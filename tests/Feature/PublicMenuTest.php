@@ -89,8 +89,7 @@ final class PublicMenuTest extends DbTestCase
         $response = $this->get('api/v1/menu/' . self::CODE_A1);
 
         $response->assertOK();
-        $this->assertStringContainsString('max-age=60', $response->response()->getHeaderLine('Cache-Control'));
-        $this->assertStringContainsString('public', $response->response()->getHeaderLine('Cache-Control'));
+        $this->assertSame('public, max-age=60', $response->response()->getHeaderLine('Cache-Control'));
     }
 
     public function testItemsAreSortedBySortOrderThenId(): void

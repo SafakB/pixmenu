@@ -23,7 +23,7 @@ $levelLabels   = ['contains' => 'içerir', 'may_contain' => 'eser miktarda içer
     <p><?= esc($menu['branch']['name']) ?><?= $menu['branch']['address'] !== null ? ' — ' . esc($menu['branch']['address']) : '' ?></p>
     <nav aria-label="Dil">
         <?php foreach ($menu['languages'] as $language): ?>
-            <a href="<?= site_url('m/' . $menu['branch']['code']) . '?lang=' . rawurlencode($language['code']) ?>"<?= $language['code'] === $menu['language']['code'] ? ' aria-current="true"' : '' ?>><?= esc($language['native_name']) ?></a>
+            <a href="<?= esc(site_url('m/' . $menu['branch']['code']) . '?lang=' . rawurlencode($language['code']), 'attr') ?>"<?= $language['code'] === $menu['language']['code'] ? ' aria-current="true"' : '' ?>><?= esc($language['native_name']) ?></a>
         <?php endforeach ?>
     </nav>
 </header>

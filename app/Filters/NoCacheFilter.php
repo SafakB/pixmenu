@@ -20,6 +20,7 @@ final class NoCacheFilter implements FilterInterface
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
+        $response->removeHeader('Cache-Control');
         $response->setHeader('Cache-Control', 'no-store');
         $response->setHeader('Pragma', 'no-cache');
 

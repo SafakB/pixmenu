@@ -208,7 +208,24 @@ final class AuthTest extends DbTestCase
     {
         $response = $this->asPanelUser($this->fx->ownerA)->get('panel');
 
-        $this->assertStringContainsString('no-store', $response->response()->getHeaderLine('Cache-Control'));
+        $this->assertSame('no-store', $response->response()->getHeaderLine('Cache-Control'));
+    }
+
+    /** §11.2: AJAX yanıtı yeni CSRF token'ını X-CSRF-TOKEN başlığında döner */
+    public function testAjaxResponsesCarryFreshCsrfTokenHeaderButPublicApiDoesNot(): void
+    {
+        $ajax = $this->asPanelUser($this->fx->ownerA)->postJson("panel/branches/{$this->fx->branchA1}/products/reorder", [
+            'ids' => [$this->fx->productA1b, $this->fx->productA1],
+        ]);
+        $ajax->assertOK();
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{32,}$/', $ajax->response()->getHeaderLine('X-CSRF-TOKEN'));
+
+        $html = $this->asPanelUser($this->fx->ownerA)->get('panel');
+        $this->assertSame('', $html->response()->getHeaderLine('X-CSRF-TOKEN'));
+
+        $api = $this->withHeaders(['Accept' => 'application/json'])->get('api/v1/menu/aaaaaaaaa1');
+        $api->assertOK();
+        $this->assertSame('', $api->response()->getHeaderLine('X-CSRF-TOKEN'));
     }
 
     public function testCsrfProtectionRejectsPostWithoutToken(): void

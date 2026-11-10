@@ -30,7 +30,10 @@ final class MenuController extends BaseController
                 ->setJSON(json_error_body(lang('App.notFound')));
         }
 
+        // CI4 yanıta varsayılan olarak `no-store` koyar ve setHeader() mevcut değere EKLER;
+        // bu yüzden önce kaldırılır.
         return $this->response
+            ->removeHeader('Cache-Control')
             ->setHeader('Cache-Control', 'public, max-age=60')
             ->setJSON(['status' => 'success', 'data' => $menu]);
     }

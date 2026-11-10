@@ -11,26 +11,16 @@
     failOnWarning="true"
     cacheDirectory="build/.phpunit.cache"
 >
-    <coverage pathCoverage="false" ignoreDeprecatedCodeUnits="true">
-        <report>
-            <clover outputFile="build/logs/clover.xml"/>
-            <html outputDirectory="build/logs/html"/>
-            <php outputFile="build/logs/coverage.serialized"/>
-            <text outputFile="php://stdout" showUncoveredFiles="false"/>
-        </report>
-    </coverage>
-
+    <!--
+        Kapsam (coverage) raporu varsayılan olarak kapalıdır; böylece `vendor/bin/phpunit`
+        Xdebug kipinden bağımsız çalışır. Kapsam raporu için XDEBUG_MODE=coverage ile
+        phpunit'in "coverage-html build/coverage" seçeneği kullanılabilir.
+    -->
     <testsuites>
         <testsuite name="App">
             <directory>./tests</directory>
         </testsuite>
     </testsuites>
-
-    <logging>
-        <testdoxHtml outputFile="build/logs/testdox.html"/>
-        <testdoxText outputFile="build/logs/testdox.txt"/>
-        <junit outputFile="build/logs/logfile.xml"/>
-    </logging>
 
     <source>
         <include>

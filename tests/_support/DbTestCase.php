@@ -75,7 +75,15 @@ abstract class DbTestCase extends CIUnitTestCase
         // Önceki isteğin süper global kalıntıları bu isteğe sızmasın.
         $_GET = $_POST = $_REQUEST = $_FILES = [];
 
-        return $this->featureCall($method, $path, $params);
+        try {
+            return $this->featureCall($method, $path, $params);
+        } finally {
+            // CI4 bunları çağrılar arasında sıfırlamaz; bir AJAX isteğinin başlıkları
+            // sonraki isteğe sızmasın.
+            $this->headers     = [];
+            $this->requestBody = '';
+            $this->bodyFormat  = '';
+        }
     }
 
     /**

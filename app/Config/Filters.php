@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Config;
 
 use CodeIgniter\Config\Filters as BaseFilters;
@@ -38,6 +40,7 @@ class Filters extends BaseFilters
         'panelauth'     => \App\Filters\PanelAuthFilter::class,
         'panelowner'    => \App\Filters\PanelOwnerFilter::class,
         'nocache'       => \App\Filters\NoCacheFilter::class,
+        'csrfheader'    => \App\Filters\CsrfHeaderFilter::class,
     ];
 
     /**
@@ -81,6 +84,7 @@ class Filters extends BaseFilters
         ],
         'after' => [
             'secureheaders',
+            'csrfheader' => ['except' => ['api/*']],
         ],
     ];
 
