@@ -98,6 +98,50 @@ abstract class BaseController extends Controller
         return $this->redirectTo($to)->with('success', $message);
     }
 
+    /**
+     * Servis çağrısını sarar: doğrulama ve iş kuralı hatalarını uygun yanıta çevirir.
+     *
+     * @param callable(): ResponseInterface $action
+     */
+    protected function handle(callable $action): ResponseInterface
+    {
+        try {
+            return $action();
+        } catch (ValidationException $e) {
+            return $this->failValidation($e->errors());
+        } catch (\App\Exceptions\BusinessRuleException $e) {
+            return $this->failRule($e->getMessage());
+        }
+    }
+
+    /**
+     * Checkbox alanı → 0/1.
+     */
+    protected function flag(string $field): int
+    {
+        return in_array((string) $this->request->getPost($field), ['1', 'on', 'true'], true) ? 1 : 0;
+    }
+
+    /**
+     * sort_order alanı (boşsa $default).
+     *
+     * @throws ValidationException
+     */
+    protected function sortOrder(int $default = 0): int
+    {
+        $raw = trim((string) $this->request->getPost('sort_order'));
+
+        if ($raw === '') {
+            return $default;
+        }
+
+        if (! ctype_digit($raw) || (int) $raw > 65535) {
+            throw ValidationException::single('sort_order', lang('App.field.sortOrder'));
+        }
+
+        return (int) $raw;
+    }
+
     protected function redirectTo(string $path): RedirectResponse
     {
         return redirect()->to(site_url($path));
@@ -181,6 +225,20 @@ abstract class BaseController extends Controller
         }
 
         return $clean;
+    }
+
+    /**
+     * Dosya gönderildiyse o alanın CI4 doğrulama kurallarını, gönderilmediyse boş dizi döndürür.
+     *
+     * @return array<string, string>
+     */
+    protected function imageRules(string $field, string $type): array
+    {
+        if ($this->uploaded($field) === null) {
+            return [];
+        }
+
+        return [$field => service('images')->rules($field, $type)];
     }
 
     /**

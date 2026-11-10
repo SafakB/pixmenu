@@ -72,7 +72,23 @@ abstract class DbTestCase extends CIUnitTestCase
     {
         $this->resetRequestServices();
 
+        // Önceki isteğin süper global kalıntıları bu isteğe sızmasın.
+        $_GET = $_POST = $_REQUEST = $_FILES = [];
+
         return $this->featureCall($method, $path, $params);
+    }
+
+    /**
+     * Gerçek bir AJAX isteği gibi ham JSON gövdesi gönderir (gövde $_POST'a girmez).
+     *
+     * @param array<string, mixed> $data
+     */
+    protected function postJson(string $path, array $data): TestResponse
+    {
+        return $this
+            ->withHeaders(['Content-Type' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+            ->withBody((string) json_encode($data))
+            ->post($path);
     }
 
     protected function resetRequestServices(): void

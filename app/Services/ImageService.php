@@ -47,11 +47,14 @@ final class ImageService
     /**
      * Controller'ların kullandığı CI4 doğrulama kuralları.
      */
-    public function rules(string $field, string $type, bool $required = false): string
+    public function rules(string $field, string $type): string
     {
+        // Not: dosya alanlarında `permit_empty` KULLANILMAZ — CI4 değeri POST'tan
+        // okuduğu için dosya kurallarının tamamını atlatır. Kurallar yalnızca
+        // dosya gerçekten gönderildiyse eklenir (BaseController::imageRules).
         $cfg   = $this->typeConfig($type);
         $rules = [
-            $required ? "uploaded[{$field}]" : 'permit_empty',
+            "uploaded[{$field}]",
             "max_size[{$field},{$cfg['maxSizeKb']}]",
             "ext_in[{$field}," . implode(',', $cfg['ext']) . ']',
             "mime_in[{$field}," . implode(',', $cfg['mime']) . ']',
