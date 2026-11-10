@@ -21,7 +21,9 @@ use Config\Services;
 abstract class DbTestCase extends CIUnitTestCase
 {
     use DatabaseTestTrait;
-    use FeatureTestTrait;
+    use FeatureTestTrait {
+        call as private featureCall;
+    }
 
     protected $migrate     = true;
     protected $migrateOnce = true;
@@ -39,6 +41,8 @@ abstract class DbTestCase extends CIUnitTestCase
 
         $this->truncateAll();
         cache()->clean();
+        $this->resetRequestServices();
+        Services::resetSingle('throttler');
 
         // CSRF ayrı testte doğrulanır; diğer feature testlerinde global filtre kapatılır.
         $filters = config('Filters');
@@ -56,6 +60,26 @@ abstract class DbTestCase extends CIUnitTestCase
         $this->removeDir($this->uploadRoot);
 
         parent::tearDown();
+    }
+
+    /**
+     * Gerçekte her HTTP isteği ayrı bir süreç durumunda çalışır. Testte ise istekler
+     * aynı süreçte art arda yapılır; istek başına servisler her çağrıdan önce sıfırlanır.
+     *
+     * @param array<string, mixed>|null $params
+     */
+    public function call(string $method, string $path, ?array $params = null): TestResponse
+    {
+        $this->resetRequestServices();
+
+        return $this->featureCall($method, $path, $params);
+    }
+
+    protected function resetRequestServices(): void
+    {
+        foreach (['tenant', 'panelAuth', 'adminAuth', 'languageResolver'] as $service) {
+            Services::resetSingle($service);
+        }
     }
 
     private function truncateAll(): void
