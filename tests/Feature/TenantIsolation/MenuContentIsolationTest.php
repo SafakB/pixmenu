@@ -74,7 +74,11 @@ final class MenuContentIsolationTest extends DbTestCase
 
         $this->assertSame(404, $foreign->response()->getStatusCode());
         $this->assertSame(404, $missing->response()->getStatusCode());
-        $this->assertSame($missing->response()->getBody(), $foreign->response()->getBody());
+        // CI4 debug modunun eklediği sayaçlı "DEBUG-VIEW" yorumları karşılaştırma dışı.
+        $strip = static fn (?string $body): string => (string) preg_replace('/<!-- DEBUG-VIEW.*?-->\s*/', '', (string) $body);
+
+        $this->assertSame($strip($missing->response()->getBody()), $strip($foreign->response()->getBody()));
+        $this->assertSame($missing->response()->getHeaderLine('Content-Type'), $foreign->response()->getHeaderLine('Content-Type'));
     }
 
     // ------------------------------------------------------------------ Test 2
