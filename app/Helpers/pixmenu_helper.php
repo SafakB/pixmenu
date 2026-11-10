@@ -41,6 +41,40 @@ if (! function_exists('json_error_body')) {
     }
 }
 
+if (! function_exists('pix_slug')) {
+    /**
+     * Metinden URL slug'ı üretir; Türkçe karakterler sadeleştirilir (ö→o, ü→u, ş→s…).
+     */
+    function pix_slug(string $text, int $maxLength = 100): string
+    {
+        helper(['url', 'text']);
+
+        $text = strtr($text, [
+            'ç' => 'c', 'Ç' => 'c', 'ğ' => 'g', 'Ğ' => 'g', 'ı' => 'i', 'İ' => 'i', 'I' => 'i',
+            'ö' => 'o', 'Ö' => 'o', 'ş' => 's', 'Ş' => 's', 'ü' => 'u', 'Ü' => 'u',
+        ]);
+
+        $slug = url_title(convert_accented_characters($text), '-', true);
+        $slug = (string) preg_replace('/[^a-z0-9\-]+/', '', $slug);
+        $slug = trim((string) preg_replace('/-+/', '-', $slug), '-');
+
+        return trim(substr($slug, 0, $maxLength), '-');
+    }
+}
+
+if (! function_exists('pix_deleted_slug')) {
+    /**
+     * Soft delete'te unique çakışmasını önlemek için değerin sonuna `--deleted-{id}` ekler
+     * (kolon uzunluğunu aşmayacak şekilde kırparak).
+     */
+    function pix_deleted_slug(string $value, int $id, int $maxLength = 120): string
+    {
+        $suffix = '--deleted-' . $id;
+
+        return substr($value, 0, max(0, $maxLength - strlen($suffix))) . $suffix;
+    }
+}
+
 if (! function_exists('upload_url')) {
     /**
      * DB'deki göreli upload yolunu tam URL'ye çevirir.

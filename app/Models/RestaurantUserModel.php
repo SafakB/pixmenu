@@ -28,6 +28,21 @@ final class RestaurantUserModel extends TenantModel
     }
 
     /**
+     * E-posta TÜM SİSTEMDE tekildir (spec §4.2, §17.5); bu yüzden bu kontrol bilerek
+     * kapsam dışıdır. Yalnızca var/yok bilgisi döner, başka tenant'ın verisi dönmez.
+     */
+    public function emailExistsGlobally(string $email, ?int $exceptUserId = null): bool
+    {
+        $builder = $this->db->table($this->table)->where('email', $email);
+
+        if ($exceptUserId !== null) {
+            $builder->where('id !=', $exceptUserId);
+        }
+
+        return $builder->countAllResults() > 0;
+    }
+
+    /**
      * Restorandaki aktif owner sayısı ($exceptUserId hariç).
      */
     public function countActiveOwners(?int $exceptUserId = null): int

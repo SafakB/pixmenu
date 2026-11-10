@@ -115,6 +115,29 @@ abstract class BaseController extends Controller
     }
 
     /**
+     * POST'taki ID listesi (ör. language_ids[]). Sayı olmayan değerler -1 olur ve
+     * servis doğrulamasında "geçersiz" olarak reddedilir (sessizce atılmaz).
+     *
+     * @return list<int>
+     */
+    protected function intList(string $field): array
+    {
+        $raw = $this->request->getPost($field);
+
+        if (! is_array($raw)) {
+            return [];
+        }
+
+        $ids = [];
+
+        foreach ($raw as $value) {
+            $ids[] = (is_string($value) && ctype_digit($value) && (int) $value > 0) ? (int) $value : -1;
+        }
+
+        return array_values(array_unique($ids));
+    }
+
+    /**
      * Checkbox alanı → 0/1.
      */
     protected function flag(string $field): int

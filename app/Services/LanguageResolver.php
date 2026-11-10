@@ -136,6 +136,41 @@ final class LanguageResolver
     }
 
     /**
+     * Her ebeveynin KENDİ zinciri olduğunda (ör. her restoranın kendi varsayılan dili).
+     * Tek sorgu ile tüm çevirileri çeker.
+     *
+     * @param class-string<TranslationModel> $translationModel
+     * @param array<int, list<int>>          $chains           parent_id => zincir
+     *
+     * @return array<int, array<string, mixed>> parent_id => çeviri satırı
+     */
+    public function resolveManyWithChains(string $translationModel, array $chains): array
+    {
+        if ($chains === []) {
+            return [];
+        }
+
+        $fk      = $translationModel::FK;
+        $grouped = [];
+
+        foreach ((new $translationModel())->whereIn($fk, array_keys($chains))->orderBy('id', 'ASC')->findAll() as $row) {
+            $grouped[(int) $row[$fk]][(int) $row['language_id']] = $row;
+        }
+
+        $resolved = [];
+
+        foreach ($grouped as $parentId => $byLanguage) {
+            $picked = $this->pick($byLanguage, $chains[$parentId] ?? []);
+
+            if ($picked !== null) {
+                $resolved[$parentId] = $picked;
+            }
+        }
+
+        return $resolved;
+    }
+
+    /**
      * Tek ebeveyn için çözülmüş çeviri.
      *
      * @param class-string<TranslationModel> $translationModel

@@ -63,6 +63,15 @@ final class BranchModel extends TenantModel
     }
 
     /**
+     * public_code TÜM SİSTEMDE tekildir; çakışma kontrolü bilerek kapsam dışıdır
+     * (silinmiş şubeler dahil). Yalnızca var/yok bilgisi döner.
+     */
+    public function publicCodeExistsGlobally(string $code): bool
+    {
+        return $this->db->table($this->table)->where('public_code', $code)->countAllResults() > 0;
+    }
+
+    /**
      * Verilen dili varsayılan dil olarak kullanan şube sayısı.
      */
     public function countUsingDefaultLanguage(int $languageId): int
