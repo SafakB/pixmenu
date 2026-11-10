@@ -177,6 +177,11 @@ abstract class BaseController extends Controller
      */
     protected function validateOrFail(array $rules): void
     {
+        // CI4, kural yokken run() için false döndürür; boş kural kümesi "geçerli" sayılır.
+        if ($rules === []) {
+            return;
+        }
+
         if (! $this->validate($rules)) {
             throw new ValidationException($this->validator->getErrors());
         }
