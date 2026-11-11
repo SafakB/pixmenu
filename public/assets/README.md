@@ -12,6 +12,10 @@ Tema güncellenirse bu değişiklikler yeniden uygulanmalı:
 4. İlk ziyarette customizer panelinin otomatik açılması kaldırıldı.
 5. İki sütunlu yerleşimdeki `logo-sm.png` yerine metin logo ikonu.
 
+## Bizim dosyalarımız
+
+- `js/pix-confirm.js` — `form[data-confirm]` gönderimini SweetAlert2 onayına bağlar (layout'ta yüklü; öznitelikler dosyanın başında).
+
 ## Bilinen eksik
 
 `css/app.min.css` varsayılan temada `hkgrotesk` fontunu kullanıyor, ancak `fonts/hkgrotesk-*.woff` dosyaları şablon kopyasında yok (404, tarayıcı sans-serif'e düşer). Orijinal Velzon paketinden `fonts/` altına eklenebilir.

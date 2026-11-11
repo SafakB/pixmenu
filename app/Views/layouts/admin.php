@@ -23,6 +23,7 @@ $shell = [
 <html lang="tr" data-layout="vertical" data-topbar="light" data-sidebar="dark" data-sidebar-size="lg" data-sidebar-image="none" data-preloader="disable" data-theme="default" data-theme-colors="default">
 <head>
 <?= view('partials/layout/head', ['pageTitle' => ($title ?? 'Yönetim') . ' | PixMenu Admin', 'withCsrfMeta' => true]) ?>
+    <link href="<?= asset_url('libs/sweetalert2/sweetalert2.min.css') ?>" rel="stylesheet">
     <?= $this->renderSection('css') ?>
 </head>
 <body>
