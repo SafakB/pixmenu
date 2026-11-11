@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -I \"$CLAUDE_PROJECT_DIR/.claude/skills/theme-skill/scripts/check_drift.py\" --hook",
+            "timeout": 30,
+            "statusMessage": "theme-skill drift kontrolü"
+          }
+        ]
+      }
+    ]
+  }
+}
