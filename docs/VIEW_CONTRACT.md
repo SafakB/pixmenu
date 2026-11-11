@@ -40,6 +40,18 @@ Zorunlu dil: kategori/ürün için **şubenin** varsayılan dili; restoran ve ş
 | `layouts/panel.php` | `currentUser{id, name, email, role, restaurant_id}`, `isOwner` (bool) |
 | `layouts/auth.php` | — |
 
+Tema: **Velzon** (`admin_template/` kaynak, depoda yok). Layout'lar `partials/layout/*` parçalarından oluşur (head, topbar, sidebar, page_title, footer, customizer, scripts, logo).
+
+| Layout | Section'lar | Opsiyonel değişkenler |
+|---|---|---|
+| `layouts/admin`, `layouts/panel` | `content`, `css` (sayfaya özel stil), `js` (sayfaya özel script; çekirdek kütüphanelerden sonra, `app.js`'ten önce basılır) | `title` (sayfa başlığı + `<title>`), `breadcrumbs` (`[{label, url?}]`; url'siz öğe aktif sayılır) |
+| `layouts/auth` | `heading`, `subtitle`, `content` | `title` |
+
+- Asset yolu: `asset_url('libs/sweetalert2/sweetalert2.min.js')` → `public/assets/...` + `?v=filemtime`.
+- Menü öğeleri layout dosyalarının başındaki dizilerdedir; aktif öğe `url_is()` ile belirlenir.
+- Temanın `plugins.js` dosyası **kullanılmaz**; Choices, flatpickr, Toastify gibi kütüphaneler gereken sayfanın `js` section'ında yüklenir.
+- `public/assets/js/app.js` temadan alınıp yamalanmıştır (bkz. `public/assets/README.md`); tema güncellenirse yamalar yeniden uygulanmalıdır.
+
 ---
 
 ## Admin (`/admin`)

@@ -84,3 +84,17 @@ if (! function_exists('upload_url')) {
         return ($path === null || $path === '') ? null : base_url($path);
     }
 }
+
+if (! function_exists('asset_url')) {
+    /**
+     * public/assets altındaki tema dosyasının URL'si; dosya değiştikçe ?v= ile cache kırılır.
+     */
+    function asset_url(string $path): string
+    {
+        $path = ltrim($path, '/');
+        $file = FCPATH . 'assets/' . $path;
+        $url  = base_url('assets/' . $path);
+
+        return is_file($file) ? $url . '?v=' . filemtime($file) : $url;
+    }
+}
