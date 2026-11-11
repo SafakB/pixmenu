@@ -7,15 +7,15 @@
  * @var list<int>                         $assigned
  * @var bool                              $allowRole  admin: rol seçilebilir; panel: her zaman manager
  */
-$oldBranchIds = old('branch_ids');
+$oldBranchIds = old('branch_ids', null, false);
 $checked      = is_array($oldBranchIds) ? array_map('intval', $oldBranchIds) : $assigned;
-$role         = (string) old('role', $user['role'] ?? 'manager');
+$role         = (string) old('role', $user['role'] ?? 'manager', false);
 ?>
 <label>Ad
-    <input type="text" name="name" value="<?= esc((string) old('name', $user['name'] ?? ''), 'attr') ?>" maxlength="100" required>
+    <input type="text" name="name" value="<?= esc((string) old('name', $user['name'] ?? '', false), 'attr') ?>" maxlength="100" required>
 </label>
 <label>E-posta
-    <input type="email" name="email" value="<?= esc((string) old('email', $user['email'] ?? ''), 'attr') ?>" maxlength="190" required>
+    <input type="email" name="email" value="<?= esc((string) old('email', $user['email'] ?? '', false), 'attr') ?>" maxlength="190" required>
 </label>
 <label>Şifre (en az 10 karakter, harf + rakam)<?= $user === null ? '' : ' — boş bırakılırsa değişmez' ?>
     <input type="password" name="password" autocomplete="new-password"<?= $user === null ? ' required' : '' ?>>

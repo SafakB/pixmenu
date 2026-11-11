@@ -4,29 +4,29 @@
 <?= form_open($action) ?>
     <label>Kod (ör. tr, en, pt-BR)
         <?php if ($language === null): ?>
-            <input type="text" name="code" value="<?= esc((string) old('code'), 'attr') ?>" maxlength="10" required>
+            <input type="text" name="code" value="<?= esc((string) old('code', null, false), 'attr') ?>" maxlength="10" required>
         <?php else: ?>
             <input type="text" value="<?= esc($language['code'], 'attr') ?>" disabled>
         <?php endif ?>
     </label>
     <label>Ad (İngilizce)
-        <input type="text" name="name" value="<?= esc((string) old('name', $language['name'] ?? ''), 'attr') ?>" maxlength="60" required>
+        <input type="text" name="name" value="<?= esc((string) old('name', $language['name'] ?? '', false), 'attr') ?>" maxlength="60" required>
     </label>
     <label>Yerel ad
-        <input type="text" name="native_name" value="<?= esc((string) old('native_name', $language['native_name'] ?? ''), 'attr') ?>" maxlength="60" required>
+        <input type="text" name="native_name" value="<?= esc((string) old('native_name', $language['native_name'] ?? '', false), 'attr') ?>" maxlength="60" required>
     </label>
     <label>Yön
-        <?php $direction = (string) old('direction', $language['direction'] ?? 'ltr'); ?>
+        <?php $direction = (string) old('direction', $language['direction'] ?? 'ltr', false); ?>
         <select name="direction">
             <option value="ltr"<?= $direction === 'ltr' ? ' selected' : '' ?>>ltr</option>
             <option value="rtl"<?= $direction === 'rtl' ? ' selected' : '' ?>>rtl</option>
         </select>
     </label>
     <label>Sıra
-        <input type="number" name="sort_order" min="0" max="65535" value="<?= esc((string) old('sort_order', $language['sort_order'] ?? 0), 'attr') ?>">
+        <input type="number" name="sort_order" min="0" max="65535" value="<?= esc((string) old('sort_order', $language['sort_order'] ?? 0, false), 'attr') ?>">
     </label>
     <label>
-        <input type="checkbox" name="is_active" value="1"<?= (int) old('is_active', $language['is_active'] ?? 1) === 1 ? ' checked' : '' ?>> Aktif
+        <input type="checkbox" name="is_active" value="1"<?= (int) old('is_active', $language['is_active'] ?? 1, false) === 1 ? ' checked' : '' ?>> Aktif
     </label>
     <button type="submit">Kaydet</button>
 <?= form_close() ?>

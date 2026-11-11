@@ -11,7 +11,7 @@
         <label><input type="checkbox" name="remove_image" value="1"> Görseli kaldır</label>
     <?php endif ?>
     <label>Sıra (boşsa sona eklenir)
-        <input type="number" name="sort_order" min="0" max="65535" value="<?= esc((string) old('sort_order', $category['sort_order'] ?? ''), 'attr') ?>">
+        <input type="number" name="sort_order" min="0" max="65535" value="<?= esc((string) old('sort_order', $category['sort_order'] ?? '', false), 'attr') ?>">
     </label>
     <label>
         <input type="checkbox" name="is_active" value="1"<?= (int) ($category['is_active'] ?? 1) === 1 ? ' checked' : '' ?>> Aktif

@@ -2,8 +2,8 @@
 <?= $this->section('content') ?>
 <?php
 $base           = 'panel/branches/' . $branch['id'];
-$categoryId     = (string) old('category_id', $product['category_id'] ?? '');
-$oldAllergens   = old('allergens');
+$categoryId     = (string) old('category_id', $product['category_id'] ?? '', false);
+$oldAllergens   = old('allergens', null, false);
 $allergenLevels = is_array($oldAllergens) ? $oldAllergens : $selectedAllergens;
 ?>
 <h1><?= esc($branch['name']) ?> — <?= $product === null ? 'Yeni ürün' : 'Ürünü düzenle' ?></h1>
@@ -18,7 +18,7 @@ $allergenLevels = is_array($oldAllergens) ? $oldAllergens : $selectedAllergens;
         </select>
     </label>
     <label>Fiyat (<?= esc($currency) ?>)
-        <input type="text" name="price" inputmode="decimal" value="<?= esc((string) old('price', $product['price'] ?? ''), 'attr') ?>" required>
+        <input type="text" name="price" inputmode="decimal" value="<?= esc((string) old('price', $product['price'] ?? '', false), 'attr') ?>" required>
     </label>
     <label>Görsel (jpg, png, webp — en fazla 5 MB)
         <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp">
@@ -27,7 +27,7 @@ $allergenLevels = is_array($oldAllergens) ? $oldAllergens : $selectedAllergens;
         <p><img src="<?= esc($image_url, 'attr') ?>" alt="" width="200"></p>
     <?php endif ?>
     <label>Sıra (boşsa sona eklenir)
-        <input type="number" name="sort_order" min="0" max="65535" value="<?= esc((string) old('sort_order', $product['sort_order'] ?? ''), 'attr') ?>">
+        <input type="number" name="sort_order" min="0" max="65535" value="<?= esc((string) old('sort_order', $product['sort_order'] ?? '', false), 'attr') ?>">
     </label>
     <label>
         <input type="checkbox" name="is_active" value="1"<?= (int) ($product['is_active'] ?? 1) === 1 ? ' checked' : '' ?>> Aktif

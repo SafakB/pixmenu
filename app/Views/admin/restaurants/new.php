@@ -2,15 +2,15 @@
 <?= $this->section('content') ?>
 <h1>Yeni restoran</h1>
 <?php
-$oldLanguageIds = array_map('strval', (array) (old('language_ids') ?? []));
-$oldDefault     = (string) old('default_language_id');
+$oldLanguageIds = array_map('strval', (array) (old('language_ids', null, false) ?? []));
+$oldDefault     = (string) old('default_language_id', null, false);
 ?>
 <?= form_open_multipart('admin/restaurants') ?>
     <label>Slug (boşsa addan üretilir)
-        <input type="text" name="slug" value="<?= esc((string) old('slug'), 'attr') ?>" maxlength="100">
+        <input type="text" name="slug" value="<?= esc((string) old('slug', null, false), 'attr') ?>" maxlength="100">
     </label>
     <label>Para birimi
-        <input type="text" name="currency_code" value="<?= esc((string) old('currency_code', 'TRY'), 'attr') ?>" maxlength="3" required>
+        <input type="text" name="currency_code" value="<?= esc((string) old('currency_code', 'TRY', false), 'attr') ?>" maxlength="3" required>
     </label>
     <fieldset>
         <legend>Diller (en az bir) ve varsayılan dil</legend>
@@ -37,8 +37,8 @@ $oldDefault     = (string) old('default_language_id');
     ]) ?>
     <fieldset>
         <legend>İlk sahip (owner) — isteğe bağlı, önerilir</legend>
-        <label>Ad <input type="text" name="owner_name" value="<?= esc((string) old('owner_name'), 'attr') ?>" maxlength="100"></label>
-        <label>E-posta <input type="email" name="owner_email" value="<?= esc((string) old('owner_email'), 'attr') ?>" maxlength="190"></label>
+        <label>Ad <input type="text" name="owner_name" value="<?= esc((string) old('owner_name', null, false), 'attr') ?>" maxlength="100"></label>
+        <label>E-posta <input type="email" name="owner_email" value="<?= esc((string) old('owner_email', null, false), 'attr') ?>" maxlength="190"></label>
         <label>Şifre (en az 10 karakter, harf + rakam) <input type="password" name="owner_password" autocomplete="new-password"></label>
     </fieldset>
     <button type="submit">Oluştur</button>

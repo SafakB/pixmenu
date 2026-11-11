@@ -6,7 +6,7 @@
  * @var array<string, array<string, string|null>>                                           $translations
  * @var array<string, string>                                                               $fields       alan => 'text' | 'textarea'
  */
-$oldTranslations = old('translations');
+$oldTranslations = old('translations', null, false);
 ?>
 <?php foreach ($languages as $language): ?>
     <?php $code = $language['code']; ?>

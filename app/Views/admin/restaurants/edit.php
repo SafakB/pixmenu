@@ -1,13 +1,13 @@
 <?= $this->extend('layouts/admin') ?>
 <?= $this->section('content') ?>
 <h1>Restoranı düzenle</h1>
-<?php $default = (string) old('default_language_id', $restaurant['default_language_id']); ?>
+<?php $default = (string) old('default_language_id', $restaurant['default_language_id'], false); ?>
 <?= form_open_multipart('admin/restaurants/' . $restaurant['id']) ?>
     <label>Slug
-        <input type="text" name="slug" value="<?= esc((string) old('slug', $restaurant['slug']), 'attr') ?>" maxlength="100">
+        <input type="text" name="slug" value="<?= esc((string) old('slug', $restaurant['slug'], false), 'attr') ?>" maxlength="100">
     </label>
     <label>Para birimi
-        <input type="text" name="currency_code" value="<?= esc((string) old('currency_code', $restaurant['currency_code']), 'attr') ?>" maxlength="3" required>
+        <input type="text" name="currency_code" value="<?= esc((string) old('currency_code', $restaurant['currency_code'], false), 'attr') ?>" maxlength="3" required>
     </label>
     <label>Varsayılan dil
         <select name="default_language_id" required>
