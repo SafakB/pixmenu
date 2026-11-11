@@ -129,3 +129,6 @@ _modules/*
 /public/uploads/*
 !/public/uploads/.htaccess
 /build/
+
+
+admin_template/
