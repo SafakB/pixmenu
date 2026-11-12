@@ -12,19 +12,32 @@ use App\Models\RestaurantModel;
 use App\Models\RestaurantTranslationModel;
 use App\Models\RestaurantUserBranchModel;
 use App\Models\RestaurantUserModel;
+use App\Models\InvoiceModel;
+use App\Models\SubscriptionModel;
+use App\Services\DomainService;
+use App\Services\PlanService;
 use App\Services\RestaurantService;
+use App\Services\SubscriptionService;
 use App\Services\TranslationService;
 use CodeIgniter\HTTP\ResponseInterface;
 
 final class RestaurantController extends AdminBaseController
 {
     /**
-     * View: admin/restaurants/index — restaurants[{id, slug, name, currency_code, is_active}]
+     * View: admin/restaurants/index — restaurants[{id, slug, name, currency_code, is_active,
+     *       plan_name|null, subscription_status|null, suspended (bool), suspension_reason|null}]
      */
     public function index(): string
     {
         $restaurants = (new RestaurantModel())->orderBy('id', 'DESC')->findAll();
         $chains      = [];
+        $current     = [];
+
+        foreach ((new SubscriptionModel())->withoutTenantScope()->where('is_current', 1)->findAll() as $sub) {
+            $current[(int) $sub['restaurant_id']] = $sub;
+        }
+
+        $planNames = (new PlanService())->texts(array_values(array_unique(array_map('intval', array_column($current, 'plan_id')))));
 
         foreach ($restaurants as $restaurant) {
             $chains[(int) $restaurant['id']] = [(int) $restaurant['default_language_id']];
@@ -39,20 +52,31 @@ final class RestaurantController extends AdminBaseController
                 'name'          => $names[(int) $restaurant['id']]['name'] ?? $restaurant['slug'],
                 'currency_code' => $restaurant['currency_code'],
                 'is_active'     => (int) $restaurant['is_active'] === 1,
+                'plan_name'     => isset($current[(int) $restaurant['id']])
+                    ? ($planNames[(int) $current[(int) $restaurant['id']]['plan_id']]['name'] ?? null)
+                    : null,
+                'subscription_status' => $current[(int) $restaurant['id']]['status'] ?? null,
+                'suspended'           => $restaurant['suspended_at'] !== null,
+                'suspension_reason'   => $restaurant['suspension_reason'],
             ], $restaurants),
         ]);
     }
 
     /**
-     * View: admin/restaurants/new — languages[] (tüm aktif diller; çeviri alanları ve dil seçimi için)
+     * View: admin/restaurants/new — languages[] (tüm aktif diller; çeviri alanları ve dil seçimi için),
+     *       plans[{id, code, name, trial_days, price_monthly, price_yearly, currency_code}] (aktif), defaultPlanId
      */
     public function new(): string
     {
         $languages = (new LanguageModel())->ordered(true);
+        $plans     = (new PlanService())->listing(true);
+        $default   = array_values(array_filter($plans, static fn (array $p): bool => $p['code'] === config('Billing')->defaultPlanCode));
 
         return $this->render('admin/restaurants/new', [
-            'allLanguages' => $languages,
-            'languages'    => (new TranslationService())->formLanguages($languages, 0),
+            'allLanguages'  => $languages,
+            'languages'     => (new TranslationService())->formLanguages($languages, 0),
+            'plans'         => $plans,
+            'defaultPlanId' => isset($default[0]) ? (int) $default[0]['id'] : null,
         ]);
     }
 
@@ -78,6 +102,8 @@ final class RestaurantController extends AdminBaseController
                     'currency_code'       => strtoupper(trim((string) $this->request->getPost('currency_code'))),
                     'is_active'           => $this->flag('is_active'),
                     'language_ids'        => $this->intList('language_ids'),
+                    'plan_id'             => (int) $this->request->getPost('plan_id') ?: null,
+                    'billing_cycle'       => (string) $this->request->getPost('billing_cycle'),
                 ],
                 $this->translationsInput(),
                 $this->uploaded('logo'),
@@ -93,7 +119,8 @@ final class RestaurantController extends AdminBaseController
      *       counts{branches, users, languages},
      *       branches[{id, slug, name, public_code, menu_url, is_active}],
      *       users[{id, name, email, role, is_active, branch_count}],
-     *       languages[{id, code, native_name, is_default}] (restoranın aktif dilleri)
+     *       languages[{id, code, native_name, is_default}] (restoranın aktif dilleri),
+     *       billing{summary (SubscriptionService::summary), suspended, suspension_reason, open_invoices, overdue_invoices, domain|null}
      */
     public function show(int $id): string
     {
@@ -113,7 +140,18 @@ final class RestaurantController extends AdminBaseController
             ->branchIdsForUsers(array_map('intval', array_column($users, 'id')));
         $languages = (new RestaurantLanguageModel())->forRestaurant($id)->languages();
 
+        $invoices = (new InvoiceModel())->forRestaurant($id)->pending();
+        $today    = date('Y-m-d');
+
         return $this->render('admin/restaurants/show', [
+            'billing' => [
+                'summary'           => (new SubscriptionService())->summary($id),
+                'suspended'         => $restaurant['suspended_at'] !== null,
+                'suspension_reason' => $restaurant['suspension_reason'],
+                'open_invoices'     => count($invoices),
+                'overdue_invoices'  => count(array_filter($invoices, static fn (array $i): bool => (string) $i['due_date'] < $today)),
+                'domain'            => (new DomainService())->current($id),
+            ],
             'restaurant' => [
                 'id'            => $id,
                 'slug'          => $restaurant['slug'],

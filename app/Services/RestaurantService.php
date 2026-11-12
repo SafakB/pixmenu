@@ -8,6 +8,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Exceptions\ValidationException;
 use App\Models\BranchModel;
 use App\Models\LanguageModel;
+use App\Models\PlanModel;
 use App\Models\RestaurantLanguageModel;
 use App\Models\RestaurantModel;
 use App\Models\RestaurantTranslationModel;
@@ -29,9 +30,10 @@ final class RestaurantService
     }
 
     /**
-     * Tek transaction: restaurants + restaurant_translations + restaurant_languages (+ ilk owner).
+     * Tek transaction: restaurants + restaurant_translations + restaurant_languages (+ ilk owner)
+     * + abonelik (plan_id verilmezse config'teki varsayılan deneme paketi).
      *
-     * @param array{slug: string, default_language_id: int, currency_code: string, is_active: int, language_ids: list<int>} $data
+     * @param array{slug: string, default_language_id: int, currency_code: string, is_active: int, language_ids: list<int>, plan_id?: int|null, billing_cycle?: string} $data
      * @param array<string, array<string, string>>                                                                       $translations
      * @param array{name: string, email: string, password: string}|null                                                  $owner
      */
@@ -98,6 +100,8 @@ final class RestaurantService
             if ($owner !== null) {
                 (new UserService(Scope::admin($id)))->create($owner + ['role' => 'owner', 'is_active' => 1, 'branch_ids' => []]);
             }
+
+            (new SubscriptionService())->start($id, $this->resolvePlanId($data['plan_id'] ?? null), (string) ($data['billing_cycle'] ?? 'monthly'));
 
             return $id;
         }, static function () use ($images, &$stored): void {
@@ -319,6 +323,24 @@ final class RestaurantService
         }
 
         return $errors;
+    }
+
+    /**
+     * Seçilmemişse varsayılan (deneme) paket.
+     */
+    private function resolvePlanId(?int $planId): int
+    {
+        if ($planId !== null && $planId > 0) {
+            return $planId;
+        }
+
+        $plan = (new PlanModel())->findByCode(config('Billing')->defaultPlanCode);
+
+        if ($plan === null) {
+            throw ValidationException::single('plan_id', lang('App.subscription.planInvalid'));
+        }
+
+        return (int) $plan['id'];
     }
 
     private function slugExists(string $slug, ?int $exceptId): bool

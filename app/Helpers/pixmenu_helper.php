@@ -98,3 +98,31 @@ if (! function_exists('asset_url')) {
         return is_file($file) ? $url . '?v=' . filemtime($file) : $url;
     }
 }
+
+if (! function_exists('pix_money')) {
+    /**
+     * "1499.90" + "TRY" → "1.499,90 TRY" (görünüm için).
+     */
+    function pix_money(string|float|int|null $amount, ?string $currency = null): string
+    {
+        $formatted = number_format((float) $amount, 2, ',', '.');
+
+        return $currency === null || $currency === '' ? $formatted : $formatted . ' ' . $currency;
+    }
+}
+
+if (! function_exists('pix_date')) {
+    /**
+     * 'Y-m-d' / 'Y-m-d H:i:s' → 'd.m.Y' (boşsa '—').
+     */
+    function pix_date(?string $value, bool $withTime = false): string
+    {
+        if ($value === null || $value === '') {
+            return '—';
+        }
+
+        $time = strtotime($value);
+
+        return $time === false ? $value : date($withTime ? 'd.m.Y H:i' : 'd.m.Y', $time);
+    }
+}

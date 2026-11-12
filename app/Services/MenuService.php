@@ -41,7 +41,7 @@ final class MenuService
 
         $db = db_connect();
 
-        // 1) Şube + restoran (ikisi de aktif ve silinmemiş olmalı)
+        // 1) Şube + restoran (ikisi de aktif ve silinmemiş, restoran askıda değil)
         $branch = $db->table('branches b')
             ->select('b.id, b.restaurant_id, b.public_code, b.default_language_id, b.phone,
                       r.default_language_id AS restaurant_default_language_id, r.currency_code, r.logo_path')
@@ -51,6 +51,7 @@ final class MenuService
             ->where('b.deleted_at', null)
             ->where('r.is_active', 1)
             ->where('r.deleted_at', null)
+            ->where('r.suspended_at', null)   // askıdaki restoranın menüsü kapalı
             ->get()
             ->getRowArray();
 

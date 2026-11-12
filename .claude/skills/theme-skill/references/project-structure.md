@@ -7,7 +7,7 @@ CodeIgniter 4.7, view'lar `app/Views`. Tema: Velzon (HTML sürümü, HTTrack mir
 | Layout | Kullanan | Section'lar | Değişkenler |
 |---|---|---|---|
 | `layouts/admin.php` | `admin/*` | `content`, `css`, `js` | `currentAdmin{id,name,email}` (filtre verir), ops. `title`, `breadcrumbs` |
-| `layouts/panel.php` | `panel/*` | `content`, `css`, `js` | `currentUser{id,name,email,role,restaurant_id}`, `isOwner`, ops. `title`, `breadcrumbs` |
+| `layouts/panel.php` | `panel/*` | `content`, `css`, `js` | `currentUser{id,name,email,role,restaurant_id}`, `isOwner`, `billingNotice` (PanelBaseController::render verir; null olabilir), ops. `title`, `breadcrumbs` |
 | `layouts/auth.php` | `admin/auth/login`, `panel/auth/login` | `heading`, `subtitle`, `content` | ops. `title` |
 
 admin/panel iskeleti (iki dosya aynı yapıda, yalnızca `$shell` dizisi farklı):
@@ -20,6 +20,7 @@ head  → partials/layout/head (pageTitle, withCsrfMeta=true) + sweetalert2.min.
   partials/layout/sidebar ($shell)
   .main-content > .page-content > .container-fluid
       partials/layout/page_title (title, breadcrumbs)
+      [yalnız panel] partials/billing/notice (notice = billingNotice, isOwner)
       partials/flash
       renderSection('content')
   partials/layout/footer
@@ -52,8 +53,8 @@ $shell = [
  'match' => ['admin/languages', 'admin/languages/*']]                      // match ops.; yoksa path
 ```
 Aktiflik `url_is()` ile; tek seviyeli menü (alt menü/collapse yok). Mevcut menüler:
-- **admin**: Gösterge Paneli (`admin`), Restoranlar · *Tanımlar*: Diller, Alerjenler
-- **panel**: Gösterge Paneli, Şubeler · *Restoran* (yalnız owner): Restoran Bilgileri, Kullanıcılar · *Hesap*: Profil
+- **admin**: Gösterge Paneli (`admin`), Restoranlar · *Abonelik*: Paketler, Faturalar · *Tanımlar*: Diller, Alerjenler
+- **panel**: Gösterge Paneli, Şubeler · *Restoran* (yalnız owner): Restoran Bilgileri, Kullanıcılar, Abonelik · *Hesap*: Profil
 
 Şubeye bağlı sayfalar (`panel/branches/{b}/categories|products`) "Şubeler" altında aktif görünür (`panel/branches/*`).
 
@@ -78,6 +79,11 @@ Diğer partial'lar (`app/Views/partials/`):
 - `translations.php` — çeviri alanları; parametreler yalnızca `languages`, `translations`, `fields` (başka parametre yok — `saveData` sızıntısı). Dil sekmeli **kendi kartını basar** ("Çeviriler" başlıklı, `nav-tabs-custom card-header-tabs`), alan bazlı `is-invalid` + hatalı sekmede ikon, gizli sekmedeki `required` için inline `invalid` dinleyicisi içerir (patterns §5). Çağıran view onu kart içine sarmaz; 7 form birden kullanır.
 - `branch_fields.php` — admin+panel ortak şube formu gövdesi: iki kolon (çeviriler + genel bilgiler / tek "Yayın" kartı + Vazgeç/Kaydet). Parametre: `branch`, `languages`, `translations`, `cancel_url`; view yalnızca `form_open/form_close` ile sarar.
 - `user_fields.php` — admin+panel ortak kullanıcı formu parçası (henüz stilsiz).
+- `billing/` — abonelik/fatura parçaları (admin + panel ortak):
+  - `badge.php` — durum rozeti; `kind` (`invoice` | `subscription` | `reason`), `status`. Renk/etiket eşlemesi burada; yeni durumda buraya ekle.
+  - `subscription_card.php` — güncel abonelik kartı; `summary` (SubscriptionService::summary), `suspended`, `suspension_reason`, `actions` (başlığa basılan hazır HTML; boş string olabilir).
+  - `invoice_doc.php` — yazdırılabilir fatura (Velzon `apps-invoices-details` düzeni); `invoice`, `restaurantName`, `seller`, `paymentInstructions`. Sayfa `css` section'ına `billing/print_css` ekler (yazdırırken sidebar/topbar gizlenir).
+  - `notice.php` — panel uyarı bandı (deneme / gecikmiş fatura / askı); layout'tan çağrılır, view'a yazma.
 
 ## Ortak JS (`public/assets/js/`)
 
@@ -87,6 +93,7 @@ Diğer partial'lar (`app/Views/partials/`):
 
 - `asset_url(string $path): string` → `base_url('assets/'.$path)` + `?v=filemtime` (dosya varsa).
 - `upload_url(?string $path): ?string` → yüklenen dosyanın tam URL'si (`public/uploads`).
+- `pix_money($tutar, ?$paraBirimi)` → `1.499,90 TRY`; `pix_date(?$tarih, $saatli = false)` → `12.11.2026` (boşsa `—`). Fatura/abonelik view'larında tutar ve tarih bunlarla basılır.
 - BaseController helper'ları: `url`, `form`, `text`, `pixmenu`.
 
 ## Veri akışı notları

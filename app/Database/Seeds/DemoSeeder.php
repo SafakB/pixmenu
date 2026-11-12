@@ -58,6 +58,9 @@ final class DemoSeeder extends Seeder
             ['İçecekler', 'Beverages', [['Ayran', 'Ayran'], ['Türk Kahvesi', 'Turkish Coffee'], ['Çay', 'Tea']]],
         ];
 
+        $this->call(PlanSeeder::class);
+        $pro = $this->db->table('plans')->where('code', 'pro')->get()->getRowArray();
+
         $this->db->transStart();
 
         foreach ($restaurants as $slug => [$nameTr, $nameEn, $branchNames]) {
@@ -183,6 +186,24 @@ final class DemoSeeder extends Seeder
                 'user_id'       => $managerId,
                 'branch_id'     => $branchIds[0],
             ]);
+
+            // Abonelik: Pro, aylık, aktif (bugün başlayan dönem). Fatura kesilmez; ilk fatura cron ile gelir.
+            if ($pro !== null) {
+                $this->db->table('subscriptions')->insert([
+                    'restaurant_id'        => $rid,
+                    'plan_id'              => $pro['id'],
+                    'billing_cycle'        => 'monthly',
+                    'status'               => 'active',
+                    'is_current'           => 1,
+                    'price'                => $pro['price_monthly'],
+                    'currency_code'        => $pro['currency_code'],
+                    'started_at'           => date('Y-m-d'),
+                    'current_period_start' => date('Y-m-d'),
+                    'current_period_end'   => date('Y-m-d', strtotime('+1 month -1 day')),
+                    'created_at'           => $now,
+                    'updated_at'           => $now,
+                ]);
+            }
         }
 
         $this->db->transComplete();

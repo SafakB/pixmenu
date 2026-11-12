@@ -108,6 +108,40 @@ $languageError  = $errors['language_ids'] ?? $errors['default_language_id'] ?? n
     </div>
 
     <div class="col-lg-4">
+        <?php
+        $oldPlan  = (string) old('plan_id', (string) ($defaultPlanId ?? ''), false);
+        $oldCycle = (string) old('billing_cycle', 'monthly', false);
+        ?>
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0">Paket</h5></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label" for="plan_id">Paket <span class="text-danger">*</span></label>
+                    <select class="form-select<?= $invalid('plan_id') ?>" id="plan_id" name="plan_id" required>
+                        <?php foreach ($plans as $plan): ?>
+                            <option value="<?= esc((string) $plan['id'], 'attr') ?>" data-trial="<?= $plan['trial_days'] !== null ? '1' : '0' ?>"<?= $oldPlan === (string) $plan['id'] ? ' selected' : '' ?>>
+                                <?= esc($plan['name']) ?><?= $plan['trial_days'] !== null
+                                    ? ' — ' . esc((string) $plan['trial_days']) . ' gün deneme'
+                                    : ' — ' . esc(pix_money($plan['price_monthly'], $plan['currency_code'])) . ' / ay' ?>
+                            </option>
+                        <?php endforeach ?>
+                    </select>
+                    <?php if (isset($errors['plan_id'])): ?><div class="invalid-feedback"><?= esc($errors['plan_id']) ?></div><?php endif ?>
+                </div>
+                <div id="billing-cycle-group">
+                    <label class="form-label d-block">Ödeme dönemi</label>
+                    <div class="btn-group w-100" role="group" aria-label="Ödeme dönemi">
+                        <input type="radio" class="btn-check" name="billing_cycle" id="cycle-monthly" value="monthly"<?= $oldCycle !== 'yearly' ? ' checked' : '' ?>>
+                        <label class="btn btn-outline-primary" for="cycle-monthly">Aylık</label>
+                        <input type="radio" class="btn-check" name="billing_cycle" id="cycle-yearly" value="yearly"<?= $oldCycle === 'yearly' ? ' checked' : '' ?>>
+                        <label class="btn btn-outline-primary" for="cycle-yearly">Yıllık</label>
+                    </div>
+                    <?php if (isset($errors['billing_cycle'])): ?><div class="text-danger small mt-1"><?= esc($errors['billing_cycle']) ?></div><?php endif ?>
+                    <div class="form-text">Ücretli pakette ilk dönemin faturası hemen kesilir.</div>
+                </div>
+            </div>
+        </div>
+
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0">Yayın</h5></div>
             <div class="card-body">
@@ -155,6 +189,18 @@ document.querySelectorAll('input[type=file][data-preview]').forEach(function (in
         if (placeholder) placeholder.remove();
     });
 });
+// Deneme paketinde ödeme dönemi seçimi gizlenir.
+(function () {
+    var select = document.getElementById('plan_id');
+    var group  = document.getElementById('billing-cycle-group');
+    if (!select || !group) return;
+    var sync = function () {
+        var opt = select.options[select.selectedIndex];
+        group.classList.toggle('d-none', !!opt && opt.dataset.trial === '1');
+    };
+    select.addEventListener('change', sync);
+    sync();
+})();
 // Varsayılan seçilen dil kullanılmıyorsa otomatik işaretle.
 document.querySelectorAll('input[name=default_language_id][data-use]').forEach(function (radio) {
     radio.addEventListener('change', function () {

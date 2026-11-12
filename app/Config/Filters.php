@@ -39,6 +39,7 @@ class Filters extends BaseFilters
         'adminauth'     => \App\Filters\AdminAuthFilter::class,
         'panelauth'     => \App\Filters\PanelAuthFilter::class,
         'panelowner'    => \App\Filters\PanelOwnerFilter::class,
+        'panelsubscription' => \App\Filters\PanelSubscriptionFilter::class,
         'nocache'       => \App\Filters\NoCacheFilter::class,
         'csrfheader'    => \App\Filters\CsrfHeaderFilter::class,
     ];

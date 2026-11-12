@@ -1,10 +1,10 @@
 {
   "files": {
     "app/Config/View.php": "969b92b00b9268e71d6a8363f38042ac39d0c24be4f1721d3335991498dc2cd0",
-    "app/Helpers/pixmenu_helper.php": "464086ac4e8a30d8e1ef59c74b70a19d66d0a34e124f246810358498e1012378",
-    "app/Views/layouts/admin.php": "9547c9090858ffcd15e412fedbe23ae0ee676b400fda0273916c8dbdfcb41ee2",
+    "app/Helpers/pixmenu_helper.php": "4404e90d23aa7fe01d65aa1c4fcacb0f06810a9f16b0154cdc88042908fb73d7",
+    "app/Views/layouts/admin.php": "025fbe52141a47942f684ac52ba8b71b729edd7839145dbd7fb043ed8d58298a",
     "app/Views/layouts/auth.php": "0f4e2eee7dd396b03c66f9dfc6cf81cded342253d7e7114105fc10f92ebbe35d",
-    "app/Views/layouts/panel.php": "25e8f0126ef88fc842cf796f6f524508a495917b6957f6f1234ac0992fc8b116",
+    "app/Views/layouts/panel.php": "bdea2d922e7cdcc9dc24b787986818a1b5c4f0a54b7d6762b39da0ea405d60ed",
     "app/Views/partials/flash.php": "76809f6c0bf41e0f3ac6f85ffb975f5cecf25d46cf15913d7936aef425be9252",
     "app/Views/partials/layout/customizer.php": "921666a16a9194d7a2b78d8f6b074f614b53a1e16f9ab8f06326628e99da7dad",
     "app/Views/partials/layout/footer.php": "c39d4a47336b390f7531accfa00d0e05b7d3011f552a35e4d76eafddb101f9d0",
@@ -18,7 +18,7 @@
     "app/Views/partials/layout/user_menu.php": "acb38b5c3171d860df5b90d853ac04b71905e86c808dacc7e648c8f3eca6dd3b",
     "app/Views/partials/login_form.php": "208934aed4bf9249b3c649d063996e35edc84353153787a28be6f1c1c412e549",
     "app/Views/partials/translations.php": "404da629cc8cb89d4302e5c81ac0045f765959def56c31469edc86f5e8bebe8c",
-    "docs/VIEW_CONTRACT.md": "5c7891f037b3966fb4b6fdce53261601e9c92df04c9cfe8ecc0e5b0bfb254e4b",
+    "docs/VIEW_CONTRACT.md": "237c0f2ece56db2a708e3815ea1892c816efd086599122436bb8aef0ea1e4556",
     "public/assets/js/app.js": "47b9e55c55fa6e0dfb414e93cd29c613d7a394e8bc747f807234315a585033ba",
     "public/assets/js/layout.js": "2a183a91dc4ab99e0d94dd387bec4d4fc0b7ce01ba4318d589cb99885931dd39",
     "public/assets/js/pix-confirm.js": "856f249ab134f03b040a26fbd6baa963c0e5b29b83f3094e5c76209efc5a9ab3"

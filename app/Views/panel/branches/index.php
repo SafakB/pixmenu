@@ -2,7 +2,18 @@
 <?= $this->section('content') ?>
 <h1>Şubeler</h1>
 <?php if ($isOwner): ?>
-    <p><a href="<?= site_url('panel/branches/new') ?>">Yeni şube</a></p>
+    <?php if (! empty($canAddBranch)): ?>
+        <p><a href="<?= site_url('panel/branches/new') ?>" class="btn btn-success btn-sm"><i class="ri-add-line align-bottom me-1"></i> Yeni şube</a></p>
+    <?php else: ?>
+        <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+            <button type="button" class="btn btn-success btn-sm" disabled><i class="ri-add-line align-bottom me-1"></i> Yeni şube</button>
+            <span class="text-muted small">
+                <i class="ri-information-line align-bottom"></i>
+                Paketinizin şube limiti<?= $maxBranches !== null ? ' (' . esc((string) $maxBranches) . ')' : '' ?> dolu.
+                <a href="<?= site_url('panel/subscription/plans') ?>">Paketleri karşılaştırın</a>
+            </span>
+        </div>
+    <?php endif ?>
 <?php endif ?>
 <table>
     <thead><tr><th>Ad</th><th>Menü</th><th>Durum</th><th></th></tr></thead>

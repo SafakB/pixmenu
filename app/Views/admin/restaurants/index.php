@@ -35,6 +35,7 @@
                             <th scope="col">Ad</th>
                             <th scope="col">Slug</th>
                             <th scope="col">Para birimi</th>
+                            <th scope="col">Paket</th>
                             <th scope="col">Durum</th>
                             <th scope="col" class="text-end">İşlemler</th>
                         </tr>
@@ -55,16 +56,29 @@
                             <td class="text-muted"><?= esc($r['slug']) ?></td>
                             <td><span class="badge bg-light text-body"><?= esc($r['currency_code']) ?></span></td>
                             <td>
+                                <?php if ($r['plan_name'] !== null): ?>
+                                    <a href="<?= site_url('admin/restaurants/' . $r['id'] . '/subscription') ?>" class="text-reset fw-medium"><?= esc($r['plan_name']) ?></a>
+                                    <div><?= view('partials/billing/badge', ['kind' => 'subscription', 'status' => $r['subscription_status']]) ?></div>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif ?>
+                            </td>
+                            <td>
                                 <?php if ($active): ?>
                                     <span class="badge bg-success-subtle text-success">Aktif</span>
                                 <?php else: ?>
                                     <span class="badge bg-danger-subtle text-danger">Pasif</span>
+                                <?php endif ?>
+                                <?php if (! empty($r['suspended'])): ?>
+                                    <span class="badge bg-danger" data-bs-toggle="tooltip" title="<?= esc(lang('App.subscription.reason.' . $r['suspension_reason']), 'attr') ?>">Askıda</span>
                                 <?php endif ?>
                             </td>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
                                     <a href="<?= site_url('admin/restaurants/' . $r['id']) ?>" class="btn btn-sm btn-icon btn-soft-info"
                                        data-bs-toggle="tooltip" title="Detay" aria-label="Detay"><i class="ri-eye-line"></i></a>
+                                    <a href="<?= site_url('admin/restaurants/' . $r['id'] . '/subscription') ?>" class="btn btn-sm btn-icon btn-soft-secondary"
+                                       data-bs-toggle="tooltip" title="Abonelik" aria-label="Abonelik"><i class="ri-vip-crown-2-line"></i></a>
                                     <a href="<?= site_url('admin/restaurants/' . $r['id'] . '/edit') ?>" class="btn btn-sm btn-icon btn-soft-primary"
                                        data-bs-toggle="tooltip" title="Düzenle" aria-label="Düzenle"><i class="ri-pencil-line"></i></a>
                                     <?= form_open('admin/restaurants/' . $r['id'] . '/toggle', ['class' => 'd-inline'] + ($active ? [
@@ -89,7 +103,7 @@
                         </tr>
                     <?php endforeach ?>
                     <tr id="restaurant-no-result" class="d-none">
-                        <td colspan="6" class="text-center text-muted py-4">Aramayla eşleşen restoran bulunamadı.</td>
+                        <td colspan="7" class="text-center text-muted py-4">Aramayla eşleşen restoran bulunamadı.</td>
                     </tr>
                     </tbody>
                 </table>

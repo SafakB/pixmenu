@@ -9,6 +9,8 @@ use App\Libraries\Tenant\TenantContext;
 use App\Models\BranchModel;
 use App\Models\CategoryModel;
 use App\Models\ProductModel;
+use App\Models\RestaurantTranslationModel;
+use App\Services\SubscriptionService;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -98,13 +100,28 @@ abstract class PanelBaseController extends BaseController
     }
 
     /**
+     * Restoranın varsayılan dildeki adı (yoksa slug).
+     */
+    protected function restaurantDisplayName(): string
+    {
+        return (string) (service('languageResolver')->resolveOne(
+            RestaurantTranslationModel::class,
+            $this->tenant->restaurantId(),
+            [(int) $this->restaurant['default_language_id']],
+        )['name'] ?? $this->restaurant['slug']);
+    }
+
+    /**
+     * Layout değişkenleri: currentUser, isOwner, billingNotice (uyarı bandı; SubscriptionService::notice()).
+     *
      * @param array<string, mixed> $data
      */
     protected function render(string $view, array $data = []): string
     {
         return view($view, $data + [
-            'currentUser' => $this->currentUser,
-            'isOwner'     => $this->tenant->isOwner(),
+            'currentUser'   => $this->currentUser,
+            'isOwner'       => $this->tenant->isOwner(),
+            'billingNotice' => (new SubscriptionService())->notice($this->restaurant),
         ]);
     }
 }

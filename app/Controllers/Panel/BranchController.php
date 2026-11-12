@@ -8,6 +8,7 @@ use App\Models\BranchModel;
 use App\Models\BranchTranslationModel;
 use App\Services\BranchService;
 use App\Services\Scope;
+use App\Services\SubscriptionService;
 use App\Services\TranslationService;
 use CodeIgniter\HTTP\ResponseInterface;
 
@@ -16,12 +17,14 @@ final class BranchController extends PanelBaseController
     /**
      * Owner: tüm şubeler; manager: yalnızca atanmış şubeler.
      *
-     * View: panel/branches/index — branches[{id, slug, name, public_code, menu_url, is_active, sort_order}]
+     * View: panel/branches/index — branches[{id, slug, name, public_code, menu_url, is_active, sort_order}],
+     *       canAddBranch (bool: paket şube limiti dolu değil), maxBranches (int|null; null = sınırsız)
      */
     public function index(): string
     {
-        $branches = (new BranchModel())->accessible($this->tenant->allowedBranchIds());
-        $names    = service('languageResolver')->resolveMany(
+        $branches      = (new BranchModel())->accessible($this->tenant->allowedBranchIds());
+        $subscriptions = new SubscriptionService();
+        $names         = service('languageResolver')->resolveMany(
             BranchTranslationModel::class,
             array_map('intval', array_column($branches, 'id')),
             [(int) $this->restaurant['default_language_id']],
@@ -37,6 +40,8 @@ final class BranchController extends PanelBaseController
                 'is_active'   => (int) $branch['is_active'] === 1,
                 'sort_order'  => (int) $branch['sort_order'],
             ], $branches),
+            'canAddBranch' => $subscriptions->canAddBranch($this->tenant->restaurantId()),
+            'maxBranches'  => $subscriptions->entitlements($this->tenant->restaurantId())['max_branches'],
         ]);
     }
 
@@ -86,9 +91,14 @@ final class BranchController extends PanelBaseController
     public function toggle(int $branchId): ResponseInterface
     {
         $this->requireOwner();
-        (new BranchService(Scope::tenant()))->toggle($this->requireBranch($branchId));
+        $branch = $this->requireBranch($branchId);
 
-        return $this->done('panel/branches', lang('App.statusChanged'));
+        // Aktifleştirme paket şube limitine takılabilir (BusinessRuleException → error flash).
+        return $this->handle(function () use ($branch): ResponseInterface {
+            (new BranchService(Scope::tenant()))->toggle($branch);
+
+            return $this->done('panel/branches', lang('App.statusChanged'));
+        });
     }
 
     public function delete(int $branchId): ResponseInterface

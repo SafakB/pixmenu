@@ -11,6 +11,8 @@ use CodeIgniter\Database\BaseConnection;
  *
  *  Restoran A: owner A, manager A1 (yalnızca şube A1), şubeler A1 ve A2
  *  Restoran B: owner B, şube B1
+ *  Paketler: demo, standard (1 şube + alan adı), pro (sınırsız), enterprise.
+ *  A ve B güncel olarak `pro` paketinde (aylık, aktif, bugün başlayan dönem).
  *
  * Model/servis katmanını atlayıp doğrudan DB'ye yazar; böylece test edilen
  * kodun hatası fixture'ı etkilemez.
@@ -26,6 +28,12 @@ final class Fixture
 
     /** @var array<string, int> code => id */
     public array $allergen = [];
+
+    /** @var array<string, int> code => id */
+    public array $plan = [];
+
+    public int $subscriptionA;
+    public int $subscriptionB;
 
     public int $restaurantA;
     public int $restaurantB;
@@ -88,6 +96,21 @@ final class Fixture
             $this->insert('allergen_translations', ['allergen_id' => $id, 'language_id' => $this->lang['en'], 'name' => $en]);
         }
 
+        foreach ([
+            ['demo', 1, 0, 0, 14, '0.00', '0.00', 'Demo'],
+            ['standard', 1, 1, 0, null, '500.00', '5000.00', 'Standart'],
+            ['pro', null, 1, 0, null, '1000.00', '10000.00', 'Pro'],
+            ['enterprise', null, 1, 1, null, '2000.00', '20000.00', 'Kurumsal'],
+        ] as $i => [$code, $max, $domain, $design, $trial, $monthly, $yearly, $name]) {
+            $this->plan[$code] = $this->insert('plans', [
+                'code' => $code, 'max_branches' => $max, 'allow_custom_domain' => $domain, 'allow_custom_design' => $design,
+                'trial_days' => $trial, 'price_monthly' => $monthly, 'price_yearly' => $yearly, 'currency_code' => 'TRY',
+                'is_featured' => $code === 'pro' ? 1 : 0, 'is_active' => 1, 'sort_order' => $i,
+                'created_at' => $this->now, 'updated_at' => $this->now,
+            ]);
+            $this->insert('plan_translations', ['plan_id' => $this->plan[$code], 'language_id' => $this->lang['tr'], 'name' => $name]);
+        }
+
         // --- Restoran A ---
         $this->restaurantA = $this->restaurant('restoran-a', 'Restoran A', 'Restaurant A');
         $this->branchA1    = $this->branch($this->restaurantA, 'a1', 'aaaaaaaaa1', 'Şube A1', 0);
@@ -109,6 +132,27 @@ final class Fixture
         $this->ownerB      = $this->user($this->restaurantB, 'Owner B', 'owner-b@test.local', 'owner');
         $this->categoryB1  = $this->category($this->restaurantB, $this->branchB1, 'Gizli Kategori B', 'Secret Category B', 0);
         $this->productB1   = $this->product($this->restaurantB, $this->branchB1, $this->categoryB1, 'Gizli Ürün B', 'Secret Product B', '999.00', 0);
+
+        $this->subscriptionA = $this->subscription($this->restaurantA, 'pro');
+        $this->subscriptionB = $this->subscription($this->restaurantB, 'pro');
+    }
+
+    /**
+     * Güncel abonelik ekler (varsa eskisini sonlandırmaz; çağıran dikkat eder).
+     */
+    public function subscription(int $restaurantId, string $planCode, string $cycle = 'monthly', ?string $start = null, ?string $end = null, string $status = 'active'): int
+    {
+        $start ??= date('Y-m-d');
+        $end   ??= date('Y-m-d', strtotime($start . ($cycle === 'trial' ? ' +13 days' : ' +1 month -1 day')));
+        $plan    = $this->db->table('plans')->where('id', $this->plan[$planCode])->get()->getRowArray();
+
+        return $this->insert('subscriptions', [
+            'restaurant_id' => $restaurantId, 'plan_id' => $plan['id'], 'billing_cycle' => $cycle,
+            'status' => $cycle === 'trial' && $status === 'active' ? 'trialing' : $status, 'is_current' => 1,
+            'price' => $cycle === 'yearly' ? $plan['price_yearly'] : ($cycle === 'trial' ? '0.00' : $plan['price_monthly']),
+            'currency_code' => 'TRY', 'started_at' => $start, 'current_period_start' => $start, 'current_period_end' => $end,
+            'created_at' => $this->now, 'updated_at' => $this->now,
+        ]);
     }
 
     /**

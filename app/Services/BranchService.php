@@ -46,6 +46,10 @@ final class BranchService
     {
         [$codes, $requiredCode] = $this->prepare($data, $translations, null);
 
+        if ($data['is_active'] === 1) {
+            $this->subscriptions()->assertBranchLimit($this->scope->restaurantId());
+        }
+
         $id = $this->atomic(function () use ($data, $translations, $codes, $requiredCode): int {
             $id = (int) $this->branches()->insert([
                 'slug'                => $this->resolveSlug($data['slug'], $translations[$requiredCode]['name'] ?? '', null),
@@ -76,6 +80,10 @@ final class BranchService
         $id                     = (int) $branch['id'];
         [$codes, $requiredCode] = $this->prepare($data, $translations, $id);
 
+        if ($data['is_active'] === 1 && (int) $branch['is_active'] !== 1) {
+            $this->subscriptions()->assertBranchLimit($this->scope->restaurantId(), $id);
+        }
+
         $this->atomic(function () use ($id, $branch, $data, $translations, $codes, $requiredCode): void {
             $slug = $data['slug'] === ''
                 ? (string) $branch['slug']
@@ -100,6 +108,10 @@ final class BranchService
      */
     public function toggle(array $branch): void
     {
+        if ((int) $branch['is_active'] !== 1) {
+            $this->subscriptions()->assertBranchLimit($this->scope->restaurantId(), (int) $branch['id']);
+        }
+
         $this->branches()->update((int) $branch['id'], [
             'is_active' => (int) $branch['is_active'] === 1 ? 0 : 1,
         ]);
@@ -140,6 +152,14 @@ final class BranchService
     }
 
     // ------------------------------------------------------------------
+
+    /**
+     * Paket şube limiti (docs/ABONELIK_PLANI.md §6): admin ve panel aynı servisi kullandığı için tek nokta.
+     */
+    private function subscriptions(): SubscriptionService
+    {
+        return new SubscriptionService();
+    }
 
     private function branches(): BranchModel
     {

@@ -42,4 +42,95 @@ $cards = [
         </div>
     <?php endforeach ?>
 </div>
+
+<?php /* ---------- Abonelik ---------- */ ?>
+<div class="row">
+    <div class="col-xl-6">
+        <div class="card card-height-100">
+            <div class="card-header d-flex align-items-center">
+                <h5 class="card-title mb-0 flex-grow-1">
+                    <i class="ri-error-warning-line text-danger align-bottom me-1"></i> Geciken faturalar
+                    <span class="badge bg-danger-subtle text-danger align-middle ms-1"><?= esc((string) $billing['overdue_count']) ?></span>
+                </h5>
+                <a href="<?= site_url('admin/invoices?overdue=1') ?>" class="btn btn-soft-primary btn-sm">Tümü <i class="ri-arrow-right-line align-bottom"></i></a>
+            </div>
+            <div class="card-body">
+                <?php if ($billing['overdue'] === []): ?>
+                    <div class="text-center text-muted py-4"><i class="ri-checkbox-circle-line fs-1 d-block mb-2 text-success"></i>Geciken fatura yok.</div>
+                <?php else: ?>
+                    <p class="text-muted mb-3">
+                        Toplam açık tutar:
+                        <?php foreach ($billing['overdue_sum'] as $currency => $sum): ?>
+                            <span class="fw-semibold text-body ms-1"><?= esc(pix_money($sum, (string) $currency)) ?></span>
+                        <?php endforeach ?>
+                    </p>
+                    <div class="table-responsive table-card">
+                        <table class="table align-middle table-nowrap mb-0">
+                            <thead class="table-light"><tr><th>Fatura</th><th>Restoran</th><th>Tutar</th><th>Gecikme</th></tr></thead>
+                            <tbody>
+                            <?php foreach ($billing['overdue'] as $i): ?>
+                                <tr>
+                                    <td><a href="<?= site_url('admin/invoices/' . $i['id']) ?>" class="fw-medium"><?= esc((string) $i['number']) ?></a></td>
+                                    <td><a href="<?= site_url('admin/restaurants/' . $i['restaurant_id'] . '/subscription') ?>" class="text-reset"><?= esc($i['restaurant_name']) ?></a></td>
+                                    <td><?= esc(pix_money($i['total'], $i['currency_code'])) ?></td>
+                                    <td><span class="badge bg-danger-subtle text-danger"><?= esc((string) $i['days_late']) ?> gün</span></td>
+                                </tr>
+                            <?php endforeach ?>
+                            </tbody>
+                        </table>
+                    </div>
+                <?php endif ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-height-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="ri-time-line text-info align-bottom me-1"></i> Bu hafta biten denemeler
+                    <span class="badge bg-info-subtle text-info align-middle ms-1"><?= esc((string) count($billing['trials'])) ?></span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <?php if ($billing['trials'] === []): ?>
+                    <p class="text-muted text-center py-4 mb-0">Bu hafta biten deneme yok.</p>
+                <?php else: ?>
+                    <ul class="list-group list-group-flush">
+                        <?php foreach ($billing['trials'] as $t): ?>
+                            <li class="list-group-item d-flex align-items-center px-0">
+                                <a href="<?= site_url('admin/restaurants/' . $t['restaurant_id'] . '/subscription') ?>" class="flex-grow-1 text-reset fw-medium"><?= esc($t['restaurant_name']) ?></a>
+                                <span class="badge bg-info-subtle text-info"><?= $t['days_left'] === 0 ? 'Bugün' : esc((string) $t['days_left']) . ' gün' ?></span>
+                            </li>
+                        <?php endforeach ?>
+                    </ul>
+                <?php endif ?>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6">
+        <div class="card card-height-100">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="ri-forbid-2-line text-danger align-bottom me-1"></i> Askıdaki restoranlar
+                    <span class="badge bg-danger-subtle text-danger align-middle ms-1"><?= esc((string) count($billing['suspended'])) ?></span>
+                </h5>
+            </div>
+            <div class="card-body">
+                <?php if ($billing['suspended'] === []): ?>
+                    <p class="text-muted text-center py-4 mb-0">Askıda restoran yok.</p>
+                <?php else: ?>
+                    <ul class="list-group list-group-flush">
+                        <?php foreach ($billing['suspended'] as $s): ?>
+                            <li class="list-group-item px-0">
+                                <a href="<?= site_url('admin/restaurants/' . $s['id'] . '/subscription') ?>" class="text-reset fw-medium d-block"><?= esc($s['name']) ?></a>
+                                <?= view('partials/billing/badge', ['kind' => 'reason', 'status' => (string) $s['suspension_reason']]) ?>
+                                <small class="text-muted ms-1"><?= esc(pix_date($s['suspended_at'])) ?></small>
+                            </li>
+                        <?php endforeach ?>
+                    </ul>
+                <?php endif ?>
+            </div>
+        </div>
+    </div>
+</div>
 <?= $this->endSection() ?>

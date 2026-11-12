@@ -354,6 +354,21 @@ Yalnızca `manager` rolü için anlamlıdır. `owner` tüm şubelere erişir; bu
 - Kategori silinmek istendiğinde içinde (soft-delete olmamış) ürün varsa işlem reddedilir; kullanıcıya ürün sayısı bildirilir.
 - Soft delete'lerde slug/public_code çakışmalarına dikkat: silinmiş kaydın slug'ı yeniden kullanılmak istenirse unique ihlali olur. Silerken `slug` değerinin sonuna `--deleted-{id}` eklenir.
 
+
+### 4.5 Abonelik Tabloları
+
+Ayrıntı ve gerekçeler: `docs/ABONELIK_PLANI.md` §3. Migration: `2026-11-12-000107_CreateBilling`, mevcut restoranlara deneme ataması: `…000108_AssignInitialSubscriptions`.
+
+| Tablo | Tür | Özet |
+|---|---|---|
+| `plans` + `plan_translations` | global | `code` UNIQUE, `max_branches` (NULL = sınırsız), `allow_custom_domain`, `allow_custom_design`, `trial_days` (dolu = deneme paketi), `price_monthly`, `price_yearly`, `currency_code`, `is_featured`, `is_active`, `sort_order`. Kullanımdaki paket silinmez, pasifleştirilir. |
+| `subscriptions` | tenant | `plan_id`, `billing_cycle` (trial/monthly/yearly), `status` (trialing/active/past_due/suspended/ended), `is_current` (1 / NULL), `price` (atama anında sabitlenir), dönem tarihleri, `cancel_at_period_end`, `grace_days`. UNIQUE(`restaurant_id`, `is_current`) → restoran başına tek güncel abonelik; UNIQUE(`id`, `restaurant_id`) bileşik FK hedefi. |
+| `invoices` | tenant | `number` (`PM-{YYYY}-{id:06}`), dönem, `subtotal`/`discount`/`tax_rate`/`tax_amount`/`total`, `status` (pending/paid/void), `issued_at`, `due_date`, ödeme alanları, bildirim zaman damgaları. FK(`subscription_id`, `restaurant_id`) → subscriptions; UNIQUE(`subscription_id`, `period_start`). **Silinmez**, yalnızca `void`. "Gecikmiş" = `pending AND due_date < bugün`. |
+| `restaurant_domains` | tenant | `restaurant_id` UNIQUE (restoran başına 1), `domain` UNIQUE (küçük harf, şemasız, `www.`'siz), `is_active`, `verified_at`. |
+| `restaurants` (+) | — | `suspended_at`, `suspension_reason` (overdue/trial_expired/no_subscription/manual). Tek yazan `SubscriptionService::reconcile()` / `suspendManually()` / `resume()`. |
+
+Ayarlar `app/Config/Billing.php` (`graceDays`, `paymentTermDays`, `invoiceLeadDays`, `reminderDaysBeforeDue`, `trialReminderDays`, `taxRate`, `invoicePrefix`, `billingEmailBcc`, `defaultPlanCode`, satıcı/ödeme bilgisi); `.env`'de `billing.*` ile ezilebilir.
+
 ---
 
 ## 5. Klasör Yapısı
@@ -574,6 +589,7 @@ session()->set('panel_auth', ['id' => 7, 'restaurant_id' => 3, 'login_at' => tim
 | `adminauth` | `AdminAuthFilter` | `/admin/*` (login hariç) |
 | `panelauth` | `PanelAuthFilter` | `/panel/*` (login hariç) |
 | `panelowner` | `PanelOwnerFilter` | Yalnızca owner'a açık panel rotaları; manager → 404 |
+| `panelsubscription` | `PanelSubscriptionFilter` | Panel içerik rotaları; restoran askıdaysa owner → `panel/subscription`, manager → `panel`, JSON → 403 (§9.5) |
 | `nocache` | `NoCacheFilter` | Tüm panel yanıtlarına `Cache-Control: no-store` |
 
 ---
@@ -796,6 +812,24 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1'], static funct
 - `/admin`, `/panel`, `/m`, `/api` önekleri ayrılmıştır; başka modül bu önekleri kullanamaz.
 - Statik segmentli rotalar (`new`, `reorder`) `(:num)` rotalarından **önce** tanımlanır (yukarıdaki sıra korunmalıdır).
 
+
+### 9.5 Abonelik Rotaları
+
+```php
+// admin (adminauth)
+plans, plans/new, plans (POST), plans/reorder (JSON), plans/(:num)/edit, plans/(:num), plans/(:num)/toggle, plans/(:num)/delete
+invoices (?status=pending|paid|void & overdue=1 & restaurant=ID), invoices/(:num), invoices/(:num)/pay, invoices/(:num)/void
+restaurants/(:num)/subscription (GET), …/subscription/change|cancel|suspend|resume|grace (POST)
+restaurants/(:num)/domain (GET, POST), …/domain/verify, …/domain/delete (POST)
+
+// panel — yalnızca owner, askıdayken de açık
+subscription, subscription/plans, subscription/invoices/(:num)
+```
+
+- **`panelsubscription` filtresi** (`PanelSubscriptionFilter`): restoran askıdaysa içerik rotaları (restoran ayarları, şubeler, kullanıcılar, kategori/ürün) kapanır — HTML: owner → `panel/subscription`, manager → `panel` (uyarı bandı); JSON: 403. Gösterge paneli, profil, çıkış ve abonelik sayfaları serbesttir. `TenantContext::isSuspended()` bilgisini `PanelAuthFilter` doldurur.
+- **Özel alan adı** (`Routes.php` başı): istek host'u uygulamanın host'u (`baseURL`, `allowedHostnames`, localhost/IP) değilse YALNIZCA `GET /` ve `GET /(:segment)` (`Menu\DomainMenuController`) tanımlanır ve dosya biter; `/admin`, `/panel`, `/api`, `/m` o host'ta yoktur. Tek aktif şube → kökte menü; birden fazla → şube seçimi (`menu/branches`), menüler `/{şube-slug}`.
+- Askıdaki restoranın menüsü (HTML, JSON ve özel alan adı) 404 döner.
+
 ---
 
 ## 10. Modül İş Kuralları ve Doğrulama
@@ -842,6 +876,15 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1'], static funct
 
 **Sıralama (reorder)**
 - JSON body: `{"ids":[12,5,9]}`. Tüm ID'ler aynı şubeye ve tenant'a ait olmalı; biri bile değilse işlem tamamen reddedilir (422). `sort_order` = dizideki index.
+
+**Abonelik** (`SubscriptionService`, `InvoiceService`, `PlanService`, `DomainService`, `BillingRunner` — `docs/ABONELIK_PLANI.md` §5–§7)
+- Yeni restoran `plan_id` + `billing_cycle` ile açılır (verilmezse `defaultPlanCode` = demo, 14 gün deneme); abonelik aynı transaction'da başlar. Ücretli pakette ilk dönem faturası hemen kesilir (vade = bugün + `paymentTermDays`).
+- **Şube limiti**: aktif (silinmemiş, `is_active=1`) şube sayısı. `BranchService::create/update/toggle` bir şubeyi aktif hale getirecekse `assertBranchLimit()` çağırır (admin + panel). Güncel abonelik yoksa şube aktifleştirilemez.
+- **Paket değişimi**: `assertPlanFits()` — aktif şube sayısı hedef limiti aşıyorsa veya alan adı tanımlıyken hedef paket alan adı içermiyorsa reddedilir. Eski abonelik `ended`; yeni abonelik bugün başlar, tam dönem faturası (isteğe bağlı indirimle) kesilir. Eski açık faturalar otomatik iptal edilmez.
+- **Askı** her zaman `reconcile()` ile verilerden hesaplanır: `manual` (yalnızca admin kaldırır) > abonelik yok > deneme süresi dolmuş > vade + eşik (`grace_days ?? graceDays`) geçmiş açık fatura (eski abonelikler dahil). Abonelik statüsü: askıda → `suspended`, deneme → `trialing`, vadesi geçmiş açık fatura → `past_due`, aksi `active`. Ödeme/iptal/eşik değişikliği sonrası çağrılır.
+- **Fatura**: tutarlar kuruş üzerinden; KDV = round((ara toplam − indirim) × oran). Yalnızca `pending` fatura ödenir veya iptal edilir.
+- **Cron** `php spark billing:run [--dry-run] [--date=YYYY-MM-DD]`: dönem ilerletme (askıdaki/deneme hariç; `cancel_at_period_end` → sonlandır), içinde bulunulan dönemin eksik faturası, dönem sonuna `invoiceLeadDays` kala yenileme faturası (vade = dönem sonu), kesim/vade/gecikme/deneme bildirimleri (her biri bir kez), `reconcile`. Her restoran ayrı transaction; idempotent.
+- **Alan adı**: normalize edilir; uygulamanın kendi host'ları, alt alan adları ve `reservedDomains` reddedilir; paket `allow_custom_domain` olmalı; global tekil. Değişince `verified_at` sıfırlanır. `resolve()` sonucu `domainCacheTtl` saniye cache'lenir.
 
 ### 10.2 Özel Doğrulama Kuralları (`Validation/PixmenuRules.php`)
 
@@ -1010,6 +1053,7 @@ Aşağıdakiler bu sürümde **yapılmaz**; ajanlar kendiliğinden eklemez:
 - Sipariş, masa, ödeme.
 - Admin'in restoran adına panele girmesi (impersonation).
 - QR kod görseli üretimi (URL hazır: `/m/{public_code}`).
+- Abonelik: online ödeme (sanal POS), resmi e-fatura ve PDF, owner'ın kendi kendine paket değiştirmesi, dönem içi kıst (proration), özel menü tasarımı altyapısı (yalnızca `allow_custom_design` bayrağı var), alt alan adı (`restoran.pixmenu.com`), otomatik DNS/SSL doğrulaması (bkz. `docs/ABONELIK_PLANI.md` §12).
 
 ---
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * Restoran paneli layout'u (Velzon). Section'lar: content, css (ops.), js (ops.).
- * Değişkenler: currentUser, isOwner, title (ops.), breadcrumbs (ops.).
+ * Değişkenler: currentUser, isOwner, billingNotice (ops.; uyarı bandı), title (ops.), breadcrumbs (ops.).
  */
 $isOwner = ! empty($isOwner);
 
@@ -15,6 +15,7 @@ if ($isOwner) {
     $menu[] = ['title' => 'Restoran'];
     $menu[] = ['label' => 'Restoran Bilgileri', 'path' => 'panel/restaurant', 'icon' => 'ri-restaurant-2-line'];
     $menu[] = ['label' => 'Kullanıcılar', 'path' => 'panel/users', 'icon' => 'ri-team-line', 'match' => ['panel/users', 'panel/users/*']];
+    $menu[] = ['label' => 'Abonelik', 'path' => 'panel/subscription', 'icon' => 'ri-vip-crown-2-line', 'match' => ['panel/subscription', 'panel/subscription/*']];
 }
 
 $menu[] = ['title' => 'Hesap'];
@@ -45,6 +46,7 @@ $shell = [
         <div class="page-content">
             <div class="container-fluid">
                 <?= view('partials/layout/page_title', ['title' => $title ?? null, 'breadcrumbs' => $breadcrumbs ?? []]) ?>
+                <?= view('partials/billing/notice', ['notice' => $billingNotice ?? null, 'isOwner' => $isOwner]) ?>
                 <?= $this->include('partials/flash') ?>
                 <?= $this->renderSection('content') ?>
             </div>

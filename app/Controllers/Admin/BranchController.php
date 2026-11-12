@@ -80,9 +80,14 @@ final class BranchController extends AdminBaseController
 
     public function toggle(int $restaurantId, int $branchId): ResponseInterface
     {
-        (new BranchService(Scope::admin($restaurantId)))->toggle($this->requireBranch($restaurantId, $branchId));
+        $branch = $this->requireBranch($restaurantId, $branchId);
 
-        return $this->done('admin/restaurants/' . $restaurantId . '/branches', lang('App.statusChanged'));
+        // Aktifleştirme paket şube limitine takılabilir (BusinessRuleException → error flash).
+        return $this->handle(function () use ($restaurantId, $branch): ResponseInterface {
+            (new BranchService(Scope::admin($restaurantId)))->toggle($branch);
+
+            return $this->done('admin/restaurants/' . $restaurantId . '/branches', lang('App.statusChanged'));
+        });
     }
 
     public function delete(int $restaurantId, int $branchId): ResponseInterface

@@ -13,5 +13,6 @@ final class DatabaseSeeder extends Seeder
         $this->call(LanguageSeeder::class);
         $this->call(AllergenSeeder::class);
         $this->call(AdminSeeder::class);
+        $this->call(PlanSeeder::class);
     }
 }

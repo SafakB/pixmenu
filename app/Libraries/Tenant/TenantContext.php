@@ -18,13 +18,16 @@ final class TenantContext
     private ?int $userId       = null;
     private ?string $role      = null;
 
+    /** Restoran askıda mı? (abonelik; panel içerik rotaları kapalı) */
+    private bool $suspended = false;
+
     /** @var list<int>|null manager için izinli şubeler; owner için null = hepsi */
     private ?array $branchIds = null;
 
     /**
      * @param list<int>|null $branchIds
      */
-    public function set(int $restaurantId, int $userId, string $role, ?array $branchIds): void
+    public function set(int $restaurantId, int $userId, string $role, ?array $branchIds, bool $suspended = false): void
     {
         if ($restaurantId <= 0 || $userId <= 0) {
             throw new InvalidArgumentException('Geçersiz tenant kimliği.');
@@ -37,6 +40,7 @@ final class TenantContext
         $this->restaurantId = $restaurantId;
         $this->userId       = $userId;
         $this->role         = $role;
+        $this->suspended    = $suspended;
         // Owner her şubeye erişir; manager için liste zorunlu (boş olabilir).
         $this->branchIds = $role === 'owner'
             ? null
@@ -91,8 +95,19 @@ final class TenantContext
         return $this->branchIds;
     }
 
+    /**
+     * Restoranın aboneliği askıda mı? (docs/ABONELIK_PLANI.md §6 — panelsubscription filtresi)
+     */
+    public function isSuspended(): bool
+    {
+        $this->restaurantId();
+
+        return $this->suspended;
+    }
+
     public function clear(): void
     {
+        $this->suspended    = false;
         $this->restaurantId = null;
         $this->userId       = null;
         $this->role         = null;

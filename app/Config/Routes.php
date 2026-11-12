@@ -16,6 +16,20 @@ use CodeIgniter\Router\RouteCollection;
 $routes->set404Override('App\Controllers\ErrorController::show404');
 
 // ---------------------------------------------------------------------
+// Özel alan adı (docs/ABONELIK_PLANI.md §9.1)
+// İstek host'u uygulamanın kendi host'u değilse YALNIZCA menü rotaları tanımlanır;
+// /admin, /panel, /api bu host'ta hiç var olmaz (oturum/çerez yüzeyi açılmaz).
+// ---------------------------------------------------------------------
+$requestHost = (string) (service('superglobals')->server('HTTP_HOST') ?? '');
+
+if ($requestHost !== '' && ! (new \App\Services\DomainService())->isAppHost($requestHost)) {
+    $routes->get('/', 'Menu\DomainMenuController::index');
+    $routes->get('(:segment)', 'Menu\DomainMenuController::show/$1');
+
+    return;
+}
+
+// ---------------------------------------------------------------------
 // Admin — /admin
 // ---------------------------------------------------------------------
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
@@ -47,6 +61,22 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('allergens/(:num)/icon/delete', 'AllergenController::deleteIcon/$1');
         $routes->post('allergens/(:num)/delete', 'AllergenController::delete/$1');
 
+        // Paketler
+        $routes->get('plans', 'PlanController::index');
+        $routes->get('plans/new', 'PlanController::new');
+        $routes->post('plans', 'PlanController::create');
+        $routes->post('plans/reorder', 'PlanController::reorder');              // JSON
+        $routes->get('plans/(:num)/edit', 'PlanController::edit/$1');
+        $routes->post('plans/(:num)', 'PlanController::update/$1');
+        $routes->post('plans/(:num)/toggle', 'PlanController::toggle/$1');
+        $routes->post('plans/(:num)/delete', 'PlanController::delete/$1');
+
+        // Faturalar
+        $routes->get('invoices', 'InvoiceController::index');                   // ?status=&overdue=1&restaurant=
+        $routes->get('invoices/(:num)', 'InvoiceController::show/$1');
+        $routes->post('invoices/(:num)/pay', 'InvoiceController::pay/$1');
+        $routes->post('invoices/(:num)/void', 'InvoiceController::void/$1');
+
         // Restoranlar
         $routes->get('restaurants', 'RestaurantController::index');
         $routes->get('restaurants/new', 'RestaurantController::new');
@@ -56,6 +86,20 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('restaurants/(:num)', 'RestaurantController::update/$1');
         $routes->post('restaurants/(:num)/toggle', 'RestaurantController::toggle/$1');
         $routes->post('restaurants/(:num)/delete', 'RestaurantController::delete/$1');
+
+        // Abonelik
+        $routes->get('restaurants/(:num)/subscription', 'SubscriptionController::show/$1');
+        $routes->post('restaurants/(:num)/subscription/change', 'SubscriptionController::change/$1');
+        $routes->post('restaurants/(:num)/subscription/cancel', 'SubscriptionController::cancel/$1');
+        $routes->post('restaurants/(:num)/subscription/suspend', 'SubscriptionController::suspend/$1');
+        $routes->post('restaurants/(:num)/subscription/resume', 'SubscriptionController::resume/$1');
+        $routes->post('restaurants/(:num)/subscription/grace', 'SubscriptionController::grace/$1');
+
+        // Özel alan adı
+        $routes->get('restaurants/(:num)/domain', 'DomainController::show/$1');
+        $routes->post('restaurants/(:num)/domain', 'DomainController::save/$1');
+        $routes->post('restaurants/(:num)/domain/verify', 'DomainController::verify/$1');
+        $routes->post('restaurants/(:num)/domain/delete', 'DomainController::delete/$1');
 
         // Restoran dilleri
         $routes->get('restaurants/(:num)/languages', 'RestaurantLanguageController::index/$1');
@@ -97,8 +141,15 @@ $routes->group('panel', ['namespace' => 'App\Controllers\Panel'], static functio
         $routes->post('profile', 'ProfileController::update');
         $routes->post('profile/password', 'ProfileController::password');
 
-        // Yalnızca owner (manager → 404)
+        // Abonelik ve faturalar — yalnızca owner; askıdayken de AÇIK
         $routes->group('', ['filter' => ['panelauth', 'panelowner', 'nocache']], static function ($routes) {
+            $routes->get('subscription', 'SubscriptionController::index');
+            $routes->get('subscription/plans', 'SubscriptionController::plans');
+            $routes->get('subscription/invoices/(:num)', 'SubscriptionController::invoice/$1');
+        });
+
+        // Yalnızca owner (manager → 404); askıdaysa abonelik sayfasına yönlendirilir
+        $routes->group('', ['filter' => ['panelauth', 'panelowner', 'panelsubscription', 'nocache']], static function ($routes) {
             $routes->get('restaurant', 'RestaurantController::edit');
             $routes->post('restaurant', 'RestaurantController::update');
             $routes->post('restaurant/logo/delete', 'RestaurantController::deleteLogo');
@@ -119,27 +170,29 @@ $routes->group('panel', ['namespace' => 'App\Controllers\Panel'], static functio
             $routes->post('users/(:num)/delete', 'UserController::delete/$1');
         });
 
-        // Owner + manager (manager yalnızca atanmış şubeler)
-        $routes->get('branches', 'BranchController::index');
+        // Owner + manager (manager yalnızca atanmış şubeler); askıdaysa kapalı
+        $routes->group('', ['filter' => ['panelauth', 'panelsubscription', 'nocache']], static function ($routes) {
+            $routes->get('branches', 'BranchController::index');
 
-        $routes->get('branches/(:num)/categories', 'CategoryController::index/$1');
-        $routes->get('branches/(:num)/categories/new', 'CategoryController::new/$1');
-        $routes->post('branches/(:num)/categories', 'CategoryController::create/$1');
-        $routes->post('branches/(:num)/categories/reorder', 'CategoryController::reorder/$1');   // JSON
-        $routes->get('branches/(:num)/categories/(:num)/edit', 'CategoryController::edit/$1/$2');
-        $routes->post('branches/(:num)/categories/(:num)', 'CategoryController::update/$1/$2');
-        $routes->post('branches/(:num)/categories/(:num)/toggle', 'CategoryController::toggle/$1/$2');
-        $routes->post('branches/(:num)/categories/(:num)/delete', 'CategoryController::delete/$1/$2');
+            $routes->get('branches/(:num)/categories', 'CategoryController::index/$1');
+            $routes->get('branches/(:num)/categories/new', 'CategoryController::new/$1');
+            $routes->post('branches/(:num)/categories', 'CategoryController::create/$1');
+            $routes->post('branches/(:num)/categories/reorder', 'CategoryController::reorder/$1');   // JSON
+            $routes->get('branches/(:num)/categories/(:num)/edit', 'CategoryController::edit/$1/$2');
+            $routes->post('branches/(:num)/categories/(:num)', 'CategoryController::update/$1/$2');
+            $routes->post('branches/(:num)/categories/(:num)/toggle', 'CategoryController::toggle/$1/$2');
+            $routes->post('branches/(:num)/categories/(:num)/delete', 'CategoryController::delete/$1/$2');
 
-        $routes->get('branches/(:num)/products', 'ProductController::index/$1');      // ?category=ID&q=
-        $routes->get('branches/(:num)/products/new', 'ProductController::new/$1');
-        $routes->post('branches/(:num)/products', 'ProductController::create/$1');
-        $routes->post('branches/(:num)/products/reorder', 'ProductController::reorder/$1');    // JSON
-        $routes->get('branches/(:num)/products/(:num)/edit', 'ProductController::edit/$1/$2');
-        $routes->post('branches/(:num)/products/(:num)', 'ProductController::update/$1/$2');
-        $routes->post('branches/(:num)/products/(:num)/toggle', 'ProductController::toggle/$1/$2');
-        $routes->post('branches/(:num)/products/(:num)/image/delete', 'ProductController::deleteImage/$1/$2');
-        $routes->post('branches/(:num)/products/(:num)/delete', 'ProductController::delete/$1/$2');
+            $routes->get('branches/(:num)/products', 'ProductController::index/$1');      // ?category=ID&q=
+            $routes->get('branches/(:num)/products/new', 'ProductController::new/$1');
+            $routes->post('branches/(:num)/products', 'ProductController::create/$1');
+            $routes->post('branches/(:num)/products/reorder', 'ProductController::reorder/$1');    // JSON
+            $routes->get('branches/(:num)/products/(:num)/edit', 'ProductController::edit/$1/$2');
+            $routes->post('branches/(:num)/products/(:num)', 'ProductController::update/$1/$2');
+            $routes->post('branches/(:num)/products/(:num)/toggle', 'ProductController::toggle/$1/$2');
+            $routes->post('branches/(:num)/products/(:num)/image/delete', 'ProductController::deleteImage/$1/$2');
+            $routes->post('branches/(:num)/products/(:num)/delete', 'ProductController::delete/$1/$2');
+        });
     });
 });
 

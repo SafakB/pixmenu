@@ -21,7 +21,8 @@ final class SchemaTest extends DbTestCase
             "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME <> 'migrations'",
         )->getResultArray();
 
-        $this->assertCount(16, $rows);
+        // 16 çekirdek + 5 abonelik (plans, plan_translations, subscriptions, invoices, restaurant_domains)
+        $this->assertCount(21, $rows);
 
         foreach ($rows as $row) {
             $this->assertSame('InnoDB', $row['ENGINE'], $row['TABLE_NAME'] . ' InnoDB olmalı');
@@ -49,6 +50,7 @@ final class SchemaTest extends DbTestCase
             'categories(branch_id,restaurant_id)->branches(id,restaurant_id)',
             'products(branch_id,restaurant_id)->branches(id,restaurant_id)',
             'products(category_id,branch_id)->categories(id,branch_id)',
+            'invoices(subscription_id,restaurant_id)->subscriptions(id,restaurant_id)',
         ];
 
         foreach ($expected as $fk) {
@@ -79,6 +81,39 @@ final class SchemaTest extends DbTestCase
             'category_id'   => $this->fx->categoryA2,
             'price'         => '10.00',
         ]);
+    }
+
+    public function testDatabaseRejectsSecondCurrentSubscription(): void
+    {
+        $this->expectException(DatabaseException::class);
+
+        // UNIQUE(restaurant_id, is_current): restoran başına tek güncel abonelik.
+        $this->fx->subscription($this->fx->restaurantA, 'standard');
+    }
+
+    public function testDatabaseRejectsInvoiceForAnotherRestaurantsSubscription(): void
+    {
+        $this->expectException(DatabaseException::class);
+
+        // restaurant_id = A ama abonelik B'ye ait.
+        $this->db->table('invoices')->insert([
+            'restaurant_id' => $this->fx->restaurantA, 'subscription_id' => $this->fx->subscriptionB,
+            'plan_id' => $this->fx->plan['pro'], 'description' => 'x', 'period_start' => '2026-01-01', 'period_end' => '2026-01-31',
+            'issued_at' => '2026-01-01', 'due_date' => '2026-01-08',
+        ]);
+    }
+
+    public function testDatabaseRejectsDuplicateInvoiceForSamePeriod(): void
+    {
+        $row = [
+            'restaurant_id' => $this->fx->restaurantA, 'subscription_id' => $this->fx->subscriptionA,
+            'plan_id' => $this->fx->plan['pro'], 'description' => 'x', 'period_start' => '2026-01-01', 'period_end' => '2026-01-31',
+            'issued_at' => '2026-01-01', 'due_date' => '2026-01-08',
+        ];
+        $this->db->table('invoices')->insert($row);
+
+        $this->expectException(DatabaseException::class);
+        $this->db->table('invoices')->insert($row);
     }
 
     public function testDatabaseRejectsCategoryWithMismatchedRestaurant(): void

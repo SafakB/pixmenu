@@ -215,6 +215,48 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
     </div>
 
     <div class="col-xl-4">
+        <?php /* ---------- Abonelik ---------- */ ?>
+        <?php
+        $bSub    = $billing['summary']['subscription'];
+        $bUsage  = $billing['summary']['usage'];
+        ?>
+        <div class="card">
+            <div class="card-header d-flex align-items-center gap-2">
+                <h5 class="card-title mb-0 flex-grow-1"><i class="ri-vip-crown-2-line text-primary align-bottom me-1"></i> Abonelik</h5>
+                <a href="<?= site_url($base . '/subscription') ?>" class="btn btn-soft-primary btn-sm">Yönet <i class="ri-arrow-right-line align-bottom"></i></a>
+            </div>
+            <div class="card-body">
+                <?php if ($billing['suspended']): ?>
+                    <div class="alert alert-danger py-2 mb-3">
+                        <i class="ri-forbid-2-line align-bottom me-1"></i> Askıda: <?= esc(lang('App.subscription.reason.' . $billing['suspension_reason'])) ?>
+                    </div>
+                <?php endif ?>
+                <?php if ($bSub === null): ?>
+                    <p class="text-muted text-center mb-0 py-3">Güncel abonelik yok.</p>
+                <?php else: ?>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex px-0"><span class="flex-grow-1 text-muted">Paket</span><span class="fw-medium"><?= esc($bSub['plan_name']) ?></span></li>
+                        <li class="list-group-item d-flex px-0"><span class="flex-grow-1 text-muted">Durum</span><?= view('partials/billing/badge', ['kind' => 'subscription', 'status' => $bSub['status']]) ?></li>
+                        <li class="list-group-item d-flex px-0"><span class="flex-grow-1 text-muted">Dönem</span><span><?= esc($bSub['cycle_label']) ?> · <?= esc(pix_date($bSub['current_period_end'])) ?>'e kadar</span></li>
+                        <li class="list-group-item d-flex px-0"><span class="flex-grow-1 text-muted">Şube</span><span><?= esc((string) $bUsage['branches']) ?> / <?= $bUsage['max_branches'] === null ? 'Sınırsız' : esc((string) $bUsage['max_branches']) ?></span></li>
+                        <li class="list-group-item d-flex px-0">
+                            <span class="flex-grow-1 text-muted">Açık fatura</span>
+                            <span>
+                                <?= esc((string) $billing['open_invoices']) ?>
+                                <?php if ($billing['overdue_invoices'] > 0): ?>
+                                    <span class="badge bg-danger-subtle text-danger ms-1"><?= esc((string) $billing['overdue_invoices']) ?> gecikmiş</span>
+                                <?php endif ?>
+                            </span>
+                        </li>
+                        <li class="list-group-item d-flex px-0">
+                            <span class="flex-grow-1 text-muted">Alan adı</span>
+                            <a href="<?= site_url($base . '/domain') ?>"><?= $billing['domain'] === null ? 'Tanımla' : esc($billing['domain']['domain']) ?></a>
+                        </li>
+                    </ul>
+                <?php endif ?>
+            </div>
+        </div>
+
         <?php /* ---------- Diller ---------- */ ?>
         <div class="card">
             <div class="card-header d-flex align-items-center gap-2">

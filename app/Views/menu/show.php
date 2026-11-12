@@ -2,8 +2,10 @@
 /**
  * Herkese açık menü — minimal işlevsel view (frontend ekibi üzerine yazacak).
  *
- * @var array<string, mixed> $menu spec §11.3 `data` yapısı
+ * @var array<string, mixed> $menu    spec §11.3 `data` yapısı
+ * @var string               $menuUrl dil bağlantılarının taban adresi (/m/{kod} veya özel alan adında / , /{şube})
  */
+$menuUrl ??= site_url('m/' . $menu['branch']['code']);
 $allergensById = array_column($menu['allergens'], null, 'id');
 $levelLabels   = ['contains' => 'içerir', 'may_contain' => 'eser miktarda içerebilir'];
 ?>
@@ -23,7 +25,7 @@ $levelLabels   = ['contains' => 'içerir', 'may_contain' => 'eser miktarda içer
     <p><?= esc($menu['branch']['name']) ?><?= $menu['branch']['address'] !== null ? ' — ' . esc($menu['branch']['address']) : '' ?></p>
     <nav aria-label="Dil">
         <?php foreach ($menu['languages'] as $language): ?>
-            <a href="<?= esc(site_url('m/' . $menu['branch']['code']) . '?lang=' . rawurlencode($language['code']), 'attr') ?>"<?= $language['code'] === $menu['language']['code'] ? ' aria-current="true"' : '' ?>><?= esc($language['native_name']) ?></a>
+            <a href="<?= esc($menuUrl . '?lang=' . rawurlencode($language['code']), 'attr') ?>"<?= $language['code'] === $menu['language']['code'] ? ' aria-current="true"' : '' ?>><?= esc($language['native_name']) ?></a>
         <?php endforeach ?>
     </nav>
 </header>

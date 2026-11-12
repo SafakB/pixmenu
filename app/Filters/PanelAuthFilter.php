@@ -37,13 +37,15 @@ final class PanelAuthFilter implements FilterInterface
             return redirect()->to(site_url('panel/login'));
         }
 
-        $role = (string) $user['role'];
+        $role       = (string) $user['role'];
+        $restaurant = $auth->restaurant();
 
         service('tenant')->set(
             (int) $user['restaurant_id'],
             (int) $user['id'],
             $role,
             $role === 'manager' ? $auth->managerBranchIds($user) : null,
+            ! empty($restaurant['suspended_at']),
         );
 
         return null;
