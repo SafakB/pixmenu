@@ -146,7 +146,7 @@ $isActive = $hasOld ? old('is_active', null, false) === '1' : (int) ($row['is_ac
 
 ## 5. Dil sekmeli çeviri alanları
 
-`partials/translations.php` sözleşmesi: `languages`, `translations`, `fields` (`alan => text|textarea`). Ad: `translations[{code}][{field}]`, hata anahtarı `translations.{code}.{field}`. Sekmeler **ortak partial'da** (`partials/translations.php`) uygulanır ki 7 form birden aynı görünsün. `card-header-tabs` bir `card-header` ister, bu yüzden partial kendi kartını basar; view onu kart içine sarmaz.
+**Uygulandı** — `partials/translations.php` aşağıdaki kalıbın çalışan hâlidir; yeni formda sadece çağır, kendisi kart basar. Sözleşmesi: `languages`, `translations`, `fields` (`alan => text|textarea`). Ad: `translations[{code}][{field}]`, hata anahtarı `translations.{code}.{field}`. Sekmeler **ortak partial'da** (`partials/translations.php`) uygulanır ki 7 form birden aynı görünsün. `card-header-tabs` bir `card-header` ister, bu yüzden partial kendi kartını basar; view onu kart içine sarmaz.
 
 Açık sekme seçimi: hatalı ilk dil → yoksa `is_default` dil → yoksa ilk dil. **`$i === 0` varsayma**: `languages` dizisinde varsayılan dil başta olmak zorunda değil. Panel id'leri `lang-{code}` (ör. `lang-tr`; `tr-tr` gibi kafa karıştırıcı id'lerden kaçın). Alan etiketleri Türkçe: `name` → Ad, `description` → Açıklama, `address` → Adres.
 

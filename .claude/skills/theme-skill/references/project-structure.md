@@ -66,7 +66,7 @@ Aktiflik `url_is()` ile; tek seviyeli menü (alt menü/collapse yok). Mevcut men
 | `topbar.php` | hamburger, tam ekran, açık/koyu mod, kullanıcı dropdown | `$shell` |
 | `sidebar.php` | logo, sidebar-user dropdown (customizer'dan açılır), menü | `$shell` |
 | `user_menu.php` | dropdown içeriği: e-posta, Profil (varsa), **Çıkış = POST form** | `user`, `profileUrl`, `logoutAction` |
-| `page_title.php` | başlık + breadcrumb; `title` boşsa hiçbir şey basmaz | `title`, `breadcrumbs[{label,url?}]` |
+| `page_title.php` | başlık + breadcrumb; `title` boşsa hiçbir şey basmaz (admin'de restoran altı sayfalarda breadcrumb'a restoran adı gerekir: controller `restaurant` satırına `AdminBaseController::restaurantName()` ile `name` ekler, sözleşmede "satır + `name`" olarak geçer) | `title`, `breadcrumbs[{label,url?}]` |
 | `footer.php` | `© {yıl} PixMenu` | — |
 | `shell_end.php` | back-to-top, preloader, customizer include | — |
 | `customizer.php` | Velzon tema ayar paneli (Türkçe; corporate/galaxy/classic/vintage çıkarıldı; "Gizli" yerine "Sakla") | — |
@@ -75,8 +75,9 @@ Aktiflik `url_is()` ile; tek seviyeli menü (alt menü/collapse yok). Mevcut men
 Diğer partial'lar (`app/Views/partials/`):
 - `flash.php` — `success` / `error` → `alert-*-dismissible alert-label-icon`, `errors` → liste. Login sayfasında `login_form` içinden, diğerlerinde layout'tan çağrılır.
 - `login_form.php` — `action`, `error` (429). email + göz ikonlu şifre (`password-addon.init.js`). Beni hatırla / şifremi unuttum / kayıt **yok** (backend'de karşılığı yok).
-- `translations.php` — çeviri alanları (henüz stilsiz; `languages`, `translations`, `fields`). Giydirilirken sekmeli + kendi kartını basan hale gelecek (patterns §5); 7 form birden etkilenir.
-- `branch_fields.php`, `user_fields.php` — admin+panel ortak form parçaları (henüz stilsiz).
+- `translations.php` — çeviri alanları; parametreler yalnızca `languages`, `translations`, `fields` (başka parametre yok — `saveData` sızıntısı). Dil sekmeli **kendi kartını basar** ("Çeviriler" başlıklı, `nav-tabs-custom card-header-tabs`), alan bazlı `is-invalid` + hatalı sekmede ikon, gizli sekmedeki `required` için inline `invalid` dinleyicisi içerir (patterns §5). Çağıran view onu kart içine sarmaz; 7 form birden kullanır.
+- `branch_fields.php` — admin+panel ortak şube formu gövdesi: iki kolon (çeviriler + genel bilgiler / tek "Yayın" kartı + Vazgeç/Kaydet). Parametre: `branch`, `languages`, `translations`, `cancel_url`; view yalnızca `form_open/form_close` ile sarar.
+- `user_fields.php` — admin+panel ortak kullanıcı formu parçası (henüz stilsiz).
 
 ## Ortak JS (`public/assets/js/`)
 

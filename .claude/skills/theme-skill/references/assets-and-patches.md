@@ -10,7 +10,7 @@ Ayrıca bkz. `public/assets/README.md` (proje içindeki kısa not; bu dosyayla t
 | `fonts/` | tamamı (ikon fontları) |
 | `libs/` | tamamı (44 kütüphane: sweetalert2, sortablejs, list.js, gridjs, apexcharts, dropzone, filepond, swiper, particles.js …) |
 | `js/` | `app.js` (**yamalı**), `layout.js`, `pages/password-addon.init.js`, `pages/particles.app.js` · **bizim**: `pix-confirm.js` |
-| `images/` | `favicon.ico`, `auth-one-bg.jpg`, `users/user-dummy-img.jpg`, `sidebar/img-1..4.jpg`, `demos/*.png` (customizer önizlemeleri) |
+| `images/` | `favicon.ico`, `auth-one-bg.jpg`, `users/user-dummy-img.jpg`, `sidebar/img-1..4.jpg`, `demos/*.png` (customizer önizlemeleri), `flags/*.svg` (temanın 8 bayrağı + bizim çizdiğimiz `tr.svg`; dil kodu → dosya eşlemesi `admin/languages/index.php`de) |
 
 Kopyalanmayanlar: `js/plugins.js` (CDN toastify + göreli choices/flatpickr), `js/pages/plugins/lord-icon-2.1.0.js` (CDN), diğer `js/pages/*.init.js` (demo verisine bağlı; gerekirse kopyalanıp uyarlanır), demo görseller.
 
