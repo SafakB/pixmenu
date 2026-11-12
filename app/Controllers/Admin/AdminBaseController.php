@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\BaseController;
 use App\Models\RestaurantModel;
+use App\Models\RestaurantTranslationModel;
 use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 use Psr\Log\LoggerInterface;
@@ -35,6 +36,20 @@ abstract class AdminBaseController extends BaseController
     protected function requireRestaurant(int $restaurantId): array
     {
         return (new RestaurantModel())->find($restaurantId) ?? $this->notFound();
+    }
+
+    /**
+     * Restoranın varsayılan dildeki adı (yoksa slug) — breadcrumb/başlık için.
+     *
+     * @param array<string, mixed> $restaurant
+     */
+    protected function restaurantName(array $restaurant): string
+    {
+        return (string) (service('languageResolver')->resolveOne(
+            RestaurantTranslationModel::class,
+            (int) $restaurant['id'],
+            [(int) $restaurant['default_language_id']],
+        )['name'] ?? $restaurant['slug']);
     }
 
     /**

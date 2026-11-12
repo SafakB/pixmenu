@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Models\BranchModel;
+use App\Models\BranchTranslationModel;
 use App\Models\LanguageModel;
 use App\Models\RestaurantLanguageModel;
 use App\Models\RestaurantModel;
 use App\Models\RestaurantTranslationModel;
+use App\Models\RestaurantUserBranchModel;
 use App\Models\RestaurantUserModel;
 use App\Services\RestaurantService;
 use App\Services\TranslationService;
@@ -88,16 +90,28 @@ final class RestaurantController extends AdminBaseController
 
     /**
      * View: admin/restaurants/show — restaurant{id, slug, name, currency_code, is_active, logo_url},
-     *       counts{branches, users, languages}
+     *       counts{branches, users, languages},
+     *       branches[{id, slug, name, public_code, menu_url, is_active}],
+     *       users[{id, name, email, role, is_active, branch_count}],
+     *       languages[{id, code, native_name, is_default}] (restoranın aktif dilleri)
      */
     public function show(int $id): string
     {
         $restaurant = $this->requireRestaurant($id);
-        $name       = service('languageResolver')->resolveOne(
-            RestaurantTranslationModel::class,
-            $id,
-            [(int) $restaurant['default_language_id']],
-        )['name'] ?? $restaurant['slug'];
+        $defaultId  = (int) $restaurant['default_language_id'];
+        $resolver   = service('languageResolver');
+        $name       = $resolver->resolveOne(RestaurantTranslationModel::class, $id, [$defaultId])['name'] ?? $restaurant['slug'];
+
+        $branches    = (new BranchModel())->forRestaurant($id)->accessible(null);
+        $branchNames = $resolver->resolveMany(
+            BranchTranslationModel::class,
+            array_map('intval', array_column($branches, 'id')),
+            [$defaultId],
+        );
+        $users     = (new RestaurantUserModel())->forRestaurant($id)->ordered();
+        $branchMap = (new RestaurantUserBranchModel())->forRestaurant($id)
+            ->branchIdsForUsers(array_map('intval', array_column($users, 'id')));
+        $languages = (new RestaurantLanguageModel())->forRestaurant($id)->languages();
 
         return $this->render('admin/restaurants/show', [
             'restaurant' => [
@@ -109,10 +123,32 @@ final class RestaurantController extends AdminBaseController
                 'logo_url'      => upload_url($restaurant['logo_path']),
             ],
             'counts' => [
-                'branches'  => (new BranchModel())->forRestaurant($id)->countAllResults(),
-                'users'     => (new RestaurantUserModel())->forRestaurant($id)->countAllResults(),
+                'branches'  => count($branches),
+                'users'     => count($users),
                 'languages' => count((new RestaurantLanguageModel())->forRestaurant($id)->languages(false)),
             ],
+            'branches' => array_map(static fn (array $branch): array => [
+                'id'          => (int) $branch['id'],
+                'slug'        => $branch['slug'],
+                'name'        => $branchNames[(int) $branch['id']]['name'] ?? $branch['slug'],
+                'public_code' => $branch['public_code'],
+                'menu_url'    => site_url('m/' . $branch['public_code']),
+                'is_active'   => (int) $branch['is_active'] === 1,
+            ], $branches),
+            'users' => array_map(static fn (array $user): array => [
+                'id'           => (int) $user['id'],
+                'name'         => $user['name'],
+                'email'        => $user['email'],
+                'role'         => $user['role'],
+                'is_active'    => (int) $user['is_active'] === 1,
+                'branch_count' => count($branchMap[(int) $user['id']] ?? []),
+            ], $users),
+            'languages' => array_map(static fn (array $language): array => [
+                'id'          => $language['id'],
+                'code'        => $language['code'],
+                'native_name' => $language['native_name'],
+                'is_default'  => $language['id'] === $defaultId,
+            ], $languages),
         ]);
     }
 

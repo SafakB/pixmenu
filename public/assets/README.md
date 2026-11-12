@@ -1,6 +1,6 @@
 # public/assets — Velzon tema dosyaları
 
-Kaynak: `admin_template/assets/` (seçici kopya: css, fonts, libs tamamı; js'den app/layout + login sayfa script'leri; images'tan favicon, auth-one-bg, varsayılan avatar, customizer önizlemeleri).
+Kaynak: `admin_template/assets/` (seçici kopya: css, fonts, libs tamamı; js'den app/layout + login sayfa script'leri; images'tan favicon, auth-one-bg, varsayılan avatar, customizer önizlemeleri, `flags/*.svg` bayraklar + elle çizilmiş `tr.svg`).
 
 ## `js/app.js` üzerinde yapılan yamalar
 

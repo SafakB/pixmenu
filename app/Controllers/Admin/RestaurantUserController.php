@@ -25,7 +25,7 @@ final class RestaurantUserController extends AdminBaseController
             ->branchIdsForUsers(array_map('intval', array_column($users, 'id')));
 
         return $this->render('admin/users/index', [
-            'restaurant' => $restaurant,
+            'restaurant' => $restaurant + ['name' => $this->restaurantName($restaurant)],
             'users'      => array_map(static fn (array $user): array => [
                 'id'         => (int) $user['id'],
                 'name'       => $user['name'],
@@ -143,7 +143,7 @@ final class RestaurantUserController extends AdminBaseController
         }
 
         return $this->render('admin/users/form', [
-            'restaurant' => $restaurant,
+            'restaurant' => $restaurant + ['name' => $this->restaurantName($restaurant)],
             'user'       => $user,
             'branches'   => array_map(static fn (array $branch): array => [
                 'id'   => (int) $branch['id'],

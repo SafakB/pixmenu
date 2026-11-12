@@ -27,7 +27,7 @@ final class BranchController extends AdminBaseController
         );
 
         return $this->render('admin/branches/index', [
-            'restaurant' => $restaurant,
+            'restaurant' => $restaurant + ['name' => $this->restaurantName($restaurant)],
             'branches'   => array_map(static fn (array $branch): array => [
                 'id'          => (int) $branch['id'],
                 'slug'        => $branch['slug'],
@@ -139,7 +139,7 @@ final class BranchController extends AdminBaseController
         $languages    = (new BranchService(Scope::admin($restaurantId)))->languages();
 
         return $this->render('admin/branches/form', [
-            'restaurant'   => $restaurant,
+            'restaurant'   => $restaurant + ['name' => $this->restaurantName($restaurant)],
             'branch'       => $branch,
             // is_default: zorunlu dil = RESTORANIN varsayılan dili
             'languages'    => $translations->formLanguages($languages, (int) $restaurant['default_language_id']),

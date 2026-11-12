@@ -12,7 +12,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 final class RestaurantLanguageController extends AdminBaseController
 {
     /**
-     * View: admin/restaurants/languages — restaurant, languages[{id, code, native_name, is_active, selected, is_default}]
+     * View: admin/restaurants/languages — restaurant (satır + name), languages[{id, code, native_name, is_active, selected, is_default}]
      */
     public function index(int $restaurantId): string
     {
@@ -20,7 +20,7 @@ final class RestaurantLanguageController extends AdminBaseController
         $selected   = (new RestaurantLanguageModel())->forRestaurant($restaurantId)->languageIds(false);
 
         return $this->render('admin/restaurants/languages', [
-            'restaurant' => $restaurant,
+            'restaurant' => $restaurant + ['name' => $this->restaurantName($restaurant)],
             'languages'  => array_map(static fn (array $language): array => [
                 'id'          => (int) $language['id'],
                 'code'        => $language['code'],
