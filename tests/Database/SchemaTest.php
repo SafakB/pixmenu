@@ -21,8 +21,8 @@ final class SchemaTest extends DbTestCase
             "SELECT TABLE_NAME, ENGINE FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME <> 'migrations'",
         )->getResultArray();
 
-        // 16 çekirdek + 5 abonelik (plans, plan_translations, subscriptions, invoices, restaurant_domains) + currencies
-        $this->assertCount(22, $rows);
+        // 16 çekirdek + 5 abonelik (plans, plan_translations, subscriptions, invoices, restaurant_domains) + currencies + menu_templates
+        $this->assertCount(23, $rows);
 
         foreach ($rows as $row) {
             $this->assertSame('InnoDB', $row['ENGINE'], $row['TABLE_NAME'] . ' InnoDB olmalı');
@@ -53,6 +53,7 @@ final class SchemaTest extends DbTestCase
             'invoices(subscription_id,restaurant_id)->subscriptions(id,restaurant_id)',
             'restaurants(currency_code)->currencies(code)',
             'plans(currency_code)->currencies(code)',
+            'branches(template_code)->menu_templates(code)',
         ];
 
         foreach ($expected as $fk) {

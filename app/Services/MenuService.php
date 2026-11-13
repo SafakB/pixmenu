@@ -43,7 +43,7 @@ final class MenuService
 
         // 1) Şube + restoran (ikisi de aktif ve silinmemiş, restoran askıda değil)
         $branch = $db->table('branches b')
-            ->select('b.id, b.restaurant_id, b.public_code, b.default_language_id, b.phone,
+            ->select('b.id, b.restaurant_id, b.public_code, b.default_language_id, b.phone, b.template_code,
                       r.default_language_id AS restaurant_default_language_id, r.currency_code, r.logo_path')
             ->join('restaurants r', 'r.id = b.restaurant_id')
             ->where('b.public_code', $publicCode)
@@ -223,10 +223,11 @@ final class MenuService
                 'currency'    => $branch['currency_code'],
             ],
             'branch' => [
-                'code'    => $branch['public_code'],
-                'name'    => $branchText['name'] ?? '',
-                'address' => $branchText['address'] ?? null,
-                'phone'   => $branch['phone'],
+                'code'     => $branch['public_code'],
+                'name'     => $branchText['name'] ?? '',
+                'address'  => $branchText['address'] ?? null,
+                'phone'    => $branch['phone'],
+                'template' => $branch['template_code'],
             ],
             'language'  => ['code' => $langCode, 'direction' => $language['direction']],
             'languages' => array_map(static fn (array $l): array => [

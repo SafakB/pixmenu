@@ -37,6 +37,7 @@ $branchBase    = 'admin/restaurants/' . $restaurant['id'] . '/branches';
                             <th style="width:70px">Sıra</th>
                             <th>Şube</th>
                             <th>Menü adresi</th>
+                            <th>Şablon</th>
                             <th>Durum</th>
                             <th class="text-end">İşlemler</th>
                         </tr>
@@ -55,6 +56,9 @@ $branchBase    = 'admin/restaurants/' . $restaurant['id'] . '/branches';
                                     <span class="font-monospace"><?= esc($branch['public_code']) ?></span>
                                     <i class="ri-external-link-line align-bottom ms-1"></i>
                                 </a>
+                            </td>
+                            <td>
+                                <span class="badge bg-info-subtle text-info"><i class="ri-layout-masonry-line align-bottom me-1"></i><?= esc($branch['template_name']) ?></span>
                             </td>
                             <td>
                                 <?php if ($branch['is_active']): ?>

@@ -16,6 +16,7 @@ $heading  = $branch === null ? 'Yeni şube' : 'Şubeyi düzenle';
         'branch'       => $branch,
         'languages'    => $languages,
         'translations' => $translations,
+        'templates'    => $templates,
         'cancel_url'   => $indexUrl,
     ]) ?>
 <?= form_close() ?>

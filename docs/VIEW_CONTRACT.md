@@ -63,6 +63,8 @@ Tema: **Velzon** (`admin_template/` kaynak, depoda yok). Layout'lar `partials/la
 | `admin/languages/index` | `GET admin/languages` | `languages[{id, code, name, native_name, direction, is_active, sort_order}]` |
 | `admin/languages/form` | `GET admin/languages/new`, `…/{id}/edit` | `language` (satır\|null), `action`. Alanlar: `code` (yalnızca oluşturmada), `name`, `native_name`, `direction` (ltr\|rtl), `is_active`, `sort_order` |
 | `admin/allergens/index` | `GET admin/allergens` | `allergens[{id, code, name, icon_url, is_active, sort_order}]` |
+| `admin/templates/index` | `GET admin/templates` | `templates[{code, name, description, is_active, sort_order, branch_count, is_default}]` (`branch_count`: kullanan silinmemiş şube; `is_default`: `standart` — silinemez/pasifleştirilemez) |
+| `admin/templates/form` | `GET admin/templates/new`, `…/{code}/edit` | `template` (satır + `is_default` \| null), `action`. Alanlar: `code` (yalnızca oluşturmada; `^[a-z0-9]+(-[a-z0-9]+)*$`, ≤ 30, `new`/`reorder` yasak), `name`, `description` (ops.), `is_active`, `sort_order` |
 | `admin/allergens/form` | `GET admin/allergens/new`, `…/{id}/edit` | `allergen` (satır\|null), `icon_url`, `languages`, `translations`, `action`. Alanlar: `code`, `icon` (dosya: svg/png/webp ≤ 512 KB), `is_active`, `sort_order`, `translations[*][name\|description]`. `multipart/form-data` |
 | `admin/restaurants/index` | `GET admin/restaurants` | `restaurants[{id, slug, name, currency_code, is_active, plan_name\|null, plan_badge_class\|null (paketin `badge_class`'ı; boşsa `bg-primary`), subscription_status\|null, suspended, suspension_reason\|null}]` |
 | `admin/restaurants/new` | `GET admin/restaurants/new` | `allLanguages[{id, code, native_name, ...}]` (dil seçimi), `languages` (çeviri alanları). Alanlar: `slug` (ops.), `currency_code`, `language_ids[]`, `default_language_id`, `logo` (dosya), `is_active`, `translations[*][name\|description]`, `owner_name`, `owner_email`, `owner_password` (ilk owner; ops.), `plan_id` (boş = varsayılan deneme paketi), `billing_cycle` (monthly\|yearly; deneme paketinde yok sayılır). Ek değişkenler: `plans[{id, code, name, trial_days, price_monthly, price_yearly, currency_code}]` (aktif), `defaultPlanId`, `currencies[{code, name, symbol, ...}]` (aktif; `currency_code` seçimi) |
@@ -71,8 +73,8 @@ Tema: **Velzon** (`admin_template/` kaynak, depoda yok). Layout'lar `partials/la
 | `admin/restaurants/languages` | `GET admin/restaurants/{id}/languages` | `restaurant` (satır + `name`), `languages[{id, code, native_name, is_active, selected, is_default}]`. Alan: `language_ids[]` (işaretliler kalır, diğerleri çıkarılır) |
 | `admin/users/index` | `GET admin/restaurants/{id}/users` | `restaurant` (satır + `name`), `users[{id, name, email, role, is_active, branch_ids[]}]` |
 | `admin/users/form` | `GET …/users/new`, `…/users/{uid}/edit` | `restaurant` (satır + `name`), `user` (satır\|null; `password_hash` yok), `branches[{id, name}]`, `assigned[]` (şube ID'leri), `action`. Alanlar: `name`, `email`, `password` (düzenlemede boş = değişmez), `role` (owner\|manager), `branch_ids[]` (manager için ≥ 1), `is_active` |
-| `admin/branches/index` | `GET admin/restaurants/{id}/branches` | `restaurant` (satır + `name`), `branches[{id, slug, name, public_code, menu_url, is_active, sort_order}]` |
-| `admin/branches/form` | `GET …/branches/new`, `…/branches/{bid}/edit` | `restaurant` (satır + `name`), `branch` (satır\|null), `languages`, `translations`, `action`. Alanlar: `slug` (ops.), `default_language_id`, `phone`, `is_active`, `sort_order`, `translations[*][name\|address\|description]` |
+| `admin/branches/index` | `GET admin/restaurants/{id}/branches` | `restaurant` (satır + `name`), `branches[{id, slug, name, public_code, menu_url, template_code, template_name, is_active, sort_order}]` |
+| `admin/branches/form` | `GET …/branches/new`, `…/branches/{bid}/edit` | `restaurant` (satır + `name`), `branch` (satır\|null), `languages`, `translations`, `templates[{code, name, is_active, ...}]` (aktif + mevcut), `action`. Alanlar: `slug` (ops.), `default_language_id`, `template_code` (yalnızca admin), `phone`, `is_active`, `sort_order`, `translations[*][name\|address\|description]` |
 
 ### Abonelik ve faturalama (admin)
 
@@ -91,7 +93,7 @@ Onay isteyen abonelik işlemleri: paket değişimi (`primary`), dönem sonunda i
 
 Tek tuşluk POST işlemleri (gövdesiz form): `…/toggle`, `…/delete`, `allergens/{id}/icon/delete`, `branches/{bid}/regenerate-code` (**eski QR kodlarını geçersiz kılar — onay/uyarı gösterilmeli**).
 
-Sıralama (JSON): `POST admin/languages/reorder`, `POST admin/allergens/reorder` → gövde `{"ids":[3,1,2]}`.
+Sıralama (JSON): `POST admin/languages/reorder`, `POST admin/allergens/reorder` → gövde `{"ids":[3,1,2]}`; `POST admin/templates/reorder` → gövde `{"ids":["standart","modern"]}` (kodlar).
 
 ## Restoran paneli (`/panel`)
 
@@ -102,7 +104,7 @@ Sıralama (JSON): `POST admin/languages/reorder`, `POST admin/allergens/reorder`
 | `panel/profile` | `GET panel/profile` | owner + manager | `user{id, name, email, role}`. Formlar: `POST panel/profile` → `name`, `email`; `POST panel/profile/password` → `current_password`, `password`, `password_confirm` |
 | `panel/restaurant` | `GET panel/restaurant` | owner | `restaurant{slug, currency_code}` (salt okunur), `logo_url`, `languages`, `translations`. Alanlar: `logo` (dosya), `translations[*][name\|description]`. Logo silme: `POST panel/restaurant/logo/delete` |
 | `panel/branches/index` | `GET panel/branches` | owner + manager | `branches[{id, slug, name, public_code, menu_url, is_active, sort_order}]`, `canAddBranch` (paket limiti dolu değil), `maxBranches\|null`. Limit doluysa "Yeni şube" pasif gösterilir |
-| `panel/branches/form` | `GET panel/branches/new`, `…/{id}/edit` | owner | `branch` (satır\|null), `languages`, `translations`, `action`. Alanlar: admin şube formuyla aynı |
+| `panel/branches/form` | `GET panel/branches/new`, `…/{id}/edit` | owner | `branch` (satır\|null), `languages`, `translations`, `action`. Alanlar: admin şube formuyla aynı, `template_code` hariç (şablonu yalnızca admin seçer; panel güncellemesi şablona dokunmaz, panelden açılan şube `standart` alır) |
 | `panel/users/index` | `GET panel/users` | owner | `users[{id, name, email, role, is_active, branch_ids[], editable}]` (`editable=false` → owner kayıtları; düzenleme/silme bağlantısı gösterilmez) |
 | `panel/users/form` | `GET panel/users/new`, `…/{id}/edit` | owner | `user` (satır\|null), `branches[{id, name}]`, `assigned[]`, `action`. Alanlar: `name`, `email`, `password`, `branch_ids[]` (≥ 1), `is_active`. **Rol alanı yoktur**; panelden açılan kullanıcı her zaman manager'dır |
 | `panel/categories/index` | `GET panel/branches/{b}/categories` | owner + manager | `branch{id, name}`, `categories[{id, name, image_url, is_active, sort_order, product_count}]` |
@@ -138,7 +140,7 @@ Manager, owner'a özel sayfalara giderse veya atanmadığı bir şubeye erişirs
   "status": "success",
   "data": {
     "restaurant": { "name": "", "description": null, "logo_url": null, "currency": "TRY" },
-    "branch":     { "code": "k3f9a0c21b", "name": "", "address": null, "phone": null },
+    "branch":     { "code": "k3f9a0c21b", "name": "", "address": null, "phone": null, "template": "standart" },
     "language":   { "code": "tr", "direction": "ltr" },
     "languages":  [ { "code": "tr", "native_name": "Türkçe" } ],
     "allergens":  [ { "id": 1, "code": "gluten", "name": "Gluten", "icon_url": null } ],
@@ -155,6 +157,7 @@ Manager, owner'a özel sayfalara giderse veya atanmadığı bir şubeye erişirs
 ```
 
 - `price` string'dir; biçimlendirme `Intl.NumberFormat(lang, {style:'currency', currency})` ile yapılır.
+- `branch.template`: admin'in şubeye atadığı menü şablonu kodu (`menu_templates.code`, varsayılan `standart`). Tasarım bu projede değil, ön uç uygulamasında uygulanır.
 - Ürünler alerjenlere `id` ile referans verir; adlar üstteki `allergens` dizisindedir.
 - `language.direction` `rtl` olabilir (`<html dir>`).
 - Dil seçimi: geçerli `?lang` → `pixmenu_lang_{public_code}` çerezi (HTML menüde; 30 gün) → şubenin varsayılan dili. JSON API çerez okumaz/yazmaz.

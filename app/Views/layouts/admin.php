@@ -19,6 +19,7 @@ $shell = [
         ['title' => 'Tanımlar'],
         ['label' => 'Diller', 'path' => 'admin/languages', 'icon' => 'ri-translate-2', 'match' => ['admin/languages', 'admin/languages/*']],
         ['label' => 'Alerjenler', 'path' => 'admin/allergens', 'icon' => 'ri-error-warning-line', 'match' => ['admin/allergens', 'admin/allergens/*']],
+        ['label' => 'Menü şablonları', 'path' => 'admin/templates', 'icon' => 'ri-layout-masonry-line', 'match' => ['admin/templates', 'admin/templates/*']],
     ],
 ];
 ?>

@@ -61,6 +61,16 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('allergens/(:num)/icon/delete', 'AllergenController::deleteIcon/$1');
         $routes->post('allergens/(:num)/delete', 'AllergenController::delete/$1');
 
+        // Menü şablonları (anahtar: kod — `reorder`/`new` statik segmentleri önce)
+        $routes->get('templates', 'MenuTemplateController::index');
+        $routes->get('templates/new', 'MenuTemplateController::new');
+        $routes->post('templates', 'MenuTemplateController::create');
+        $routes->post('templates/reorder', 'MenuTemplateController::reorder');  // JSON
+        $routes->get('templates/(:segment)/edit', 'MenuTemplateController::edit/$1');
+        $routes->post('templates/(:segment)', 'MenuTemplateController::update/$1');
+        $routes->post('templates/(:segment)/toggle', 'MenuTemplateController::toggle/$1');
+        $routes->post('templates/(:segment)/delete', 'MenuTemplateController::delete/$1');
+
         // Paketler
         $routes->get('plans', 'PlanController::index');
         $routes->get('plans/new', 'PlanController::new');

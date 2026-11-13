@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Exceptions\ValidationException;
 use App\Models\BranchModel;
 use App\Models\BranchTranslationModel;
+use App\Models\MenuTemplateModel;
 use App\Models\RestaurantLanguageModel;
 use App\Models\RestaurantModel;
 use App\Services\Concerns\Transactional;
@@ -39,12 +40,15 @@ final class BranchService
     }
 
     /**
-     * @param array{slug: string, default_language_id: int, phone: string, is_active: int, sort_order: int} $data
+     * @param array{slug: string, default_language_id: int, phone: string, is_active: int, sort_order: int, template_code?: string} $data
      * @param array<string, array<string, string>>                                                        $translations
      */
     public function create(array $data, array $translations): int
     {
         [$codes, $requiredCode] = $this->prepare($data, $translations, null);
+
+        // Şablonu yalnızca admin seçer; panelden açılan şube varsayılanı alır.
+        $data['template_code'] ??= MenuTemplateModel::DEFAULT_CODE;
 
         if ($data['is_active'] === 1) {
             $this->subscriptions()->assertBranchLimit($this->scope->restaurantId());
@@ -55,6 +59,7 @@ final class BranchService
                 'slug'                => $this->resolveSlug($data['slug'], $translations[$requiredCode]['name'] ?? '', null),
                 'public_code'         => $this->newPublicCode(),
                 'default_language_id' => $data['default_language_id'],
+                'template_code'       => $data['template_code'],
                 'phone'               => $data['phone'] === '' ? null : $data['phone'],
                 'is_active'           => $data['is_active'],
                 'sort_order'          => $data['sort_order'],
@@ -72,13 +77,13 @@ final class BranchService
 
     /**
      * @param array<string, mixed>                                                                         $branch       mevcut kayıt (bu kapsamda yüklenmiş)
-     * @param array{slug: string, default_language_id: int, phone: string, is_active: int, sort_order: int} $data
+     * @param array{slug: string, default_language_id: int, phone: string, is_active: int, sort_order: int, template_code?: string} $data
      * @param array<string, array<string, string>>                                                        $translations
      */
     public function update(array $branch, array $data, array $translations): void
     {
         $id                     = (int) $branch['id'];
-        [$codes, $requiredCode] = $this->prepare($data, $translations, $id);
+        [$codes, $requiredCode] = $this->prepare($data, $translations, $id, (string) ($branch['template_code'] ?? ''));
 
         if ($data['is_active'] === 1 && (int) $branch['is_active'] !== 1) {
             $this->subscriptions()->assertBranchLimit($this->scope->restaurantId(), $id);
@@ -89,13 +94,20 @@ final class BranchService
                 ? (string) $branch['slug']
                 : $this->resolveSlug($data['slug'], '', $id);
 
-            $this->branches()->update($id, [
+            $row = [
                 'slug'                => $slug,
                 'default_language_id' => $data['default_language_id'],
                 'phone'               => $data['phone'] === '' ? null : $data['phone'],
                 'is_active'           => $data['is_active'],
                 'sort_order'          => $data['sort_order'],
-            ]);
+            ];
+
+            // Anahtar yoksa (panel) şablona dokunulmaz; admin seçimi korunur.
+            if (isset($data['template_code'])) {
+                $row['template_code'] = $data['template_code'];
+            }
+
+            $this->branches()->update($id, $row);
 
             $this->translations->sync(BranchTranslationModel::class, 'branch_id', $id, $translations, $codes, $requiredCode);
         });
@@ -169,12 +181,12 @@ final class BranchService
     /**
      * Ortak doğrulama. [izinli dil kodları, zorunlu dil kodu] döndürür.
      *
-     * @param array{slug: string, default_language_id: int, phone: string, is_active: int, sort_order: int} $data
+     * @param array{slug: string, default_language_id: int, phone: string, is_active: int, sort_order: int, template_code?: string} $data
      * @param array<string, array<string, string>>                                                        $translations
      *
      * @return array{0: list<string>, 1: string}
      */
-    private function prepare(array $data, array $translations, ?int $exceptId): array
+    private function prepare(array $data, array $translations, ?int $exceptId, ?string $currentTemplate = null): array
     {
         $languages = $this->languages();
         $byId      = array_column($languages, 'code', 'id');
@@ -184,6 +196,11 @@ final class BranchService
         // default_language_id restoranın AKTİF dillerinden biri olmalı.
         if (! isset($byId[$data['default_language_id']])) {
             $errors['default_language_id'] = lang('App.language.notInRestaurant');
+        }
+
+        if (isset($data['template_code'])
+            && ! (new MenuTemplateModel())->isSelectable($data['template_code'], $currentTemplate)) {
+            $errors['template_code'] = lang('App.template.notSelectable');
         }
 
         if (mb_strlen($data['phone']) > 30) {

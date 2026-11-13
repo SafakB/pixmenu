@@ -11,7 +11,7 @@ final class BranchModel extends TenantModel
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
-        'restaurant_id', 'slug', 'public_code', 'default_language_id',
+        'restaurant_id', 'slug', 'public_code', 'default_language_id', 'template_code',
         'phone', 'is_active', 'sort_order',
     ];
 
@@ -69,6 +69,38 @@ final class BranchModel extends TenantModel
     public function publicCodeExistsGlobally(string $code): bool
     {
         return $this->db->table($this->table)->where('public_code', $code)->countAllResults() > 0;
+    }
+
+    /**
+     * Şablonu kullanan şube sayısı — TÜM SİSTEMDE (kapsam dışı, admin içindir).
+     * $withDeleted: silinmiş şubeler de sayılır (FK RESTRICT silmeyi engeller).
+     */
+    public function countUsingTemplateGlobally(string $code, bool $withDeleted = false): int
+    {
+        $builder = $this->db->table($this->table)->where('template_code', $code);
+
+        if (! $withDeleted) {
+            $builder->where('deleted_at', null);
+        }
+
+        return $builder->countAllResults();
+    }
+
+    /**
+     * Şablon kodu => kullanan (silinmemiş) şube sayısı — TÜM SİSTEMDE.
+     *
+     * @return array<string, int>
+     */
+    public function templateUsageCounts(): array
+    {
+        $rows = $this->db->table($this->table)
+            ->select('template_code, COUNT(*) AS total')
+            ->where('deleted_at', null)
+            ->groupBy('template_code')
+            ->get()
+            ->getResultArray();
+
+        return array_map('intval', array_column($rows, 'total', 'template_code'));
     }
 
     /**

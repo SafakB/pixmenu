@@ -7,11 +7,13 @@
  * @var list<array<string, mixed>>                 $languages    restoranın aktif dilleri (is_default = zorunlu dil)
  * @var array<string, array<string, string|null>>  $translations
  * @var string                                     $cancel_url   "Vazgeç" bağlantısı
+ * @var list<array<string, mixed>>|null            $templates    menü şablonları (yalnızca admin; null = alan gösterilmez)
  */
 $errors   = session('errors') ?? [];
 $hasOld   = old('translations', null, false) !== null;
 $isActive = $hasOld ? old('is_active', null, false) === '1' : (int) ($branch['is_active'] ?? 1) === 1;
 $default  = (string) old('default_language_id', $branch['default_language_id'] ?? '', false);
+$template = (string) old('template_code', $branch['template_code'] ?? 'standart', false);
 $invalid  = static fn (string $field): string => isset($errors[$field]) ? ' is-invalid' : '';
 $feedback = static fn (string $field): string => isset($errors[$field]) ? '<div class="invalid-feedback">' . esc($errors[$field]) . '</div>' : '';
 ?>
@@ -64,6 +66,21 @@ $feedback = static fn (string $field): string => isset($errors[$field]) ? '<div 
                     <label class="form-check-label" for="is_active">Aktif</label>
                 </div>
                 <p class="text-muted small mb-0">Pasif şubenin menü adresi ziyaretçilere açılmaz.</p>
+
+                <?php if ($templates !== null): ?>
+                    <hr class="my-4">
+
+                    <label class="form-label" for="template_code">Menü şablonu <span class="text-danger">*</span></label>
+                    <select class="form-select<?= $invalid('template_code') ?>" id="template_code" name="template_code" required>
+                        <?php foreach ($templates as $option): ?>
+                            <option value="<?= esc((string) $option['code'], 'attr') ?>"<?= $template === (string) $option['code'] ? ' selected' : '' ?>>
+                                <?= esc($option['name']) ?><?= (int) $option['is_active'] === 1 ? '' : ' (pasif)' ?>
+                            </option>
+                        <?php endforeach ?>
+                    </select>
+                    <?= $feedback('template_code') ?>
+                    <div class="form-text">Ziyaretçinin gördüğü QR menü tasarımı.</div>
+                <?php endif ?>
 
                 <hr class="my-4">
 

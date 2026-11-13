@@ -60,7 +60,7 @@ final class PublicMenuTest extends DbTestCase
         $this->assertSame(['name', 'description', 'logo_url', 'currency'], array_keys($menu['restaurant']));
         $this->assertSame('Restoran A', $menu['restaurant']['name']);
         $this->assertSame('TRY', $menu['restaurant']['currency']);
-        $this->assertSame(['code' => self::CODE_A1, 'name' => 'Şube A1', 'address' => 'Şube A1 adresi', 'phone' => null], $menu['branch']);
+        $this->assertSame(['code' => self::CODE_A1, 'name' => 'Şube A1', 'address' => 'Şube A1 adresi', 'phone' => null, 'template' => 'standart'], $menu['branch']);
         $this->assertSame(['code' => 'tr', 'direction' => 'ltr'], $menu['language']);
         $this->assertSame([['code' => 'tr', 'native_name' => 'Türkçe'], ['code' => 'en', 'native_name' => 'English']], $menu['languages']);
 

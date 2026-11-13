@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Models\BranchModel;
 use App\Models\BranchTranslationModel;
+use App\Models\MenuTemplateModel;
 use App\Services\BranchService;
 use App\Services\Scope;
 use App\Services\TranslationService;
@@ -14,7 +15,7 @@ use CodeIgniter\HTTP\ResponseInterface;
 final class BranchController extends AdminBaseController
 {
     /**
-     * View: admin/branches/index — restaurant, branches[{id, slug, name, public_code, menu_url, is_active, sort_order}]
+     * View: admin/branches/index — restaurant, branches[{id, slug, name, public_code, menu_url, template_code, template_name, is_active, sort_order}]
      */
     public function index(int $restaurantId): string
     {
@@ -26,22 +27,26 @@ final class BranchController extends AdminBaseController
             [(int) $restaurant['default_language_id']],
         );
 
+        $templates  = array_column((new MenuTemplateModel())->findAll(), 'name', 'code');
+
         return $this->render('admin/branches/index', [
             'restaurant' => $restaurant + ['name' => $this->restaurantName($restaurant)],
             'branches'   => array_map(static fn (array $branch): array => [
-                'id'          => (int) $branch['id'],
-                'slug'        => $branch['slug'],
-                'name'        => $names[(int) $branch['id']]['name'] ?? $branch['slug'],
-                'public_code' => $branch['public_code'],
-                'menu_url'    => site_url('m/' . $branch['public_code']),
-                'is_active'   => (int) $branch['is_active'] === 1,
-                'sort_order'  => (int) $branch['sort_order'],
+                'id'            => (int) $branch['id'],
+                'slug'          => $branch['slug'],
+                'name'          => $names[(int) $branch['id']]['name'] ?? $branch['slug'],
+                'public_code'   => $branch['public_code'],
+                'menu_url'      => site_url('m/' . $branch['public_code']),
+                'template_code' => $branch['template_code'],
+                'template_name' => $templates[$branch['template_code']] ?? $branch['template_code'],
+                'is_active'     => (int) $branch['is_active'] === 1,
+                'sort_order'    => (int) $branch['sort_order'],
             ], $branches),
         ]);
     }
 
     /**
-     * View: admin/branches/form — restaurant, branch(null), languages, translations, action
+     * View: admin/branches/form — restaurant, branch(null), languages, translations, templates, action
      */
     public function new(int $restaurantId): string
     {
@@ -60,7 +65,7 @@ final class BranchController extends AdminBaseController
     }
 
     /**
-     * View: admin/branches/form — restaurant, branch, languages, translations, action
+     * View: admin/branches/form — restaurant, branch, languages, translations, templates, action
      */
     public function edit(int $restaurantId, int $branchId): string
     {
@@ -120,17 +125,27 @@ final class BranchController extends AdminBaseController
     }
 
     /**
-     * @return array{slug: string, default_language_id: int, phone: string, is_active: int, sort_order: int}
+     * @return array{slug: string, default_language_id: int, phone: string, is_active: int, sort_order: int, template_code?: string}
      */
     private function input(): array
     {
-        return [
+        $data = [
             'slug'                => trim((string) $this->request->getPost('slug')),
             'default_language_id' => (int) $this->request->getPost('default_language_id'),
             'phone'               => trim((string) $this->request->getPost('phone')),
             'is_active'           => $this->flag('is_active'),
             'sort_order'          => $this->sortOrder(),
         ];
+
+        // Şablonu yalnızca admin seçer. Boş gelirse anahtar verilmez:
+        // oluşturmada varsayılan şablon, güncellemede mevcut şablon kalır.
+        $template = trim((string) $this->request->getPost('template_code'));
+
+        if ($template !== '') {
+            $data['template_code'] = $template;
+        }
+
+        return $data;
     }
 
     /**
@@ -149,6 +164,7 @@ final class BranchController extends AdminBaseController
             // is_default: zorunlu dil = RESTORANIN varsayılan dili
             'languages'    => $translations->formLanguages($languages, (int) $restaurant['default_language_id']),
             'translations' => $branch === null ? [] : $translations->load(BranchTranslationModel::class, (int) $branch['id']),
+            'templates'    => (new MenuTemplateModel())->options($branch['template_code'] ?? null),
             'action'       => 'admin/restaurants/' . $restaurantId . '/branches' . ($branch === null ? '' : '/' . $branch['id']),
         ]);
     }
