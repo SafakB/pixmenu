@@ -25,7 +25,7 @@ head  → partials/layout/head (pageTitle, withCsrfMeta=true) + sweetalert2.min.
       renderSection('content')
   partials/layout/footer
 partials/layout/shell_end   (back-to-top, preloader, customizer)
-partials/layout/scripts     (bootstrap.bundle, simplebar, waves, feather, sweetalert2, js/pix-confirm.js)
+partials/layout/scripts     (bootstrap.bundle, simplebar, waves, feather, sweetalert2, js/pix-confirm.js, js/pix-image-preview.js)
 renderSection('js')
 js/app.js
 ```
@@ -71,14 +71,14 @@ Aktiflik `url_is()` ile; tek seviyeli menü (alt menü/collapse yok). Mevcut men
 | `footer.php` | `© {yıl} PixMenu` | — |
 | `shell_end.php` | back-to-top, preloader, customizer include | — |
 | `customizer.php` | Velzon tema ayar paneli (Türkçe; corporate/galaxy/classic/vintage çıkarıldı; "Gizli" yerine "Sakla") | — |
-| `scripts.php` | çekirdek JS + SweetAlert2 + `pix-confirm.js` (form[data-confirm] onayı) | — |
+| `scripts.php` | çekirdek JS + SweetAlert2 + `pix-confirm.js` (form[data-confirm] onayı) + `pix-image-preview.js` | — |
 
 Diğer partial'lar (`app/Views/partials/`):
 - `flash.php` — `success` / `error` → `alert-*-dismissible alert-label-icon`, `errors` → liste. Login sayfasında `login_form` içinden, diğerlerinde layout'tan çağrılır.
 - `login_form.php` — `action`, `error` (429). email + göz ikonlu şifre (`password-addon.init.js`). Beni hatırla / şifremi unuttum / kayıt **yok** (backend'de karşılığı yok).
 - `translations.php` — çeviri alanları; parametreler yalnızca `languages`, `translations`, `fields` (başka parametre yok — `saveData` sızıntısı). Dil sekmeli **kendi kartını basar** ("Çeviriler" başlıklı, `nav-tabs-custom card-header-tabs`), alan bazlı `is-invalid` + hatalı sekmede ikon, gizli sekmedeki `required` için inline `invalid` dinleyicisi içerir (patterns §5). Çağıran view onu kart içine sarmaz; 7 form birden kullanır.
 - `branch_fields.php` — admin+panel ortak şube formu gövdesi: iki kolon (çeviriler + genel bilgiler / tek "Yayın" kartı + Vazgeç/Kaydet). Parametre: `branch`, `languages`, `translations`, `cancel_url`; view yalnızca `form_open/form_close` ile sarar.
-- `user_fields.php` — admin+panel ortak kullanıcı formu parçası (henüz stilsiz).
+- `user_fields.php` — admin+panel ortak kullanıcı formu gövdesi (iki kolon + kaydet kartı). Parametre: `user`, `branches`, `assigned`, `allowRole`, `cancel_url`.
 - `billing/` — abonelik/fatura parçaları (admin + panel ortak):
   - `badge.php` — durum rozeti; `kind` (`invoice` | `subscription` | `reason`), `status`. Renk/etiket eşlemesi burada; yeni durumda buraya ekle.
   - `subscription_card.php` — güncel abonelik kartı; `summary` (SubscriptionService::summary), `suspended`, `suspension_reason`, `actions` (başlığa basılan hazır HTML; boş string olabilir).
@@ -88,6 +88,7 @@ Diğer partial'lar (`app/Views/partials/`):
 ## Ortak JS (`public/assets/js/`)
 
 - `pix-confirm.js` — `form[data-confirm]` submit'ini SweetAlert2 onayına bağlar. Öznitelikler: `data-confirm` (metin), `data-confirm-title`, `data-confirm-button`, `data-confirm-variant` (danger|warning|primary). Swal yoksa `confirm()` yedeği.
+- `pix-image-preview.js` — `input[type=file][data-preview="#img"]` seçilince `#img`'yi gösterir (`d-none` kalkar); ops. `data-preview-placeholder="#yer-tutucu"` gizlenir. Sayfaya önizleme JS'i yazma.
 
 ## Helper'lar (`app/Helpers/pixmenu_helper.php`, autoload)
 

@@ -161,7 +161,7 @@ $languageError  = $errors['language_ids'] ?? $errors['default_language_id'] ?? n
                     </div>
                 </div>
                 <label class="form-label" for="logo">Logo yükle</label>
-                <input class="form-control<?= $invalid('logo') ?>" type="file" id="logo" name="logo" accept=".jpg,.jpeg,.png,.webp" data-preview="#logo-preview">
+                <input class="form-control<?= $invalid('logo') ?>" type="file" id="logo" name="logo" accept=".jpg,.jpeg,.png,.webp" data-preview="#logo-preview" data-preview-placeholder="#logo-placeholder">
                 <?php if (isset($errors['logo'])): ?><div class="invalid-feedback"><?= esc($errors['logo']) ?></div><?php endif ?>
                 <div class="form-text">jpg, png, webp — en fazla 2 MB.</div>
             </div>
@@ -179,16 +179,6 @@ $languageError  = $errors['language_ids'] ?? $errors['default_language_id'] ?? n
 
 <?= $this->section('js') ?>
 <script>
-document.querySelectorAll('input[type=file][data-preview]').forEach(function (input) {
-    input.addEventListener('change', function () {
-        var img = document.querySelector(input.dataset.preview);
-        if (!img || !input.files[0]) return;
-        img.src = URL.createObjectURL(input.files[0]);
-        img.classList.remove('d-none');
-        var placeholder = document.getElementById('logo-placeholder');
-        if (placeholder) placeholder.remove();
-    });
-});
 // Deneme paketinde ödeme dönemi seçimi gizlenir.
 (function () {
     var select = document.getElementById('plan_id');

@@ -11,7 +11,7 @@
     "app/Views/partials/layout/head.php": "b77d0687019d26aa0c528c2e53ec89dcc7d7502f182824d88309817dcd037b07",
     "app/Views/partials/layout/logo.php": "f5ba5430e71e3cb7d25152a1690ad8f591fa5c6c5ba3f7be41a48a8dedb030cc",
     "app/Views/partials/layout/page_title.php": "bd96ee6b2ea924ec3c6789d303fd178f450d0d6573ae13a82693c24711f2b569",
-    "app/Views/partials/layout/scripts.php": "33f08d38530c02f896bb1afe5b80321d70aa32dc95d12322531836e0b50ef547",
+    "app/Views/partials/layout/scripts.php": "e0001436c587da4a47f6916352e1e2dbeb9e05e0d652844c9cfce64031bb4874",
     "app/Views/partials/layout/shell_end.php": "e17fc7b3f7002470b12354fcacf0cc09c0dccd72dd20974ad336c85842abcbaa",
     "app/Views/partials/layout/sidebar.php": "bcf63d30ca76f6dbc84099c0c22c8c95c209af9beda8908c1802bf1d248b818d",
     "app/Views/partials/layout/topbar.php": "bf4130804331f2049a371efc13e2e774e2214c4c5b23bca68f88984157c726e4",
@@ -74,7 +74,8 @@
       "app.js",
       "layout.js",
       "pages",
-      "pix-confirm.js"
+      "pix-confirm.js",
+      "pix-image-preview.js"
     ],
     "public/assets/js/pages": [
       "particles.app.js",

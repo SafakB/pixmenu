@@ -207,16 +207,7 @@ document.addEventListener('invalid', function (e) {
     </div>
 <?php endif ?>
 ```
-```js
-document.querySelectorAll('input[type=file][data-preview]').forEach(function (input) {
-    input.addEventListener('change', function () {
-        var img = document.querySelector(input.dataset.preview);
-        if (!img || !input.files[0]) return;
-        img.src = URL.createObjectURL(input.files[0]);
-        img.classList.remove('d-none');
-    });
-});
-```
+Önizleme JS'i **yazılmaz**: layout'taki `js/pix-image-preview.js` `data-preview` özniteliğini kendisi işler. Yer tutucu (avatar) varsa input'a `data-preview-placeholder="#image-placeholder"` ver; görsel seçilince gizlenir.
 Ayrı silme rotası olan yerlerde (`…/image/delete`, `allergens/{id}/icon/delete`, `restaurant/logo/delete`) checkbox yerine ayrı onaylı POST formu (kalıp 7) kullanılır — **ana formun içine form yerleştirme** (iç içe form HTML'de geçersiz); ana formun dışına koy.
 
 ## 7. Onaylı POST (`pix-confirm.js`)
@@ -265,3 +256,5 @@ Sözleşme: `POST …/reorder`, gövde `{"ids":[...]}` (JSON), başlıklar `X-Re
 </script>
 <?= $this->endSection() ?>
 ```
+
+**Ürün sıralaması:** ürünler kategori içinde sıralanır ve servis gelen id'lere 0..n verir. `panel/products/index`'te sürükle-bırak yalnızca kategori filtresi seçili ve arama boşken açılır (`$canReorder`); karışık listede tutamak gösterilmez.
