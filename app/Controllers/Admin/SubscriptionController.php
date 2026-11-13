@@ -141,6 +141,28 @@ final class SubscriptionController extends AdminBaseController
         });
     }
 
+    /**
+     * Restoran geneli yüzdelik indirim. Alanlar: discount_percent (boş = kaldır; "12,5" kabul edilir),
+     * discount_until (Y-m-d, boş = süresiz)
+     */
+    public function discount(int $restaurantId): ResponseInterface
+    {
+        $this->requireRestaurant($restaurantId);
+
+        return $this->handle(function () use ($restaurantId): ResponseInterface {
+            $percent = str_replace(',', '.', trim((string) $this->request->getPost('discount_percent')));
+            $until   = trim((string) $this->request->getPost('discount_until'));
+
+            (new SubscriptionService())->setRestaurantDiscount(
+                $restaurantId,
+                $percent === '' ? null : $percent,
+                $until === '' ? null : $until,
+            );
+
+            return $this->done($this->base($restaurantId), lang($percent === '' ? 'App.subscription.discountRemoved' : 'App.subscription.discountSaved'));
+        });
+    }
+
     private function base(int $restaurantId): string
     {
         return 'admin/restaurants/' . $restaurantId . '/subscription';

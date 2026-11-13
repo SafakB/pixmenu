@@ -114,6 +114,28 @@ final class AdminBillingTest extends DbTestCase
         $this->asAdmin()->post("admin/restaurants/{$a}/subscription/grace", ['grace_days' => 'abc'])->assertSessionHas('errors');
     }
 
+    public function testRestaurantDiscountSaveValidateAndRemove(): void
+    {
+        $a = $this->fx->restaurantA;
+
+        $this->asAdmin()->post("admin/restaurants/{$a}/subscription/discount", ['discount_percent' => '12,5', 'discount_until' => '2027-06-30'])
+            ->assertSessionHas('success');
+        $row = $this->row('restaurants', $a);
+        $this->assertSame('12.50', $row['discount_percent']);
+        $this->assertSame('2027-06-30', $row['discount_until']);
+        $this->asAdmin()->get("admin/restaurants/{$a}/subscription")->assertSee('%12,5');
+
+        $this->asAdmin()->post("admin/restaurants/{$a}/subscription/discount", ['discount_percent' => '150'])->assertSessionHas('errors');
+        $this->asAdmin()->post("admin/restaurants/{$a}/subscription/discount", ['discount_percent' => '0'])->assertSessionHas('errors');
+        $this->asAdmin()->post("admin/restaurants/{$a}/subscription/discount", ['discount_percent' => '10', 'discount_until' => '2027-02-30'])->assertSessionHas('errors');
+        $this->assertSame('12.50', $this->row('restaurants', $a)['discount_percent']);
+
+        $this->asAdmin()->post("admin/restaurants/{$a}/subscription/discount", ['discount_percent' => '', 'discount_until' => '2027-06-30']);
+        $row = $this->row('restaurants', $a);
+        $this->assertNull($row['discount_percent']);
+        $this->assertNull($row['discount_until']);
+    }
+
     public function testInvoiceFilters(): void
     {
         $base = [

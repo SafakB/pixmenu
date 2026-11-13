@@ -166,7 +166,7 @@ ob_start();
                     <input type="text" inputmode="decimal" class="form-control<?= $invalid('discount') ?>" id="discount" name="discount" placeholder="0,00"
                            value="<?= esc((string) old('discount', '', false), 'attr') ?>">
                     <?= $feedback('discount') ?>
-                    <div class="form-text">İlk faturaya uygulanır (KDV hariç).</div>
+                    <div class="form-text">İlk faturaya ek TL indirim (KDV hariç). Restoran yüzdelik indirimi ayrıca uygulanır.</div>
                 </div>
                 <div class="mb-0">
                     <label class="form-label" for="notes">Not</label>
@@ -204,6 +204,51 @@ ob_start();
                 <?= form_close() ?>
             </div>
         <?php endif ?>
+
+        <?php /* ---------- Restoran indirimi ---------- */ ?>
+        <?php
+        $discPct     = $restaurant['discount_percent'] !== null && (float) $restaurant['discount_percent'] > 0
+            ? rtrim(rtrim(number_format((float) $restaurant['discount_percent'], 2, ',', ''), '0'), ',')
+            : null;
+        $discUntil   = $discPct !== null ? $restaurant['discount_until'] : null;
+        $discExpired = $discUntil !== null && $discUntil < date('Y-m-d');
+        ?>
+        <div class="card">
+            <div class="card-header"><h5 class="card-title mb-0"><i class="ri-percent-line text-primary align-bottom me-1"></i> Restoran indirimi</h5></div>
+            <?= form_open($base . '/discount') ?>
+            <div class="card-body">
+                <p class="text-muted small">Bu restoran için kesilen tüm abonelik faturalarına (yenilemeler ve paket değişimleri dahil) uygulanır. Kaldırmak için oranı boş bırakın.</p>
+                <div class="mb-3">
+                    <label class="form-label" for="discount_percent">İndirim oranı</label>
+                    <div class="input-group">
+                        <span class="input-group-text">%</span>
+                        <input type="text" inputmode="decimal" class="form-control<?= $invalid('discount_percent') ?>" id="discount_percent" name="discount_percent" placeholder="ör. 20"
+                               value="<?= esc((string) old('discount_percent', $discPct ?? '', false), 'attr') ?>">
+                        <?= $feedback('discount_percent') ?>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label" for="discount_until">Bitiş tarihi</label>
+                    <input type="date" class="form-control<?= $invalid('discount_until') ?>" id="discount_until" name="discount_until"
+                           value="<?= esc((string) old('discount_until', $discUntil ?? '', false), 'attr') ?>">
+                    <?= $feedback('discount_until') ?>
+                    <div class="form-text">Boş = süresiz. Dönem başı bu tarihten sonra olan faturalara uygulanmaz.</div>
+                </div>
+                <p class="text-muted small mb-0">
+                    Geçerli:
+                    <?php if ($discPct === null): ?>
+                        <strong>yok</strong>
+                    <?php else: ?>
+                        <strong>%<?= esc($discPct) ?></strong> — <?= $discUntil === null ? 'süresiz' : esc(pix_date($discUntil)) . ' tarihine kadar' ?>
+                        <?php if ($discExpired): ?><span class="badge bg-warning-subtle text-warning ms-1">Süresi doldu</span><?php endif ?>
+                    <?php endif ?>
+                </p>
+            </div>
+            <div class="card-footer">
+                <button type="submit" class="btn btn-primary w-100"><i class="ri-save-line align-bottom me-1"></i> Kaydet</button>
+            </div>
+            <?= form_close() ?>
+        </div>
 
         <div class="card">
             <div class="card-body d-flex align-items-center gap-2">

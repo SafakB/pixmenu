@@ -144,6 +144,27 @@ final class BillingRunnerTest extends DbTestCase
         $this->get('m/aaaaaaaaa1')->assertOK();
     }
 
+    public function testRestaurantPercentDiscountAppliesUntilEndDate(): void
+    {
+        $this->db->table('restaurants')->where('id', $this->fx->restaurantA)->update([
+            'discount_percent' => '20.00', 'discount_until' => '2026-11-30',
+        ]);
+
+        // Kasım dönemi (başı 1 Kasım ≤ bitiş) → %20 indirim.
+        $this->runOn('2026-11-22');
+        $nov      = $this->invoicesA()[0];
+        $subtotal = (float) $nov['subtotal'];
+        $this->assertGreaterThan(0, $subtotal);
+        $this->assertSame(number_format($subtotal * 0.2, 2, '.', ''), $nov['discount']);
+        $this->assertSame(number_format($subtotal * 0.8 * 1.2, 2, '.', ''), $nov['total']);
+
+        // Aralık dönemi (başı 1 Aralık > bitiş) → indirim yok.
+        $this->runOn('2026-11-23');
+        $dec = $this->invoicesA()[1];
+        $this->assertSame('2026-12-01', $dec['period_start']);
+        $this->assertSame('0.00', $dec['discount']);
+    }
+
     public function testGraceDaysOverridePerRestaurant(): void
     {
         $this->db->table('subscriptions')->where('id', $this->fx->subscriptionA)->update(['grace_days' => 30]);

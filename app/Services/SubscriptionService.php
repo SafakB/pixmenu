@@ -318,6 +318,33 @@ final class SubscriptionService
     }
 
     /**
+     * Restoran geneli yüzdelik indirim (null = kaldır). Abonelikten bağımsızdır; paket değişse de
+     * geçerli kalır ve sonraki tüm faturalara uygulanır. $until (Y-m-d) dolu ise dönem başı bu
+     * tarihten sonra olan faturalara uygulanmaz.
+     */
+    public function setRestaurantDiscount(int $restaurantId, ?string $percent, ?string $until): void
+    {
+        $errors = [];
+
+        if ($percent !== null && (! is_numeric($percent) || (float) $percent <= 0 || (float) $percent > 100)) {
+            $errors['discount_percent'] = lang('App.subscription.discountPercentInvalid');
+        }
+
+        if ($until !== null && ! Period::isValidDate($until)) {
+            $errors['discount_until'] = lang('App.subscription.discountUntilInvalid');
+        }
+
+        if ($errors !== []) {
+            throw new ValidationException($errors);
+        }
+
+        (new RestaurantModel())->update($restaurantId, [
+            'discount_percent' => $percent === null ? null : number_format((float) $percent, 2, '.', ''),
+            'discount_until'   => $percent === null ? null : $until,
+        ]);
+    }
+
+    /**
      * Admin'in elle askıya alması; ödeme durumundan bağımsızdır ve yalnızca resume() ile kalkar.
      */
     public function suspendManually(int $restaurantId, ?string $today = null): void

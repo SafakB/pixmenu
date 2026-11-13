@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace App\Controllers\Admin;
 
+use App\Exceptions\ValidationException;
 use App\Libraries\Billing\Period;
 use App\Models\InvoiceModel;
 use App\Models\RestaurantModel;
 use App\Models\RestaurantTranslationModel;
 use App\Services\InvoiceService;
+use App\Services\PlanService;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
@@ -121,6 +123,27 @@ final class InvoiceController extends AdminBaseController
             );
 
             return $this->done('admin/invoices/' . $invoice['id'], lang('App.invoice.paid'));
+        });
+    }
+
+    /**
+     * Ödenmemiş faturanın indirimi. Alan: discount (TL, KDV hariç; boş = 0, mevcut indirimin yerine geçer)
+     */
+    public function discount(int $id): ResponseInterface
+    {
+        $invoice = $this->requireInvoice($id);
+
+        return $this->handle(function () use ($invoice): ResponseInterface {
+            $raw      = trim((string) $this->request->getPost('discount'));
+            $discount = $raw === '' ? '0.00' : (new PlanService())->money($raw);
+
+            if ($discount === null) {
+                throw ValidationException::single('discount', lang('App.invoice.discountInvalid'));
+            }
+
+            (new InvoiceService())->updateDiscount($invoice, $discount);
+
+            return $this->done('admin/invoices/' . $invoice['id'], lang('App.invoice.discountUpdated'));
         });
     }
 

@@ -35,6 +35,25 @@ $pending  = $invoice['status'] === 'pending';
 
         <?php if ($pending): ?>
             <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-percent-line text-primary align-bottom me-1"></i> İndirim</h5></div>
+                <?= form_open($base . '/discount') ?>
+                <div class="card-body">
+                    <label class="form-label" for="discount">İndirim tutarı (KDV hariç)</label>
+                    <div class="input-group">
+                        <input type="text" inputmode="decimal" class="form-control<?= $invalid('discount') ?>" id="discount" name="discount" placeholder="0,00"
+                               value="<?= esc((string) old('discount', number_format((float) $invoice['discount'], 2, ',', '.'), false), 'attr') ?>">
+                        <span class="input-group-text"><?= esc((string) $invoice['currency_code']) ?></span>
+                        <?= $feedback('discount') ?>
+                    </div>
+                    <div class="form-text">Mevcut indirimin yerine geçer; KDV ve toplam yeniden hesaplanır. En fazla ara toplam: <?= esc(pix_money($invoice['subtotal'], $invoice['currency_code'])) ?></div>
+                </div>
+                <div class="card-footer">
+                    <button type="submit" class="btn btn-primary w-100"><i class="ri-save-line align-bottom me-1"></i> İndirimi kaydet</button>
+                </div>
+                <?= form_close() ?>
+            </div>
+
+            <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0"><i class="ri-checkbox-circle-line text-success align-bottom me-1"></i> Ödendi işaretle</h5></div>
                 <?= form_open($base . '/pay') ?>
                 <div class="card-body">

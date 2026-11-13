@@ -132,6 +132,51 @@ final class SubscriptionTest extends DbTestCase
         $this->assertSame(date('Y-m-d', strtotime('+7 days')), $invoice['due_date']);
     }
 
+    public function testRestaurantPercentDiscountSurvivesPlanChangeAndAddsToOneTimeDiscount(): void
+    {
+        $b = $this->fx->restaurantB;
+        $this->asAdmin()->post("admin/restaurants/{$b}/subscription/discount", ['discount_percent' => '10', 'discount_until' => ''])
+            ->assertSessionHas('success');
+
+        $this->asAdmin()->post("admin/restaurants/{$b}/subscription/change", [
+            'plan_id' => (string) $this->fx->plan['enterprise'], 'billing_cycle' => 'yearly', 'discount' => '1.000,00',
+        ]);
+
+        $new     = $this->db->table('subscriptions')->where('restaurant_id', $b)->where('is_current', 1)->get()->getRowArray();
+        $invoice = $this->db->table('invoices')->where('subscription_id', $new['id'])->get()->getRowArray();
+        $this->assertSame('20000.00', $invoice['subtotal']);
+        $this->assertSame('3000.00', $invoice['discount']);     // %10 (2000) + 1000 TL
+        $this->assertSame('3400.00', $invoice['tax_amount']);   // 17000 × %20
+        $this->assertSame('20400.00', $invoice['total']);
+    }
+
+    public function testPendingInvoiceDiscountCanBeEditedOnlyWhilePending(): void
+    {
+        $sub = (new SubscriptionService())->current($this->fx->restaurantA);
+        $id  = (new InvoiceService())->issue($sub, '2030-01-01', '2030-01-31', '2029-12-25', '2029-12-31');
+        $inv = $this->row('invoices', $id);
+        $sub = (float) $inv['subtotal'];
+
+        $this->asAdmin()->post("admin/invoices/{$id}/discount", ['discount' => '100,00'])->assertSessionHas('success');
+        $inv = $this->row('invoices', $id);
+        $this->assertSame('100.00', $inv['discount']);
+        $this->assertSame(number_format(($sub - 100) * 0.2, 2, '.', ''), $inv['tax_amount']);
+        $this->assertSame(number_format(($sub - 100) * 1.2, 2, '.', ''), $inv['total']);
+
+        // Ara toplamı aşan ve geçersiz tutar reddedilir; değer değişmez.
+        $this->asAdmin()->post("admin/invoices/{$id}/discount", ['discount' => number_format($sub + 1, 2, ',', '')])->assertSessionHas('errors');
+        $this->asAdmin()->post("admin/invoices/{$id}/discount", ['discount' => 'abc'])->assertSessionHas('errors');
+        $this->assertSame('100.00', $this->row('invoices', $id)['discount']);
+
+        // Boş = indirimi kaldır.
+        $this->asAdmin()->post("admin/invoices/{$id}/discount", ['discount' => '']);
+        $this->assertSame('0.00', $this->row('invoices', $id)['discount']);
+
+        $this->db->table('invoices')->where('id', $id)->update(['status' => 'paid']);
+        $this->asAdmin()->post("admin/invoices/{$id}/discount", ['discount' => '50'])->assertSessionHas('error');
+        $this->assertSame('0.00', $this->row('invoices', $id)['discount']);
+    }
+
     public function testPlanPriceChangeDoesNotAffectExistingSubscription(): void
     {
         $this->db->table('plans')->where('id', $this->fx->plan['pro'])->update(['price_monthly' => '5000.00']);

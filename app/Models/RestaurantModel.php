@@ -17,5 +17,5 @@ final class RestaurantModel extends Model
     protected $returnType     = 'array';
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
-    protected $allowedFields  = ['slug', 'default_language_id', 'currency_code', 'logo_path', 'is_active', 'suspended_at', 'suspension_reason'];
+    protected $allowedFields  = ['slug', 'default_language_id', 'currency_code', 'logo_path', 'is_active', 'suspended_at', 'suspension_reason', 'discount_percent', 'discount_until'];
 }

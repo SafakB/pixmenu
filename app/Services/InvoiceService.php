@@ -8,6 +8,7 @@ use App\Exceptions\BusinessRuleException;
 use App\Exceptions\ValidationException;
 use App\Libraries\Billing\Period;
 use App\Models\InvoiceModel;
+use App\Models\RestaurantModel;
 use App\Services\Concerns\Transactional;
 
 /**
@@ -50,11 +51,14 @@ final class InvoiceService
             throw ValidationException::single('discount', lang('App.invoice.discountInvalid'));
         }
 
-        $config  = config('Billing');
-        $rate    = (float) $config->taxRate;
-        $taxable = $subtotal - $discountC;
-        $tax     = (int) round($taxable * $rate / 100);
-        $model   = (new InvoiceModel())->forRestaurant($restaurantId);
+        // Restoran geneli yüzdelik indirim + (varsa) tek seferlik TL indirimi; ara toplamı aşamaz.
+        $restaurant = (new RestaurantModel())->withDeleted()->find($restaurantId) ?? [];
+        $discountC  = min($subtotal, $discountC + self::percentDiscount($restaurant, $periodStart, $subtotal));
+
+        $config = config('Billing');
+        $rate   = (float) $config->taxRate;
+        ['tax' => $tax, 'taxable' => $taxable] = self::totals($subtotal, $discountC, $rate);
+        $model  = (new InvoiceModel())->forRestaurant($restaurantId);
 
         return $this->atomic(function () use ($model, $subscription, $periodStart, $periodEnd, $issuedAt, $dueDate, $subtotal, $discountC, $rate, $tax, $taxable, $notes, $config): int {
             $id = (int) $model->insert([
@@ -82,6 +86,34 @@ final class InvoiceService
 
             return $id;
         });
+    }
+
+    /**
+     * Ödenmemiş faturanın indirimini (TL, KDV hariç) değiştirir; KDV ve toplam faturanın
+     * kendi KDV oranıyla yeniden hesaplanır. Girilen tutar mevcut indirimin yerine geçer.
+     *
+     * @param array<string, mixed> $invoice
+     */
+    public function updateDiscount(array $invoice, string $discount): void
+    {
+        if ($invoice['status'] !== 'pending') {
+            throw new BusinessRuleException(lang('App.invoice.notPending'));
+        }
+
+        $subtotal  = self::cents((string) $invoice['subtotal']);
+        $discountC = self::cents($discount);
+
+        if ($discountC < 0 || $discountC > $subtotal) {
+            throw ValidationException::single('discount', lang('App.invoice.discountInvalid'));
+        }
+
+        ['tax' => $tax, 'taxable' => $taxable] = self::totals($subtotal, $discountC, (float) $invoice['tax_rate']);
+
+        (new InvoiceModel())->forRestaurant((int) $invoice['restaurant_id'])->update((int) $invoice['id'], [
+            'discount'   => self::money($discountC),
+            'tax_amount' => self::money($tax),
+            'total'      => self::money($taxable + $tax),
+        ]);
     }
 
     /**
@@ -177,6 +209,33 @@ final class InvoiceService
             date('d.m.Y', (int) strtotime($start)),
             date('d.m.Y', (int) strtotime($end)),
         );
+    }
+
+    /**
+     * Restoranın yüzdelik indirimi (kuruş). Dönem başı indirim bitiş tarihinden sonraysa 0.
+     *
+     * @param array<string, mixed> $restaurant
+     */
+    public static function percentDiscount(array $restaurant, string $periodStart, int $subtotal): int
+    {
+        $percent = (float) ($restaurant['discount_percent'] ?? 0);
+        $until   = $restaurant['discount_until'] ?? null;
+
+        if ($percent <= 0 || ($until !== null && $until !== '' && $periodStart > (string) $until)) {
+            return 0;
+        }
+
+        return min($subtotal, (int) round($subtotal * min($percent, 100.0) / 100));
+    }
+
+    /**
+     * @return array{taxable: int, tax: int}
+     */
+    private static function totals(int $subtotal, int $discount, float $rate): array
+    {
+        $taxable = $subtotal - $discount;
+
+        return ['taxable' => $taxable, 'tax' => (int) round($taxable * $rate / 100)];
     }
 
     public static function cents(string $amount): int

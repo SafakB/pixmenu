@@ -86,6 +86,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->get('invoices/(:num)', 'InvoiceController::show/$1');
         $routes->post('invoices/(:num)/pay', 'InvoiceController::pay/$1');
         $routes->post('invoices/(:num)/void', 'InvoiceController::void/$1');
+        $routes->post('invoices/(:num)/discount', 'InvoiceController::discount/$1');
 
         // Restoranlar
         $routes->get('restaurants', 'RestaurantController::index');
@@ -104,6 +105,7 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('restaurants/(:num)/subscription/suspend', 'SubscriptionController::suspend/$1');
         $routes->post('restaurants/(:num)/subscription/resume', 'SubscriptionController::resume/$1');
         $routes->post('restaurants/(:num)/subscription/grace', 'SubscriptionController::grace/$1');
+        $routes->post('restaurants/(:num)/subscription/discount', 'SubscriptionController::discount/$1');
 
         // Özel alan adı
         $routes->get('restaurants/(:num)/domain', 'DomainController::show/$1');

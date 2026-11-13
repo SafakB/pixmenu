@@ -143,6 +143,10 @@ return [
         'resumed'            => 'Askı kaldırıldı.',
         'stillSuspended'     => 'Elle askı kaldırıldı ancak restoran başka bir nedenle askıda kalıyor: {0}.',
         'graceSaved'         => 'Gecikme eşiği kaydedildi.',
+        'discountSaved'      => 'Restoran indirimi kaydedildi; sonraki faturalara uygulanacak.',
+        'discountRemoved'    => 'Restoran indirimi kaldırıldı.',
+        'discountPercentInvalid' => 'İndirim oranı 0’dan büyük ve en fazla 100 olmalıdır.',
+        'discountUntilInvalid'   => 'Bitiş tarihi geçersiz.',
         'suspendedPanel'     => 'Aboneliğiniz askıda olduğu için bu sayfaya erişilemiyor.',
         'cycle' => [
             'trial'   => 'Deneme',
@@ -172,6 +176,7 @@ return [
         'referenceTooLong' => 'Ödeme referansı en fazla 100 karakter olabilir.',
         'paid'             => 'Fatura ödendi olarak işaretlendi.',
         'voided'           => 'Fatura iptal edildi.',
+        'discountUpdated'  => 'Fatura indirimi güncellendi.',
         'status' => [
             'pending' => 'Ödenmedi',
             'overdue' => 'Gecikmiş',
