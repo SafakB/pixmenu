@@ -67,7 +67,8 @@ return [
     'restaurant' => [
         'slugTaken'       => 'Bu kısa ad (slug) zaten kullanılıyor.',
         'slugInvalid'     => 'Kısa ad yalnızca küçük harf, rakam ve tire içerebilir.',
-        'currencyInvalid' => 'Para birimi 3 harfli ISO 4217 kodu olmalıdır (ör. TRY).',
+        'currencyInvalid' => 'Geçerli bir para birimi seçin.',
+        'currencyLocked'  => 'Restoranın ürünleri varken para birimi değiştirilemez; fiyatlar dönüştürülmez.',
         'logoDeleted'     => 'Logo silindi.',
     ],
 

@@ -86,6 +86,13 @@ final class Fixture
             ]);
         }
 
+        foreach ([['TRY', 'Türk Lirası', '₺', 1], ['USD', 'ABD Doları', '$', 1], ['EUR', 'Euro', '€', 1], ['XAU', 'Altın', 'XAU', 0]] as $i => [$code, $name, $symbol, $active]) {
+            $this->db->table('currencies')->insert([
+                'code' => $code, 'name' => $name, 'symbol' => $symbol, 'decimals' => 2,
+                'is_active' => $active, 'sort_order' => $i, 'created_at' => $this->now, 'updated_at' => $this->now,
+            ]);
+        }
+
         foreach ([['gluten', 'Gluten', 'Gluten', 1], ['milk', 'Süt', 'Milk', 1], ['lupin', 'Acı bakla', 'Lupin', 0]] as $i => [$code, $tr, $en, $active]) {
             $id = $this->insert('allergens', [
                 'code' => $code, 'is_active' => $active, 'sort_order' => $i,

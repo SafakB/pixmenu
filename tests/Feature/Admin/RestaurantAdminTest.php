@@ -115,6 +115,8 @@ final class RestaurantAdminTest extends DbTestCase
     public function testUpdateToggleAndSoftDeleteRestaurant(): void
     {
         $b = $this->fx->restaurantB;
+        // Para birimi yalnızca ürünü olmayan restoranda değiştirilebilir.
+        $this->db->table('products')->where('restaurant_id', $b)->update(['deleted_at' => date('Y-m-d H:i:s')]);
 
         $this->asAdmin()->post("admin/restaurants/{$b}", [
             'slug' => 'yeni-b', 'currency_code' => 'USD', 'is_active' => '1',
@@ -132,6 +134,38 @@ final class RestaurantAdminTest extends DbTestCase
         $this->assertNotNull($row['deleted_at']);
         $this->assertSame("yeni-b--deleted-{$b}", $row['slug']);
         $this->asAdmin()->get("admin/restaurants/{$b}")->assertStatus(404);
+    }
+
+    public function testCurrencyMustBeActiveListedCode(): void
+    {
+        $base = [
+            'language_ids' => [(string) $this->fx->lang['tr']], 'default_language_id' => (string) $this->fx->lang['tr'],
+            'translations' => ['tr' => ['name' => 'Kur Restoran']],
+        ];
+
+        foreach (['ABC', 'TL', 'XAU'] as $code) {   // listede yok / geçersiz / pasif
+            $this->asAdmin()->post('admin/restaurants', $base + ['currency_code' => $code]);
+            $this->assertArrayHasKey('currency_code', $_SESSION['errors'] ?? [], $code);
+        }
+
+        $this->assertSame(2, $this->db->table('restaurants')->countAllResults());
+    }
+
+    public function testCurrencyIsLockedWhenRestaurantHasProducts(): void
+    {
+        $a = $this->fx->restaurantA;
+
+        $page = $this->asAdmin()->get("admin/restaurants/{$a}/edit");
+        $page->assertOK();
+        $page->assertSee('değiştirilemez');
+
+        $this->asAdmin()->post("admin/restaurants/{$a}", [
+            'slug' => '', 'currency_code' => 'USD', 'is_active' => '1',
+            'default_language_id' => (string) $this->fx->lang['tr'],
+            'translations' => ['tr' => ['name' => 'A']],
+        ]);
+        $this->assertSame(lang('App.restaurant.currencyLocked'), $_SESSION['errors']['currency_code'] ?? null);
+        $this->assertSame('TRY', $this->row('restaurants', $a)['currency_code']);
     }
 
     // ------------------------------------------------------- Restoran dilleri

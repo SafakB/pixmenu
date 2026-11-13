@@ -39,7 +39,7 @@ $levelLabels   = ['contains' => 'içerir', 'may_contain' => 'eser miktarda içer
                     <li>
                         <?php if ($product['thumb_url'] !== null): ?><img src="<?= esc($product['thumb_url'], 'attr') ?>" alt="" width="96" loading="lazy"><?php endif ?>
                         <strong><?= esc($product['name']) ?></strong>
-                        <span data-price="<?= esc($product['price'], 'attr') ?>" data-currency="<?= esc($menu['restaurant']['currency'], 'attr') ?>"><?= esc($product['price']) ?> <?= esc($menu['restaurant']['currency']) ?></span>
+                        <span data-price="<?= esc($product['price'], 'attr') ?>" data-currency="<?= esc($menu['restaurant']['currency'], 'attr') ?>"><?= esc(pix_money($product['price'], $menu['restaurant']['currency'])) ?></span>
                         <?php if ($product['description'] !== null): ?><p><?= esc($product['description']) ?></p><?php endif ?>
                         <?php if ($product['allergens'] !== []): ?>
                             <small>

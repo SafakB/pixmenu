@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Exceptions\BusinessRuleException;
 use App\Exceptions\ValidationException;
+use App\Models\CurrencyModel;
 use App\Models\LanguageModel;
 use App\Models\PlanModel;
 use App\Models\PlanTranslationModel;
@@ -93,7 +94,7 @@ final class PlanService
      */
     public function create(array $data, array $translations): int
     {
-        $data  = $this->validate($data, null);
+        $data  = $this->validate($data, null, null);
         $codes = $this->languageCodes();
         $this->assertTranslations($translations, $codes);
 
@@ -115,7 +116,7 @@ final class PlanService
     public function update(array $plan, array $data, array $translations): void
     {
         $id    = (int) $plan['id'];
-        $data  = $this->validate($data, $id);
+        $data  = $this->validate($data, $id, (string) $plan['currency_code']);
         $codes = $this->languageCodes();
         $this->assertTranslations($translations, $codes);
 
@@ -184,7 +185,7 @@ final class PlanService
      *
      * @return array<string, mixed> veritabanına yazılacak alanlar
      */
-    private function validate(array $data, ?int $exceptId): array
+    private function validate(array $data, ?int $exceptId, ?string $currentCurrency): array
     {
         $errors = [];
         $code   = (string) ($data['code'] ?? '');
@@ -233,7 +234,7 @@ final class PlanService
 
         $currency = strtoupper(trim((string) ($data['currency_code'] ?? '')));
 
-        if (preg_match('/^[A-Z]{3}$/', $currency) !== 1) {
+        if (preg_match('/^[A-Z]{3}$/', $currency) !== 1 || ! (new CurrencyModel())->isSelectable($currency, $currentCurrency)) {
             $errors['currency_code'] = lang('App.restaurant.currencyInvalid');
         }
 

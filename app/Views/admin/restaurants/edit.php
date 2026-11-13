@@ -38,10 +38,17 @@ $invalid     = static fn (string $field): string => isset($errors[$field]) ? ' i
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="currency_code">Para birimi <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control text-uppercase<?= $invalid('currency_code') ?>" id="currency_code" name="currency_code" maxlength="3" required
-                               placeholder="TRY" value="<?= esc((string) old('currency_code', $restaurant['currency_code'], false), 'attr') ?>">
+                        <?php $selCur = $currencyLocked ? (string) $restaurant['currency_code'] : (string) old('currency_code', $restaurant['currency_code'], false) ?>
+                        <select class="form-select<?= $invalid('currency_code') ?>" id="currency_code"<?= $currencyLocked ? ' disabled' : ' name="currency_code" required' ?>>
+                            <?php foreach ($currencies as $c): ?>
+                                <option value="<?= esc($c['code'], 'attr') ?>"<?= $selCur === $c['code'] ? ' selected' : '' ?>><?= esc($c['code'] . ' — ' . $c['name'] . ' (' . $c['symbol'] . ')') ?></option>
+                            <?php endforeach ?>
+                        </select>
+                        <?php if ($currencyLocked): ?><input type="hidden" name="currency_code" value="<?= esc($selCur, 'attr') ?>"><?php endif ?>
                         <?php if (isset($errors['currency_code'])): ?><div class="invalid-feedback"><?= esc($errors['currency_code']) ?></div><?php endif ?>
-                        <div class="form-text">3 harfli ISO kodu (TRY, EUR, USD…).</div>
+                        <div class="form-text"><?= $currencyLocked
+                            ? '<i class="ri-lock-line align-bottom me-1"></i>Restoranın ürünleri olduğu için değiştirilemez; fiyatlar dönüştürülmez.'
+                            : 'Menü fiyatları bu para biriminde girilir. Ürün eklendikten sonra değiştirilemez.' ?></div>
                     </div>
                     <div class="col-md-6 mb-0">
                         <label class="form-label" for="default_language_id">Varsayılan dil <span class="text-danger">*</span></label>

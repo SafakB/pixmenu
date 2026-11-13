@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Models\BranchModel;
 use App\Models\BranchTranslationModel;
+use App\Models\CurrencyModel;
 use App\Models\LanguageModel;
 use App\Models\PlanModel;
 use App\Models\RestaurantLanguageModel;
@@ -70,7 +71,8 @@ final class RestaurantController extends AdminBaseController
 
     /**
      * View: admin/restaurants/new — languages[] (tüm aktif diller; çeviri alanları ve dil seçimi için),
-     *       plans[{id, code, name, trial_days, price_monthly, price_yearly, currency_code}] (aktif), defaultPlanId
+     *       plans[{id, code, name, trial_days, price_monthly, price_yearly, currency_code}] (aktif), defaultPlanId,
+     *       currencies[{code, name, symbol}] (aktif)
      */
     public function new(): string
     {
@@ -83,6 +85,7 @@ final class RestaurantController extends AdminBaseController
             'languages'     => (new TranslationService())->formLanguages($languages, 0),
             'plans'         => $plans,
             'defaultPlanId' => isset($default[0]) ? (int) $default[0]['id'] : null,
+            'currencies'    => (new CurrencyModel())->options(),
         ]);
     }
 
@@ -197,7 +200,8 @@ final class RestaurantController extends AdminBaseController
     }
 
     /**
-     * View: admin/restaurants/edit — restaurant, logo_url, languages, translations
+     * View: admin/restaurants/edit — restaurant, logo_url, languages, translations,
+     *       currencies[{code, name, symbol}] (aktif + mevcut), currencyLocked (ürün varsa true)
      */
     public function edit(int $id): string
     {
@@ -211,7 +215,9 @@ final class RestaurantController extends AdminBaseController
                 (new RestaurantLanguageModel())->forRestaurant($id)->languages(true),
                 (int) $restaurant['default_language_id'],
             ),
-            'translations' => $service->load(RestaurantTranslationModel::class, $id),
+            'translations'   => $service->load(RestaurantTranslationModel::class, $id),
+            'currencies'     => (new CurrencyModel())->options((string) $restaurant['currency_code']),
+            'currencyLocked' => (new RestaurantService())->hasProducts($id),
         ]);
     }
 

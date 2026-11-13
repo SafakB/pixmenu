@@ -46,8 +46,12 @@ $checked  = static function (string $field, int $default) use ($hasOld, $plan): 
                     </div>
                     <div class="col-md-4 mb-3">
                         <label class="form-label" for="currency_code">Para birimi <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control text-uppercase<?= $invalid('currency_code') ?>" id="currency_code" name="currency_code" maxlength="3" required
-                               value="<?= $value('currency_code', $plan['currency_code'] ?? 'TRY') ?>">
+                        <?php $selCur = (string) old('currency_code', $plan['currency_code'] ?? 'TRY', false) ?>
+                        <select class="form-select<?= $invalid('currency_code') ?>" id="currency_code" name="currency_code" required>
+                            <?php foreach ($currencies as $c): ?>
+                                <option value="<?= esc($c['code'], 'attr') ?>"<?= $selCur === $c['code'] ? ' selected' : '' ?>><?= esc($c['code'] . ' (' . $c['symbol'] . ')') ?></option>
+                            <?php endforeach ?>
+                        </select>
                         <?= $feedback('currency_code') ?>
                     </div>
                 </div>

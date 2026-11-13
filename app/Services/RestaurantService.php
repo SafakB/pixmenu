@@ -7,8 +7,10 @@ namespace App\Services;
 use App\Exceptions\BusinessRuleException;
 use App\Exceptions\ValidationException;
 use App\Models\BranchModel;
+use App\Models\CurrencyModel;
 use App\Models\LanguageModel;
 use App\Models\PlanModel;
+use App\Models\ProductModel;
 use App\Models\RestaurantLanguageModel;
 use App\Models\RestaurantModel;
 use App\Models\RestaurantTranslationModel;
@@ -60,7 +62,7 @@ final class RestaurantService
             $errors['default_language_id'] = lang('App.language.defaultMustBeIn');
         }
 
-        $errors += $this->validateCommon($data, null);
+        $errors += $this->validateCommon($data, null, null);
 
         if ($errors !== []) {
             throw new ValidationException($errors);
@@ -128,7 +130,12 @@ final class RestaurantService
             $errors['default_language_id'] = lang('App.language.notInRestaurant');
         }
 
-        $errors += $this->validateCommon($data, $id);
+        $errors += $this->validateCommon($data, $id, (string) $restaurant['currency_code']);
+
+        // Fiyatlar para birimiyle birlikte dönüştürülmediği için ürünü olan restoranda değiştirilemez.
+        if (! isset($errors['currency_code']) && $data['currency_code'] !== $restaurant['currency_code'] && $this->hasProducts($id)) {
+            $errors['currency_code'] = lang('App.restaurant.currencyLocked');
+        }
 
         if ($errors !== []) {
             throw new ValidationException($errors);
@@ -306,11 +313,11 @@ final class RestaurantService
      *
      * @return array<string, string>
      */
-    private function validateCommon(array $data, ?int $exceptId): array
+    private function validateCommon(array $data, ?int $exceptId, ?string $currentCurrency): array
     {
         $errors = [];
 
-        if (preg_match('/^[A-Z]{3}$/', $data['currency_code']) !== 1) {
+        if (preg_match('/^[A-Z]{3}$/', $data['currency_code']) !== 1 || ! (new CurrencyModel())->isSelectable($data['currency_code'], $currentCurrency)) {
             $errors['currency_code'] = lang('App.restaurant.currencyInvalid');
         }
 
@@ -341,6 +348,14 @@ final class RestaurantService
         }
 
         return (int) $plan['id'];
+    }
+
+    /**
+     * Restoranın (silinmemiş) ürünü var mı — para birimi kilidi için.
+     */
+    public function hasProducts(int $restaurantId): bool
+    {
+        return (new ProductModel())->forRestaurant($restaurantId)->countAllResults() > 0;
     }
 
     private function slugExists(string $slug, ?int $exceptId): bool

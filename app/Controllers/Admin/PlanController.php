@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Exceptions\ValidationException;
+use App\Models\CurrencyModel;
 use App\Models\PlanModel;
 use App\Models\PlanTranslationModel;
 use App\Services\PlanService;
@@ -113,6 +114,7 @@ final class PlanController extends AdminBaseController
             'languages'    => $translations->formLanguages($service->languages(), (int) $tr),
             'translations' => $plan === null ? [] : $translations->load(PlanTranslationModel::class, (int) $plan['id']),
             'action'       => $plan === null ? 'admin/plans' : 'admin/plans/' . $plan['id'],
+            'currencies'   => (new CurrencyModel())->options($plan['currency_code'] ?? null),
         ]);
     }
 
