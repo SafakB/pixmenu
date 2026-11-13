@@ -12,9 +12,14 @@ $oldPlan   = (string) old('plan_id', '', false);
 $oldCycle  = (string) old('billing_cycle', $sub !== null && $sub['billing_cycle'] !== 'trial' ? $sub['billing_cycle'] : 'monthly', false);
 $openOld   = array_filter($invoices, static fn (array $i): bool => $i['status'] === 'pending');
 
+$canControl   = admin_can('subscriptions.control'); // iptal / askıya al / askıdan çıkar
+$canManageSub = admin_can('subscriptions.manage');  // paket değiştir / eşik / restoran indirimi
+$canDomain    = admin_can('restaurants.manage');
+
 // Kart başlığı aksiyonları
 ob_start();
 ?>
+<?php if ($canControl): ?>
 <?php if ($sub !== null && $sub['billing_cycle'] !== 'trial'): ?>
     <?php $cancelOn = (int) $sub['cancel_at_period_end'] === 1 ?>
     <?= form_open($base . '/cancel', ['class' => 'd-inline'] + ($cancelOn ? [] : [
@@ -41,6 +46,7 @@ ob_start();
     ]) ?>
         <button type="submit" class="btn btn-sm btn-soft-danger"><i class="ri-pause-circle-line align-bottom me-1"></i>Elle askıya al</button>
     <?= form_close() ?>
+<?php endif ?>
 <?php endif ?>
 <?php $actions = (string) ob_get_clean(); ?>
 <?php $this->setVar('title', 'Abonelik') ?>
@@ -126,6 +132,36 @@ ob_start();
     </div>
 
     <div class="col-xl-4">
+        <?php
+        $discPct     = $restaurant['discount_percent'] !== null && (float) $restaurant['discount_percent'] > 0
+            ? rtrim(rtrim(number_format((float) $restaurant['discount_percent'], 2, ',', ''), '0'), ',')
+            : null;
+        $discUntil   = $discPct !== null ? $restaurant['discount_until'] : null;
+        $discExpired = $discUntil !== null && $discUntil < date('Y-m-d');
+        ?>
+        <?php if (! $canManageSub): ?>
+            <?php /* ---------- Salt okunur ayarlar ---------- */ ?>
+            <div class="card">
+                <div class="card-header"><h5 class="card-title mb-0"><i class="ri-settings-3-line text-secondary align-bottom me-1"></i> Abonelik ayarları</h5></div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex px-0"><span class="flex-grow-1 text-muted">Gecikme eşiği</span><span><?= esc((string) $summary['grace_days']) ?> gün</span></li>
+                        <li class="list-group-item d-flex px-0">
+                            <span class="flex-grow-1 text-muted">Restoran indirimi</span>
+                            <span>
+                                <?php if ($discPct === null): ?>
+                                    yok
+                                <?php else: ?>
+                                    %<?= esc($discPct) ?> — <?= $discUntil === null ? 'süresiz' : esc(pix_date($discUntil)) ?>
+                                    <?php if ($discExpired): ?><span class="badge bg-warning-subtle text-warning ms-1">Süresi doldu</span><?php endif ?>
+                                <?php endif ?>
+                            </span>
+                        </li>
+                    </ul>
+                    <p class="text-muted small mb-0 mt-2"><i class="ri-lock-2-line align-bottom me-1"></i>Abonelik değişiklikleri için yetkiniz yok.</p>
+                </div>
+            </div>
+        <?php else: ?>
         <?php /* ---------- Paket değiştir ---------- */ ?>
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ri-exchange-line text-success align-bottom me-1"></i> <?= $sub === null ? 'Paket ata' : 'Paket değiştir' ?></h5></div>
@@ -206,13 +242,6 @@ ob_start();
         <?php endif ?>
 
         <?php /* ---------- Restoran indirimi ---------- */ ?>
-        <?php
-        $discPct     = $restaurant['discount_percent'] !== null && (float) $restaurant['discount_percent'] > 0
-            ? rtrim(rtrim(number_format((float) $restaurant['discount_percent'], 2, ',', ''), '0'), ',')
-            : null;
-        $discUntil   = $discPct !== null ? $restaurant['discount_until'] : null;
-        $discExpired = $discUntil !== null && $discUntil < date('Y-m-d');
-        ?>
         <div class="card">
             <div class="card-header"><h5 class="card-title mb-0"><i class="ri-percent-line text-primary align-bottom me-1"></i> Restoran indirimi</h5></div>
             <?= form_open($base . '/discount') ?>
@@ -249,7 +278,9 @@ ob_start();
             </div>
             <?= form_close() ?>
         </div>
+        <?php endif ?>
 
+        <?php if ($canDomain): ?>
         <div class="card">
             <div class="card-body d-flex align-items-center gap-2">
                 <i class="ri-global-line fs-20 text-primary"></i>
@@ -257,6 +288,7 @@ ob_start();
                 <a href="<?= site_url('admin/restaurants/' . $rid . '/domain') ?>" class="btn btn-soft-primary btn-sm">Yönet <i class="ri-arrow-right-line align-bottom"></i></a>
             </div>
         </div>
+        <?php endif ?>
     </div>
 </div>
 <?= $this->endSection() ?>

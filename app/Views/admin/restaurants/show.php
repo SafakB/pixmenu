@@ -4,6 +4,10 @@ $id     = $restaurant['id'];
 $base   = 'admin/restaurants/' . $id;
 $active = ! empty($restaurant['is_active']);
 $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', 'info']];
+
+$canManage  = admin_can('restaurants.manage');
+$canDelete  = admin_can('restaurants.delete');
+$canBilling = admin_can('billing.view');
 ?>
 <?php $this->setVar('title', $restaurant['name']) ?>
 <?php $this->setVar('breadcrumbs', [
@@ -39,6 +43,7 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                 </div>
             </div>
             <div class="flex-shrink-0 d-flex flex-wrap gap-2">
+                <?php if ($canManage): ?>
                 <a href="<?= site_url($base . '/edit') ?>" class="btn btn-primary btn-sm"><i class="ri-pencil-line align-bottom me-1"></i> Bilgileri düzenle</a>
                 <?= form_open($base . '/toggle', ['class' => 'd-inline'] + ($active ? [
                     'data-confirm'         => $restaurant['name'] . ' pasifleştirilecek. Kullanıcılarının oturumu kapanır, menüleri yayından kalkar.',
@@ -51,6 +56,8 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                         <button type="submit" class="btn btn-soft-success btn-sm"><i class="ri-shut-down-line align-bottom me-1"></i> Aktifleştir</button>
                     <?php endif ?>
                 <?= form_close() ?>
+                <?php endif ?>
+                <?php if ($canDelete): ?>
                 <?= form_open($base . '/delete', [
                     'class'               => 'd-inline',
                     'data-confirm'        => $restaurant['name'] . ' silinecek. Bu işlem geri alınamaz.',
@@ -58,6 +65,7 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                 ]) ?>
                     <button type="submit" class="btn btn-soft-danger btn-sm"><i class="ri-delete-bin-line align-bottom me-1"></i> Sil</button>
                 <?= form_close() ?>
+                <?php endif ?>
             </div>
         </div>
     </div>
@@ -72,14 +80,16 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                     <i class="ri-map-pin-2-line text-success align-bottom me-1"></i> Şubeler
                     <span class="badge bg-success-subtle text-success align-middle ms-1"><?= esc((string) count($branches)) ?></span>
                 </h5>
+                <?php if ($canManage): ?>
                 <a href="<?= site_url($base . '/branches/new') ?>" class="btn btn-success btn-sm"><i class="ri-add-line align-bottom me-1"></i> Yeni şube</a>
                 <a href="<?= site_url($base . '/branches') ?>" class="btn btn-soft-primary btn-sm">Yönet <i class="ri-arrow-right-line align-bottom"></i></a>
+                <?php endif ?>
             </div>
             <div class="card-body">
                 <?php if ($branches === []): ?>
                     <div class="text-center text-muted py-4">
                         <i class="ri-map-pin-2-line fs-1 d-block mb-2"></i>
-                        Henüz şube yok. İlk şubeyi eklemek için "Yeni şube"ye tıklayın.
+                        Henüz şube yok.<?php if ($canManage): ?> İlk şubeyi eklemek için "Yeni şube"ye tıklayın.<?php endif ?>
                     </div>
                 <?php else: ?>
                     <div class="table-responsive table-card">
@@ -92,7 +102,11 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                                 <?php $bBase = $base . '/branches/' . $b['id']; ?>
                                 <tr>
                                     <td>
-                                        <a href="<?= site_url($bBase . '/edit') ?>" class="fw-medium text-reset"><?= esc($b['name']) ?></a>
+                                        <?php if ($canManage): ?>
+                                            <a href="<?= site_url($bBase . '/edit') ?>" class="fw-medium text-reset"><?= esc($b['name']) ?></a>
+                                        <?php else: ?>
+                                            <span class="fw-medium"><?= esc($b['name']) ?></span>
+                                        <?php endif ?>
                                         <div class="text-muted small"><?= esc($b['slug']) ?></div>
                                     </td>
                                     <td>
@@ -108,6 +122,7 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                                         <?php endif ?>
                                     </td>
                                     <td class="text-end">
+                                        <?php if ($canManage): ?>
                                         <div class="d-inline-flex gap-1">
                                             <a href="<?= site_url($bBase . '/edit') ?>" class="btn btn-sm btn-icon btn-soft-primary"
                                                data-bs-toggle="tooltip" title="Düzenle" aria-label="Düzenle"><i class="ri-pencil-line"></i></a>
@@ -129,6 +144,7 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                                                         data-bs-toggle="tooltip" title="Sil" aria-label="Sil"><i class="ri-delete-bin-line"></i></button>
                                             <?= form_close() ?>
                                         </div>
+                                        <?php endif ?>
                                     </td>
                                 </tr>
                             <?php endforeach ?>
@@ -146,14 +162,16 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                     <i class="ri-team-line text-info align-bottom me-1"></i> Kullanıcılar
                     <span class="badge bg-info-subtle text-info align-middle ms-1"><?= esc((string) count($users)) ?></span>
                 </h5>
+                <?php if ($canManage): ?>
                 <a href="<?= site_url($base . '/users/new') ?>" class="btn btn-success btn-sm"><i class="ri-user-add-line align-bottom me-1"></i> Yeni kullanıcı</a>
                 <a href="<?= site_url($base . '/users') ?>" class="btn btn-soft-primary btn-sm">Yönet <i class="ri-arrow-right-line align-bottom"></i></a>
+                <?php endif ?>
             </div>
             <div class="card-body">
                 <?php if ($users === []): ?>
                     <div class="text-center text-muted py-4">
                         <i class="ri-team-line fs-1 d-block mb-2"></i>
-                        Henüz kullanıcı yok. Restoran sahibini eklemek için "Yeni kullanıcı"ya tıklayın.
+                        Henüz kullanıcı yok.<?php if ($canManage): ?> Restoran sahibini eklemek için "Yeni kullanıcı"ya tıklayın.<?php endif ?>
                     </div>
                 <?php else: ?>
                     <div class="table-responsive table-card">
@@ -169,7 +187,11 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                                 ?>
                                 <tr>
                                     <td>
-                                        <a href="<?= site_url($uBase . '/edit') ?>" class="fw-medium text-reset"><?= esc($u['name']) ?></a>
+                                        <?php if ($canManage): ?>
+                                            <a href="<?= site_url($uBase . '/edit') ?>" class="fw-medium text-reset"><?= esc($u['name']) ?></a>
+                                        <?php else: ?>
+                                            <span class="fw-medium"><?= esc($u['name']) ?></span>
+                                        <?php endif ?>
                                         <div class="text-muted small"><?= esc($u['email']) ?></div>
                                     </td>
                                     <td><span class="badge bg-<?= esc($roleColor, 'attr') ?>-subtle text-<?= esc($roleColor, 'attr') ?>"><?= esc($roleLabel) ?></span></td>
@@ -182,6 +204,7 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                                         <?php endif ?>
                                     </td>
                                     <td class="text-end">
+                                        <?php if ($canManage): ?>
                                         <div class="d-inline-flex gap-1">
                                             <a href="<?= site_url($uBase . '/edit') ?>" class="btn btn-sm btn-icon btn-soft-primary"
                                                data-bs-toggle="tooltip" title="Düzenle" aria-label="Düzenle"><i class="ri-pencil-line"></i></a>
@@ -203,6 +226,7 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                                                         data-bs-toggle="tooltip" title="Sil" aria-label="Sil"><i class="ri-delete-bin-line"></i></button>
                                             <?= form_close() ?>
                                         </div>
+                                        <?php endif ?>
                                     </td>
                                 </tr>
                             <?php endforeach ?>
@@ -223,7 +247,9 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
         <div class="card">
             <div class="card-header d-flex align-items-center gap-2">
                 <h5 class="card-title mb-0 flex-grow-1"><i class="ri-vip-crown-2-line text-primary align-bottom me-1"></i> Abonelik</h5>
+                <?php if ($canBilling): ?>
                 <a href="<?= site_url($base . '/subscription') ?>" class="btn btn-soft-primary btn-sm">Yönet <i class="ri-arrow-right-line align-bottom"></i></a>
+                <?php endif ?>
             </div>
             <div class="card-body">
                 <?php if ($billing['suspended']): ?>
@@ -250,7 +276,11 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                         </li>
                         <li class="list-group-item d-flex px-0">
                             <span class="flex-grow-1 text-muted">Alan adı</span>
-                            <a href="<?= site_url($base . '/domain') ?>"><?= $billing['domain'] === null ? 'Tanımla' : esc($billing['domain']['domain']) ?></a>
+                            <?php if ($canManage): ?>
+                                <a href="<?= site_url($base . '/domain') ?>"><?= $billing['domain'] === null ? 'Tanımla' : esc($billing['domain']['domain']) ?></a>
+                            <?php else: ?>
+                                <span><?= $billing['domain'] === null ? '—' : esc($billing['domain']['domain']) ?></span>
+                            <?php endif ?>
                         </li>
                     </ul>
                 <?php endif ?>
@@ -264,7 +294,9 @@ $roles  = ['owner' => ['Sahip', 'primary'], 'manager' => ['Şube yöneticisi', '
                     <i class="ri-translate-2 text-warning align-bottom me-1"></i> Diller
                     <span class="badge bg-warning-subtle text-warning align-middle ms-1"><?= esc((string) count($languages)) ?></span>
                 </h5>
+                <?php if ($canManage): ?>
                 <a href="<?= site_url($base . '/languages') ?>" class="btn btn-soft-primary btn-sm">Yönet <i class="ri-arrow-right-line align-bottom"></i></a>
+                <?php endif ?>
             </div>
             <div class="card-body">
                 <?php if ($languages === []): ?>

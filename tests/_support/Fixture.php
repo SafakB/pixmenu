@@ -76,7 +76,7 @@ final class Fixture
     {
         $this->adminId = $this->insert('admins', [
             'name' => 'Admin', 'email' => 'admin@test.local', 'password_hash' => $this->hash,
-            'is_active' => 1, 'created_at' => $this->now, 'updated_at' => $this->now,
+            'role' => 'super_admin', 'is_active' => 1, 'created_at' => $this->now, 'updated_at' => $this->now,
         ]);
 
         foreach ([['tr', 'Turkish', 'Türkçe'], ['en', 'English', 'English'], ['de', 'German', 'Deutsch']] as $i => [$code, $name, $native]) {
@@ -150,6 +150,17 @@ final class Fixture
 
         $this->subscriptionA = $this->subscription($this->restaurantA, 'pro');
         $this->subscriptionB = $this->subscription($this->restaurantB, 'pro');
+    }
+
+    /**
+     * Belirli roldeki ek admin (Config\AdminRoles). E-posta: {rol}@test.local
+     */
+    public function createAdmin(string $role, int $active = 1, ?string $email = null): int
+    {
+        return $this->insert('admins', [
+            'name' => ucfirst($role), 'email' => $email ?? $role . '@test.local', 'password_hash' => $this->hash,
+            'role' => $role, 'is_active' => $active, 'created_at' => $this->now, 'updated_at' => $this->now,
+        ]);
     }
 
     /**

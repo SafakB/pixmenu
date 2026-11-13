@@ -4,12 +4,13 @@
 <?= $this->section('content') ?>
 <?php
 $cards = [
-    'restaurants' => ['label' => 'Restoranlar', 'icon' => 'ri-store-2-line', 'color' => 'primary', 'url' => site_url('admin/restaurants')],
+    'restaurants' => ['label' => 'Restoranlar', 'icon' => 'ri-store-2-line', 'color' => 'primary', 'url' => admin_can('restaurants.view') ? site_url('admin/restaurants') : null],
     'branches'    => ['label' => 'Şubeler', 'icon' => 'ri-map-pin-2-line', 'color' => 'success', 'url' => null],
     'users'       => ['label' => 'Kullanıcılar', 'icon' => 'ri-team-line', 'color' => 'info', 'url' => null],
-    'languages'   => ['label' => 'Diller', 'icon' => 'ri-translate-2', 'color' => 'warning', 'url' => site_url('admin/languages')],
-    'allergens'   => ['label' => 'Alerjenler', 'icon' => 'ri-error-warning-line', 'color' => 'danger', 'url' => site_url('admin/allergens')],
+    'languages'   => ['label' => 'Diller', 'icon' => 'ri-translate-2', 'color' => 'warning', 'url' => admin_can('definitions.manage') ? site_url('admin/languages') : null],
+    'allergens'   => ['label' => 'Alerjenler', 'icon' => 'ri-error-warning-line', 'color' => 'danger', 'url' => admin_can('definitions.manage') ? site_url('admin/allergens') : null],
 ];
+$canBilling = admin_can('billing.view');
 ?>
 <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-5">
     <?php foreach ($cards as $key => $card): ?>
@@ -43,7 +44,8 @@ $cards = [
     <?php endforeach ?>
 </div>
 
-<?php /* ---------- Abonelik ---------- */ ?>
+<?php /* ---------- Abonelik (billing.view) ---------- */ ?>
+<?php if ($canBilling): ?>
 <div class="row">
     <div class="col-xl-6">
         <div class="card card-height-100">
@@ -133,4 +135,5 @@ $cards = [
         </div>
     </div>
 </div>
+<?php endif ?>
 <?= $this->endSection() ?>

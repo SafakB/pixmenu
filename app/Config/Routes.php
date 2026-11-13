@@ -38,9 +38,18 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
 
     $routes->group('', ['filter' => ['adminauth', 'nocache']], static function ($routes) {
         $routes->post('logout', 'AuthController::logout');
-        $routes->get('/', 'DashboardController::index');
+    });
 
-        // Diller
+    // Rol bazlı yetki (Config\AdminRoles): her alt grup `adminperm:<izin>` taşır.
+    // Yeni bir admin rotası mutlaka bir izin grubuna eklenmelidir (AdminRouteCoverageTest).
+    $perm = static fn (string $permission): array => ['filter' => ['adminauth', 'adminperm:' . $permission, 'nocache']];
+
+    $routes->group('', $perm('dashboard.view'), static function ($routes) {
+        $routes->get('/', 'DashboardController::index');
+    });
+
+    // Tanımlar: diller, alerjenler, menü şablonları
+    $routes->group('', $perm('definitions.manage'), static function ($routes) {
         $routes->get('languages', 'LanguageController::index');
         $routes->get('languages/new', 'LanguageController::new');
         $routes->post('languages', 'LanguageController::create');
@@ -50,7 +59,6 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('languages/(:num)/toggle', 'LanguageController::toggle/$1');
         $routes->post('languages/(:num)/delete', 'LanguageController::delete/$1');
 
-        // Alerjenler
         $routes->get('allergens', 'AllergenController::index');
         $routes->get('allergens/new', 'AllergenController::new');
         $routes->post('allergens', 'AllergenController::create');
@@ -70,9 +78,10 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('templates/(:segment)', 'MenuTemplateController::update/$1');
         $routes->post('templates/(:segment)/toggle', 'MenuTemplateController::toggle/$1');
         $routes->post('templates/(:segment)/delete', 'MenuTemplateController::delete/$1');
+    });
 
-        // Paketler
-        $routes->get('plans', 'PlanController::index');
+    // Paketler — değişiklik (`new`/`reorder` statik segmentleri (:num)'dan önce)
+    $routes->group('', $perm('plans.manage'), static function ($routes) {
         $routes->get('plans/new', 'PlanController::new');
         $routes->post('plans', 'PlanController::create');
         $routes->post('plans/reorder', 'PlanController::reorder');              // JSON
@@ -80,32 +89,44 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('plans/(:num)', 'PlanController::update/$1');
         $routes->post('plans/(:num)/toggle', 'PlanController::toggle/$1');
         $routes->post('plans/(:num)/delete', 'PlanController::delete/$1');
+    });
 
-        // Faturalar
+    // Paketler, faturalar, abonelik — görüntüleme
+    $routes->group('', $perm('billing.view'), static function ($routes) {
+        $routes->get('plans', 'PlanController::index');
         $routes->get('invoices', 'InvoiceController::index');                   // ?status=&overdue=1&restaurant=
         $routes->get('invoices/(:num)', 'InvoiceController::show/$1');
-        $routes->post('invoices/(:num)/pay', 'InvoiceController::pay/$1');
-        $routes->post('invoices/(:num)/void', 'InvoiceController::void/$1');
-        $routes->post('invoices/(:num)/discount', 'InvoiceController::discount/$1');
-
-        // Restoranlar
-        $routes->get('restaurants', 'RestaurantController::index');
-        $routes->get('restaurants/new', 'RestaurantController::new');
-        $routes->post('restaurants', 'RestaurantController::create');
-        $routes->get('restaurants/(:num)', 'RestaurantController::show/$1');
-        $routes->get('restaurants/(:num)/edit', 'RestaurantController::edit/$1');
-        $routes->post('restaurants/(:num)', 'RestaurantController::update/$1');
-        $routes->post('restaurants/(:num)/toggle', 'RestaurantController::toggle/$1');
-        $routes->post('restaurants/(:num)/delete', 'RestaurantController::delete/$1');
-
-        // Abonelik
         $routes->get('restaurants/(:num)/subscription', 'SubscriptionController::show/$1');
+    });
+
+    $routes->group('', $perm('invoices.manage'), static function ($routes) {
+        $routes->post('invoices/(:num)/pay', 'InvoiceController::pay/$1');
+        $routes->post('invoices/(:num)/discount', 'InvoiceController::discount/$1');
+    });
+
+    $routes->group('', $perm('invoices.void'), static function ($routes) {
+        $routes->post('invoices/(:num)/void', 'InvoiceController::void/$1');
+    });
+
+    $routes->group('', $perm('subscriptions.manage'), static function ($routes) {
         $routes->post('restaurants/(:num)/subscription/change', 'SubscriptionController::change/$1');
+        $routes->post('restaurants/(:num)/subscription/grace', 'SubscriptionController::grace/$1');
+        $routes->post('restaurants/(:num)/subscription/discount', 'SubscriptionController::discount/$1');
+    });
+
+    $routes->group('', $perm('subscriptions.control'), static function ($routes) {
         $routes->post('restaurants/(:num)/subscription/cancel', 'SubscriptionController::cancel/$1');
         $routes->post('restaurants/(:num)/subscription/suspend', 'SubscriptionController::suspend/$1');
         $routes->post('restaurants/(:num)/subscription/resume', 'SubscriptionController::resume/$1');
-        $routes->post('restaurants/(:num)/subscription/grace', 'SubscriptionController::grace/$1');
-        $routes->post('restaurants/(:num)/subscription/discount', 'SubscriptionController::discount/$1');
+    });
+
+    // Restoranlar — değişiklik (`new` statik segmenti (:num)'dan önce)
+    $routes->group('', $perm('restaurants.manage'), static function ($routes) {
+        $routes->get('restaurants/new', 'RestaurantController::new');
+        $routes->post('restaurants', 'RestaurantController::create');
+        $routes->get('restaurants/(:num)/edit', 'RestaurantController::edit/$1');
+        $routes->post('restaurants/(:num)', 'RestaurantController::update/$1');
+        $routes->post('restaurants/(:num)/toggle', 'RestaurantController::toggle/$1');
 
         // Özel alan adı
         $routes->get('restaurants/(:num)/domain', 'DomainController::show/$1');
@@ -135,6 +156,15 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('restaurants/(:num)/branches/(:num)/toggle', 'BranchController::toggle/$1/$2');
         $routes->post('restaurants/(:num)/branches/(:num)/delete', 'BranchController::delete/$1/$2');
         $routes->post('restaurants/(:num)/branches/(:num)/regenerate-code', 'BranchController::regenerateCode/$1/$2');
+    });
+
+    $routes->group('', $perm('restaurants.delete'), static function ($routes) {
+        $routes->post('restaurants/(:num)/delete', 'RestaurantController::delete/$1');
+    });
+
+    $routes->group('', $perm('restaurants.view'), static function ($routes) {
+        $routes->get('restaurants', 'RestaurantController::index');
+        $routes->get('restaurants/(:num)', 'RestaurantController::show/$1');
     });
 });
 

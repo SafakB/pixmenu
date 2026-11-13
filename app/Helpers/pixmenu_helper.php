@@ -126,3 +126,14 @@ if (! function_exists('pix_date')) {
         return $time === false ? $value : date($withTime ? 'd.m.Y H:i' : 'd.m.Y', $time);
     }
 }
+
+if (! function_exists('admin_can')) {
+    /**
+     * Oturumdaki admin bu izne sahip mi? (Config\AdminRoles) — admin görünümlerinde
+     * düğme/menü gizlemek için. Asıl koruma rotadaki `adminperm` filtresidir.
+     */
+    function admin_can(string $permission): bool
+    {
+        return service('adminAuth')->can($permission);
+    }
+}

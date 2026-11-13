@@ -19,6 +19,7 @@ return [
         'invalid'   => 'E-posta veya şifre hatalı.',
         'throttled' => 'Çok fazla deneme yapıldı. Lütfen bir dakika sonra tekrar deneyin.',
         'required'  => 'Oturum açmanız gerekiyor.',
+        'forbidden' => 'Bu işlem için yetkiniz yok.',
         'loggedOut' => 'Oturum kapatıldı.',
     ],
 

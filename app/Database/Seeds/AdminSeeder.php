@@ -8,8 +8,8 @@ use CodeIgniter\Database\Seeder;
 use RuntimeException;
 
 /**
- * .env içindeki pixmenu.adminEmail / pixmenu.adminPassword ile ilk admini oluşturur.
- * Değerler yoksa hata verir.
+ * .env içindeki pixmenu.adminEmail / pixmenu.adminPassword ile ilk admini (süper admin) oluşturur.
+ * Değerler yoksa hata verir. Sonraki adminler: `php spark admin:create`.
  */
 final class AdminSeeder extends Seeder
 {
@@ -36,6 +36,7 @@ final class AdminSeeder extends Seeder
             'name'          => 'Admin',
             'email'         => $email,
             'password_hash' => password_hash($password, PASSWORD_DEFAULT),
+            'role'          => 'super_admin',
             'is_active'     => 1,
             'created_at'    => $now,
             'updated_at'    => $now,

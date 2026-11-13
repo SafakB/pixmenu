@@ -5,6 +5,8 @@ $invalid  = static fn (string $field): string => isset($errors[$field]) ? ' is-i
 $feedback = static fn (string $field): string => isset($errors[$field]) ? '<div class="invalid-feedback">' . esc($errors[$field]) . '</div>' : '';
 $base     = 'admin/invoices/' . $invoice['id'];
 $pending  = $invoice['status'] === 'pending';
+$canManage = admin_can('invoices.manage'); // ödendi / indirim
+$canVoid   = admin_can('invoices.void');
 ?>
 <?php $this->setVar('title', 'Fatura ' . $invoice['number']) ?>
 <?php $this->setVar('breadcrumbs', [
@@ -33,7 +35,13 @@ $pending  = $invoice['status'] === 'pending';
             </div>
         </div>
 
-        <?php if ($pending): ?>
+        <?php if ($pending && ! $canManage && ! $canVoid): ?>
+            <div class="alert alert-light border small">
+                <i class="ri-lock-2-line align-bottom me-1"></i>Bu fatura üzerinde işlem yapma yetkiniz yok.
+            </div>
+        <?php endif ?>
+
+        <?php if ($pending && $canManage): ?>
             <div class="card">
                 <div class="card-header"><h5 class="card-title mb-0"><i class="ri-percent-line text-primary align-bottom me-1"></i> İndirim</h5></div>
                 <?= form_open($base . '/discount') ?>
@@ -84,7 +92,9 @@ $pending  = $invoice['status'] === 'pending';
                 </div>
                 <?= form_close() ?>
             </div>
+        <?php endif ?>
 
+        <?php if ($pending && $canVoid): ?>
             <div class="card border-danger-subtle">
                 <div class="card-body">
                     <h6 class="mb-1">Faturayı iptal et</h6>

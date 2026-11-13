@@ -1,8 +1,8 @@
 {
   "files": {
     "app/Config/View.php": "969b92b00b9268e71d6a8363f38042ac39d0c24be4f1721d3335991498dc2cd0",
-    "app/Helpers/pixmenu_helper.php": "4404e90d23aa7fe01d65aa1c4fcacb0f06810a9f16b0154cdc88042908fb73d7",
-    "app/Views/layouts/admin.php": "1855daf56852b4789ec046d6e7f3ee9071725153e75617be79f25c06af3760c2",
+    "app/Helpers/pixmenu_helper.php": "d60af9d00b4be67b00bbf303d93afacb7f7f55f1af7a3ceed7d4596db13be1ab",
+    "app/Views/layouts/admin.php": "12b4c75b2c191b18a6a394144bb769399587b5f293a7fb4e8f2abe7a5e2703cd",
     "app/Views/layouts/auth.php": "0f4e2eee7dd396b03c66f9dfc6cf81cded342253d7e7114105fc10f92ebbe35d",
     "app/Views/layouts/panel.php": "bdea2d922e7cdcc9dc24b787986818a1b5c4f0a54b7d6762b39da0ea405d60ed",
     "app/Views/partials/flash.php": "76809f6c0bf41e0f3ac6f85ffb975f5cecf25d46cf15913d7936aef425be9252",

@@ -37,13 +37,15 @@ js/app.js
 ```php
 $shell = [
     'user'         => $currentAdmin ?? [],           // panel: $currentUser
-    'roleLabel'    => 'Sistem Yöneticisi',            // panel: Restoran Sahibi / Şube Yöneticisi
+    'roleLabel'    => service('adminAuth')->roleLabel(), // Config\AdminRoles etiketi; panel: Restoran Sahibi / Şube Yöneticisi
     'homeUrl'      => site_url('admin'),
     'profileUrl'   => null,                           // panel: site_url('panel/profile')
     'logoutAction' => 'admin/logout',
-    'menu'         => [ ... ],
+    'menu'         => $visible,                       // admin: $menu, izne göre süzülmüş
 ];
 ```
+
+Admin menüsünde her öğe `'can' => '<izin>'` taşır; layout `admin_can()` ile süzer, öğesi kalmayan başlığı da atar. Süzme döngüsünde `$title` kullanma (sayfa başlığıdır) — `$heading` kullanılır.
 
 ### Menü öğeleri
 
@@ -95,6 +97,7 @@ Diğer partial'lar (`app/Views/partials/`):
 - `asset_url(string $path): string` → `base_url('assets/'.$path)` + `?v=filemtime` (dosya varsa).
 - `upload_url(?string $path): ?string` → yüklenen dosyanın tam URL'si (`public/uploads`).
 - `pix_money($tutar, ?$paraBirimi)` → `1.499,90 TRY`; `pix_date(?$tarih, $saatli = false)` → `12.11.2026` (boşsa `—`). Fatura/abonelik view'larında tutar ve tarih bunlarla basılır.
+- `admin_can(string $izin): bool` → oturumdaki adminin rolü izni veriyor mu (`Config\AdminRoles`). Admin view'larında yetkisiz düğme/link/kartı **gizlemek** için: `<?php if (admin_can('restaurants.manage')): ?>…<?php endif ?>`. Asıl koruma rotadaki `adminperm:<izin>` filtresidir (403 → `admin/forbidden`); gizlemek yalnızca UX. İzin listesi: `app/Config/AdminRoles.php`.
 - BaseController helper'ları: `url`, `form`, `text`, `pixmenu`.
 
 ## Veri akışı notları

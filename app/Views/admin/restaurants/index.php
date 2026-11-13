@@ -2,6 +2,11 @@
 <?php $this->setVar('title', 'Restoranlar') ?>
 <?php $this->setVar('breadcrumbs', [['label' => 'Restoranlar']]) ?>
 <?= $this->section('content') ?>
+<?php
+$canManage  = admin_can('restaurants.manage');
+$canDelete  = admin_can('restaurants.delete');
+$canBilling = admin_can('billing.view');
+?>
 <div class="card">
     <div class="card-header">
         <div class="row g-2 align-items-center">
@@ -15,7 +20,9 @@
                         <i class="ri-search-line search-icon"></i>
                     </div>
                 <?php endif ?>
-                <a href="<?= site_url('admin/restaurants/new') ?>" class="btn btn-success btn-sm"><i class="ri-add-line align-bottom me-1"></i> Yeni restoran</a>
+                <?php if ($canManage): ?>
+                    <a href="<?= site_url('admin/restaurants/new') ?>" class="btn btn-success btn-sm"><i class="ri-add-line align-bottom me-1"></i> Yeni restoran</a>
+                <?php endif ?>
             </div>
         </div>
     </div>
@@ -24,7 +31,7 @@
             <div class="text-center py-5">
                 <div class="avatar-md mx-auto mb-3"><div class="avatar-title bg-light text-primary rounded-circle fs-24"><i class="ri-store-2-line"></i></div></div>
                 <h5 class="mb-1">Henüz restoran yok</h5>
-                <p class="text-muted mb-0">İlk restoranı eklemek için "Yeni restoran"a tıklayın.</p>
+                <?php if ($canManage): ?><p class="text-muted mb-0">İlk restoranı eklemek için "Yeni restoran"a tıklayın.</p><?php endif ?>
             </div>
         <?php else: ?>
             <div class="table-responsive table-card">
@@ -57,8 +64,10 @@
                             <td class="text-muted"><?= esc($r['slug']) ?></td>
                             <td><span class="badge bg-light text-body"><?= esc($r['currency_code']) ?></span></td>
                             <td>
-                                <?php if ($r['plan_name'] !== null): ?>
+                                <?php if ($r['plan_name'] !== null && $canBilling): ?>
                                     <a href="<?= site_url('admin/restaurants/' . $r['id'] . '/subscription') ?>" class="badge fs-12 <?= esc($r['plan_badge_class'], 'attr') ?>"><?= esc($r['plan_name']) ?></a>
+                                <?php elseif ($r['plan_name'] !== null): ?>
+                                    <span class="badge fs-12 <?= esc($r['plan_badge_class'], 'attr') ?>"><?= esc($r['plan_name']) ?></span>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif ?>
@@ -84,8 +93,11 @@
                                 <div class="d-inline-flex gap-1">
                                     <a href="<?= site_url('admin/restaurants/' . $r['id']) ?>" class="btn btn-sm btn-icon btn-soft-info"
                                        data-bs-toggle="tooltip" title="Detay" aria-label="Detay"><i class="ri-eye-line"></i></a>
+                                    <?php if ($canBilling): ?>
                                     <a href="<?= site_url('admin/restaurants/' . $r['id'] . '/subscription') ?>" class="btn btn-sm btn-icon btn-soft-secondary"
                                        data-bs-toggle="tooltip" title="Abonelik" aria-label="Abonelik"><i class="ri-vip-crown-2-line"></i></a>
+                                    <?php endif ?>
+                                    <?php if ($canManage): ?>
                                     <a href="<?= site_url('admin/restaurants/' . $r['id'] . '/edit') ?>" class="btn btn-sm btn-icon btn-soft-primary"
                                        data-bs-toggle="tooltip" title="Düzenle" aria-label="Düzenle"><i class="ri-pencil-line"></i></a>
                                     <?= form_open('admin/restaurants/' . $r['id'] . '/toggle', ['class' => 'd-inline'] + ($active ? [
@@ -97,6 +109,8 @@
                                         <button type="submit" class="btn btn-sm btn-icon btn-soft-<?= $active ? 'warning' : 'success' ?>"
                                                 data-bs-toggle="tooltip" title="<?= $label ?>" aria-label="<?= $label ?>"><i class="ri-shut-down-line"></i></button>
                                     <?= form_close() ?>
+                                    <?php endif ?>
+                                    <?php if ($canDelete): ?>
                                     <?= form_open('admin/restaurants/' . $r['id'] . '/delete', [
                                         'class'               => 'd-inline',
                                         'data-confirm'        => $r['name'] . ' silinecek. Bu işlem geri alınamaz.',
@@ -105,6 +119,7 @@
                                         <button type="submit" class="btn btn-sm btn-icon btn-soft-danger"
                                                 data-bs-toggle="tooltip" title="Sil" aria-label="Sil"><i class="ri-delete-bin-line"></i></button>
                                     <?= form_close() ?>
+                                    <?php endif ?>
                                 </div>
                             </td>
                         </tr>

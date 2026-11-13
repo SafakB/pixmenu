@@ -8,35 +8,40 @@
 </style>
 <?= $this->endSection() ?>
 <?= $this->section('content') ?>
+<?php $canManage = admin_can('plans.manage') ?>
 <div class="card">
     <div class="card-header d-flex align-items-center flex-wrap gap-2">
         <h5 class="card-title mb-0 flex-grow-1">Paketler <span class="badge bg-light text-muted ms-1"><?= count($plans) ?></span></h5>
-        <a href="<?= site_url('admin/plans/new') ?>" class="btn btn-success btn-sm"><i class="ri-add-line align-bottom me-1"></i> Yeni paket</a>
+        <?php if ($canManage): ?>
+            <a href="<?= site_url('admin/plans/new') ?>" class="btn btn-success btn-sm"><i class="ri-add-line align-bottom me-1"></i> Yeni paket</a>
+        <?php endif ?>
     </div>
     <div class="card-body">
         <?php if ($plans === []): ?>
             <div class="text-center py-5">
                 <div class="avatar-md mx-auto mb-3"><div class="avatar-title bg-light text-primary rounded-circle fs-24"><i class="ri-vip-crown-2-line"></i></div></div>
                 <h5 class="mb-1">Henüz paket yok</h5>
-                <p class="text-muted mb-0">İlk paketi eklemek için "Yeni paket"e tıklayın.</p>
+                <?php if ($canManage): ?><p class="text-muted mb-0">İlk paketi eklemek için "Yeni paket"e tıklayın.</p><?php endif ?>
             </div>
         <?php else: ?>
-            <p class="text-muted small"><i class="ri-drag-move-2-line align-bottom me-1"></i>Sırayı (paket karşılaştırma sayfasındaki düzen) değiştirmek için satırları sürükleyin.</p>
+            <?php if ($canManage): ?>
+                <p class="text-muted small"><i class="ri-drag-move-2-line align-bottom me-1"></i>Sırayı (paket karşılaştırma sayfasındaki düzen) değiştirmek için satırları sürükleyin.</p>
+            <?php endif ?>
             <div class="table-responsive table-card">
                 <table class="table align-middle table-nowrap mb-0">
                     <thead class="table-light">
                         <tr>
-                            <th style="width:40px"></th>
+                            <?php if ($canManage): ?><th style="width:40px"></th><?php endif ?>
                             <th>Paket</th>
                             <th>Aylık / Yıllık</th>
                             <th>Şube</th>
                             <th>Haklar</th>
                             <th>Kullanan</th>
                             <th>Durum</th>
-                            <th class="text-end">İşlemler</th>
+                            <?php if ($canManage): ?><th class="text-end">İşlemler</th><?php endif ?>
                         </tr>
                     </thead>
-                    <tbody id="sortable-plans">
+                    <tbody<?= $canManage ? ' id="sortable-plans"' : '' ?>>
                     <?php foreach ($plans as $p): ?>
                         <?php
                         $id     = (int) $p['id'];
@@ -44,9 +49,16 @@
                         $label  = $active ? 'Pasifleştir' : 'Aktifleştir';
                         ?>
                         <tr data-id="<?= esc((string) $id, 'attr') ?>">
+                            <?php if ($canManage): ?>
                             <td><span class="drag-handle text-muted fs-18" data-bs-toggle="tooltip" title="Sürükleyerek sırala" aria-label="Sürükleyerek sırala"><i class="ri-drag-move-2-line"></i></span></td>
+                            <?php endif ?>
                             <td>
-                                <a href="<?= site_url('admin/plans/' . $id . '/edit') ?>" class="badge fs-12 <?= esc(($p['badge_class'] ?? '') !== '' ? $p['badge_class'] : 'bg-primary', 'attr') ?>"><?= esc($p['name']) ?></a>
+                                <?php $badge = ($p['badge_class'] ?? '') !== '' ? $p['badge_class'] : 'bg-primary' ?>
+                                <?php if ($canManage): ?>
+                                    <a href="<?= site_url('admin/plans/' . $id . '/edit') ?>" class="badge fs-12 <?= esc($badge, 'attr') ?>"><?= esc($p['name']) ?></a>
+                                <?php else: ?>
+                                    <span class="badge fs-12 <?= esc($badge, 'attr') ?>"><?= esc($p['name']) ?></span>
+                                <?php endif ?>
                                 <?php if ((int) $p['is_featured'] === 1): ?><span class="badge bg-danger-subtle text-danger ms-1">Popüler</span><?php endif ?>
                                 <div class="text-muted small font-monospace"><?= esc($p['code']) ?></div>
                             </td>
@@ -71,6 +83,7 @@
                                     <span class="badge bg-danger-subtle text-danger">Pasif</span>
                                 <?php endif ?>
                             </td>
+                            <?php if ($canManage): ?>
                             <td class="text-end">
                                 <div class="d-inline-flex gap-1">
                                     <a href="<?= site_url('admin/plans/' . $id . '/edit') ?>" class="btn btn-sm btn-icon btn-soft-primary"
@@ -89,6 +102,7 @@
                                     <?= form_close() ?>
                                 </div>
                             </td>
+                            <?php endif ?>
                         </tr>
                     <?php endforeach ?>
                     </tbody>

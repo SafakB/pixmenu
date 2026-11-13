@@ -21,7 +21,7 @@
 
 | Rol | Tablo | Kapsam |
 |---|---|---|
-| `admin` | `admins` | Sistemin tamamı. Dil, alerjen, restoran, restoran kullanıcısı, şube yönetimi. |
+| `admin` | `admins` | Sistem yönetimi; ne yapabileceğini `admins.role` belirler (§7.4): `super_admin` (her şey), `manager` / Yönetici (restoran, şube, kullanıcı, dil, alerjen, şablon; faturalar salt okunur), `accountant` / Muhasebe (fatura ödeme/indirim, paket değiştirme, ek süre, restoran indirimi; kritik işlemler hariç). |
 | `owner` (restoran sahibi) | `restaurant_users` | Yalnızca kendi restoranı. Tüm şubeler, kategoriler, ürünler, kendi restoranının kullanıcıları. |
 | `manager` (şube yöneticisi) | `restaurant_users` | Yalnızca kendi restoranında **kendisine atanmış şubeler**in kategori ve ürünleri. |
 | Ziyaretçi | — | Yalnızca aktif şubenin aktif menüsünü okur. |
@@ -172,9 +172,13 @@ Tüm tablolar migration ile oluşturulur (`app/Database/Migrations`). Engine Inn
 | name | VARCHAR(100) | |
 | email | VARCHAR(190) | UNIQUE |
 | password_hash | VARCHAR(255) | `password_hash(PASSWORD_DEFAULT)` |
+| role | VARCHAR(30) | `super_admin` \| `manager` \| `accountant` (`Config\AdminRoles`); tanımsız rol giriş yapamaz |
 | is_active | TINYINT(1) | default 1 |
 | last_login_at | DATETIME NULL | |
+| password_changed_at | DATETIME NULL | Bu andan önce açılmış oturumlar düşer |
 | created_at, updated_at | DATETIME NULL | |
+
+Admin hesapları web arayüzünden **yönetilmez**; yalnızca `php spark admin:create | admin:list | admin:update` (§13). Son aktif süper admin pasifleştirilemez / rolü düşürülemez.
 
 #### `languages`
 | Kolon | Tip | Not |
@@ -580,17 +584,36 @@ session()->set('panel_auth', ['id' => 7, 'restaurant_id' => 3, 'login_at' => tim
 5. Herhangi biri başarısızsa `panel_auth` silinir, login'e yönlendirilir.
 6. Başarılıysa `service('tenant')->set(...)`.
 
-`AdminAuthFilter` aynı mantıkla `admins` tablosunu doğrular. Admin filtresi `TenantContext`'e **dokunmaz**.
+`AdminAuthFilter` aynı mantıkla `admins` tablosunu doğrular (`is_active=1` ve rol `Config\AdminRoles`'ta tanımlı). Admin filtresi `TenantContext`'e **dokunmaz**.
 
 ### 7.3 Filter Alias'ları (`Config/Filters.php`)
 
 | Alias | Sınıf | Kullanım |
 |---|---|---|
 | `adminauth` | `AdminAuthFilter` | `/admin/*` (login hariç) |
+| `adminperm:<izin>` | `AdminPermissionFilter` | `adminauth`'tan sonra; rolün izni yoksa HTML → 403 `admin/forbidden`, JSON → 403 `{status:error}` (§7.4) |
 | `panelauth` | `PanelAuthFilter` | `/panel/*` (login hariç) |
 | `panelowner` | `PanelOwnerFilter` | Yalnızca owner'a açık panel rotaları; manager → 404 |
 | `panelsubscription` | `PanelSubscriptionFilter` | Panel içerik rotaları; restoran askıdaysa owner → `panel/subscription`, manager → `panel`, JSON → 403 (§9.5) |
 | `nocache` | `NoCacheFilter` | Tüm panel yanıtlarına `Cache-Control: no-store` |
+
+### 7.4 Admin Rolleri ve İzinleri (`Config\AdminRoles`)
+
+Roller ve izinleri tek yerde tanımlıdır; yeni rol (ör. `support`) eklemek için oraya bir girdi eklemek yeterlidir. `logout` dışındaki her admin rotası tam olarak bir `adminperm:<izin>` taşır (`AdminRouteCoverageTest` doğrular). View'lar yetkisiz düğmeleri `admin_can('<izin>')` ile gizler; asıl koruma filtredir. Rol her istekte DB'den okunduğu için değişiklik anında etkilidir.
+
+| İzin | Kapsam | super_admin | manager | accountant |
+|---|---|:-:|:-:|:-:|
+| `dashboard.view` | Gösterge paneli | ✓ | ✓ | ✓ |
+| `restaurants.view` | Restoran listesi / detay | ✓ | ✓ | ✓ |
+| `restaurants.manage` | Restoran ekle/düzenle/aktif-pasif, şube, restoran kullanıcısı, restoran dilleri, alan adı | ✓ | ✓ | – |
+| `restaurants.delete` | Restoran silme | ✓ | – | – |
+| `definitions.manage` | Diller, alerjenler, menü şablonları | ✓ | ✓ | – |
+| `billing.view` | Paket listesi, faturalar, abonelik sayfası (salt okunur), panodaki finans kartları | ✓ | ✓ | ✓ |
+| `invoices.manage` | Fatura ödendi işaretle, fatura indirimi | ✓ | – | ✓ |
+| `invoices.void` | Fatura iptali | ✓ | – | – |
+| `subscriptions.manage` | Paket değiştir, gecikme eşiği, restoran indirimi | ✓ | – | ✓ |
+| `subscriptions.control` | Abonelik iptal, askıya al, askıdan çıkar | ✓ | – | – |
+| `plans.manage` | Paket ekle/düzenle/sırala/aktif-pasif/sil | ✓ | – | – |
 
 ---
 
@@ -663,6 +686,8 @@ Alerjenler için: istenen dil → şubenin varsayılan dili → `tr` → `en` �
 `app/Config/Routes.php`. `autoRoute` kapalı. Formlar düz HTML olduğu için güncelleme/silme işlemleri **POST** ile ve açık yollarla yapılır (method spoofing kullanılmaz). `(:num)` ile kısıtlanmayan ID parametresi yoktur.
 
 ### 9.1 Admin Rotaları — `/admin`
+
+> Güncel gruplama `app/Config/Routes.php`'tedir: her izin için ayrı alt grup, `['filter' => ['adminauth', 'adminperm:<izin>', 'nocache']]` (§7.4). Aşağıdaki liste rota kümesini gösterir.
 
 ```php
 $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static function ($routes) {
@@ -995,7 +1020,7 @@ Kurallar:
 |---|---|
 | `LanguageSeeder` | tr (Türkçe), en (English), de (Deutsch), ru (Русский), ar (العربية, rtl) |
 | `AllergenSeeder` | AB 14 alerjeni, tr + en çevirileri: gluten, crustaceans, eggs, fish, peanuts, soybeans, milk, nuts, celery, mustard, sesame, sulphites, lupin, molluscs. İkonlar boş bırakılır. |
-| `AdminSeeder` | `.env`'deki `pixmenu.adminEmail` / `pixmenu.adminPassword` ile bir admin. Değerler yoksa çalışmaz ve hata verir. |
+| `AdminSeeder` | `.env`'deki `pixmenu.adminEmail` / `pixmenu.adminPassword` ile bir **süper admin**. Değerler yoksa çalışmaz ve hata verir. |
 | `DemoSeeder` | **Yalnızca development.** 2 restoran (izolasyon testini elle denemek için), her birinde 2 şube, owner + manager, kategoriler, ürünler, alerjen atamaları. |
 | `DatabaseSeeder` | Language → Allergen → Admin (Demo hariç) |
 
@@ -1003,6 +1028,14 @@ Kurallar:
 php spark migrate
 php spark db:seed DatabaseSeeder
 php spark db:seed DemoSeeder   # opsiyonel
+```
+
+Diğer admin hesapları (web arayüzü yok):
+
+```bash
+php spark admin:create --name "Ayşe Yılmaz" --email ayse@ornek.com --role accountant   # parola üretilir, bir kez yazılır
+php spark admin:list
+php spark admin:update ayse@ornek.com --role manager      # --active 0|1, --password [<parola>]
 ```
 
 ---

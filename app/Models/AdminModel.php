@@ -12,5 +12,5 @@ final class AdminModel extends Model
     protected $primaryKey    = 'id';
     protected $returnType    = 'array';
     protected $useTimestamps = true;
-    protected $allowedFields = ['name', 'email', 'password_hash', 'is_active', 'last_login_at', 'password_changed_at'];
+    protected $allowedFields = ['name', 'email', 'password_hash', 'role', 'is_active', 'last_login_at', 'password_changed_at'];
 }

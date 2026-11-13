@@ -37,6 +37,7 @@ class Filters extends BaseFilters
         'pagecache'     => PageCache::class,
         'performance'   => PerformanceMetrics::class,
         'adminauth'     => \App\Filters\AdminAuthFilter::class,
+        'adminperm'     => \App\Filters\AdminPermissionFilter::class,
         'panelauth'     => \App\Filters\PanelAuthFilter::class,
         'panelowner'    => \App\Filters\PanelOwnerFilter::class,
         'panelsubscription' => \App\Filters\PanelSubscriptionFilter::class,

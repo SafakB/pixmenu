@@ -29,9 +29,29 @@ final class AdminAuth extends BaseAuth
         return (new AdminModel())->find($id);
     }
 
+    /**
+     * Bilinmeyen (config'ten kaldırılmış) rol → giriş/oturum reddedilir.
+     */
     protected function isUsable(array $user, ?array $session): bool
     {
-        return (int) $user['is_active'] === 1;
+        return (int) $user['is_active'] === 1 && config('AdminRoles')->exists((string) ($user['role'] ?? ''));
+    }
+
+    /**
+     * Oturumdaki admin bu izne sahip mi? Rol her istekte DB'den okunur; değişiklik anında etkilidir.
+     */
+    public function can(string $permission): bool
+    {
+        $user = $this->user();
+
+        return $user !== null && config('AdminRoles')->allows((string) $user['role'], $permission);
+    }
+
+    public function roleLabel(): string
+    {
+        $user = $this->user();
+
+        return $user === null ? '' : config('AdminRoles')->label((string) $user['role']);
     }
 
     protected function sessionPayload(array $user): array
