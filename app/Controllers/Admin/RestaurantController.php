@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Models\BranchModel;
 use App\Models\BranchTranslationModel;
 use App\Models\LanguageModel;
+use App\Models\PlanModel;
 use App\Models\RestaurantLanguageModel;
 use App\Models\RestaurantModel;
 use App\Models\RestaurantTranslationModel;
@@ -25,7 +26,7 @@ final class RestaurantController extends AdminBaseController
 {
     /**
      * View: admin/restaurants/index — restaurants[{id, slug, name, currency_code, is_active,
-     *       plan_name|null, subscription_status|null, suspended (bool), suspension_reason|null}]
+     *       plan_name|null, plan_badge_class|null, subscription_status|null, suspended (bool), suspension_reason|null}]
      */
     public function index(): string
     {
@@ -37,7 +38,9 @@ final class RestaurantController extends AdminBaseController
             $current[(int) $sub['restaurant_id']] = $sub;
         }
 
-        $planNames = (new PlanService())->texts(array_values(array_unique(array_map('intval', array_column($current, 'plan_id')))));
+        $planIds    = array_values(array_unique(array_map('intval', array_column($current, 'plan_id'))));
+        $planNames  = (new PlanService())->texts($planIds);
+        $planBadges = $planIds === [] ? [] : array_column((new PlanModel())->select('id, badge_class')->whereIn('id', $planIds)->findAll(), 'badge_class', 'id');
 
         foreach ($restaurants as $restaurant) {
             $chains[(int) $restaurant['id']] = [(int) $restaurant['default_language_id']];
@@ -54,6 +57,9 @@ final class RestaurantController extends AdminBaseController
                 'is_active'     => (int) $restaurant['is_active'] === 1,
                 'plan_name'     => isset($current[(int) $restaurant['id']])
                     ? ($planNames[(int) $current[(int) $restaurant['id']]['plan_id']]['name'] ?? null)
+                    : null,
+                'plan_badge_class' => isset($current[(int) $restaurant['id']])
+                    ? (($planBadges[(int) $current[(int) $restaurant['id']]['plan_id']] ?? '') ?: 'bg-primary')
                     : null,
                 'subscription_status' => $current[(int) $restaurant['id']]['status'] ?? null,
                 'suspended'           => $restaurant['suspended_at'] !== null,

@@ -109,6 +109,7 @@ return [
     'plan' => [
         'codeInvalid'             => 'Paket kodu küçük harfle başlamalı; yalnızca küçük harf, rakam ve alt çizgi içerebilir (2–30 karakter).',
         'codeTaken'               => 'Bu paket kodu zaten kullanılıyor.',
+        'badgeClassInvalid'       => "Rozet class'ı yalnızca harf, rakam, boşluk, tire, alt çizgi ve iki nokta içerebilir (en fazla 100 karakter).",
         'priceInvalid'            => 'Fiyat 0 veya daha büyük, geçerli bir tutar olmalıdır (ör. 499,90).',
         'maxBranchesInvalid'      => 'Şube limiti 1–9999 arasında olmalı; sınırsız için boş bırakın.',
         'trialDaysInvalid'        => 'Deneme süresi 1–9999 gün arasında olmalı; ücretli paket için boş bırakın.',

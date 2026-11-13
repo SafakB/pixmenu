@@ -225,6 +225,12 @@ final class PlanService
             }
         }
 
+        $badge = preg_replace('/\s+/', ' ', trim((string) ($data['badge_class'] ?? '')));
+
+        if ($badge !== '' && preg_match('/^[A-Za-z0-9 _:-]{1,100}$/', $badge) !== 1) {
+            $errors['badge_class'] = lang('App.plan.badgeClassInvalid');
+        }
+
         $currency = strtoupper(trim((string) ($data['currency_code'] ?? '')));
 
         if (preg_match('/^[A-Z]{3}$/', $currency) !== 1) {
@@ -237,6 +243,7 @@ final class PlanService
 
         return [
             'code'                => $code,
+            'badge_class'         => $badge === '' ? null : $badge,
             'max_branches'        => $data['max_branches'],
             'allow_custom_domain' => (int) ! empty($data['allow_custom_domain']),
             'allow_custom_design' => (int) ! empty($data['allow_custom_design']),

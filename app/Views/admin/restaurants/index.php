@@ -36,6 +36,7 @@
                             <th scope="col">Slug</th>
                             <th scope="col">Para birimi</th>
                             <th scope="col">Paket</th>
+                            <th scope="col">Abonelik</th>
                             <th scope="col">Durum</th>
                             <th scope="col" class="text-end">İşlemler</th>
                         </tr>
@@ -57,8 +58,14 @@
                             <td><span class="badge bg-light text-body"><?= esc($r['currency_code']) ?></span></td>
                             <td>
                                 <?php if ($r['plan_name'] !== null): ?>
-                                    <a href="<?= site_url('admin/restaurants/' . $r['id'] . '/subscription') ?>" class="text-reset fw-medium"><?= esc($r['plan_name']) ?></a>
-                                    <div><?= view('partials/billing/badge', ['kind' => 'subscription', 'status' => $r['subscription_status']]) ?></div>
+                                    <a href="<?= site_url('admin/restaurants/' . $r['id'] . '/subscription') ?>" class="badge fs-12 <?= esc($r['plan_badge_class'], 'attr') ?>"><?= esc($r['plan_name']) ?></a>
+                                <?php else: ?>
+                                    <span class="text-muted">—</span>
+                                <?php endif ?>
+                            </td>
+                            <td>
+                                <?php if ($r['subscription_status'] !== null): ?>
+                                    <?= view('partials/billing/badge', ['kind' => 'subscription', 'status' => $r['subscription_status']]) ?>
                                 <?php else: ?>
                                     <span class="text-muted">—</span>
                                 <?php endif ?>
@@ -103,7 +110,7 @@
                         </tr>
                     <?php endforeach ?>
                     <tr id="restaurant-no-result" class="d-none">
-                        <td colspan="7" class="text-center text-muted py-4">Aramayla eşleşen restoran bulunamadı.</td>
+                        <td colspan="8" class="text-center text-muted py-4">Aramayla eşleşen restoran bulunamadı.</td>
                     </tr>
                     </tbody>
                 </table>

@@ -46,7 +46,7 @@
                         <tr data-id="<?= esc((string) $id, 'attr') ?>">
                             <td><span class="drag-handle text-muted fs-18" data-bs-toggle="tooltip" title="Sürükleyerek sırala" aria-label="Sürükleyerek sırala"><i class="ri-drag-move-2-line"></i></span></td>
                             <td>
-                                <a href="<?= site_url('admin/plans/' . $id . '/edit') ?>" class="fw-medium text-reset"><?= esc($p['name']) ?></a>
+                                <a href="<?= site_url('admin/plans/' . $id . '/edit') ?>" class="badge fs-12 <?= esc(($p['badge_class'] ?? '') !== '' ? $p['badge_class'] : 'bg-primary', 'attr') ?>"><?= esc($p['name']) ?></a>
                                 <?php if ((int) $p['is_featured'] === 1): ?><span class="badge bg-danger-subtle text-danger ms-1">Popüler</span><?php endif ?>
                                 <div class="text-muted small font-monospace"><?= esc($p['code']) ?></div>
                             </td>

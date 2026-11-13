@@ -90,6 +90,10 @@ Velzon sınıflarıyla, sözleşmeyi bozmayan hazır parçalar. Uyarlarken alan 
 <?php endif ?>
 ```
 
+Paket adı rozeti: renk paketin `badge_class` alanından gelir (admin paket formunda elle girilir, boş = `bg-primary`). Sabit renk yazma:
+`<span class="badge <?= esc($p['badge_class'] ?: 'bg-primary', 'attr') ?>"><?= esc($p['name']) ?></span>`
+(`admin/restaurants/index`'te controller hazır `plan_badge_class` verir.) Abonelik durumu ayrı rozettir: `partials/billing/badge` (`kind` = `subscription`).
+
 ```php
 <?php if ($restaurants === []): ?>
     <div class="text-center py-5">

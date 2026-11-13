@@ -84,6 +84,13 @@ $checked  = static function (string $field, int $default) use ($hasOld, $plan): 
                     <div class="form-text">Küçük harf, rakam ve alt çizgi.</div>
                 </div>
                 <div class="mb-3">
+                    <label class="form-label" for="badge_class">Rozet class'ı</label>
+                    <input type="text" class="form-control font-monospace<?= $invalid('badge_class') ?>" id="badge_class" name="badge_class" maxlength="100" placeholder="ör. bg-primary"
+                           value="<?= $value('badge_class', $plan['badge_class'] ?? '') ?>">
+                    <?= $feedback('badge_class') ?>
+                    <div class="form-text">Listelerde paket adı bu class ile rozet olarak gösterilir. Boş = <code>bg-primary</code>.</div>
+                </div>
+                <div class="mb-3">
                     <label class="form-label" for="sort_order">Sıra</label>
                     <input type="number" class="form-control<?= $invalid('sort_order') ?>" id="sort_order" name="sort_order" min="0" max="65535"
                            value="<?= $value('sort_order', $plan['sort_order'] ?? 0) ?>">

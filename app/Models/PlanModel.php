@@ -16,7 +16,7 @@ final class PlanModel extends Model
     protected $returnType    = 'array';
     protected $useTimestamps = true;
     protected $allowedFields = [
-        'code', 'max_branches', 'allow_custom_domain', 'allow_custom_design', 'trial_days',
+        'code', 'badge_class', 'max_branches', 'allow_custom_domain', 'allow_custom_design', 'trial_days',
         'price_monthly', 'price_yearly', 'currency_code', 'is_featured', 'is_active', 'sort_order',
     ];
 

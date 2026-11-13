@@ -125,6 +125,7 @@ final class PlanController extends AdminBaseController
 
         return [
             'code'                => strtolower($post('code')),
+            'badge_class'         => $post('badge_class'),
             'max_branches'        => $post('max_branches'),
             'trial_days'          => $post('trial_days'),
             'price_monthly'       => $post('price_monthly'),
