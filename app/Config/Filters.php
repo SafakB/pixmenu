@@ -43,6 +43,7 @@ class Filters extends BaseFilters
         'panelsubscription' => \App\Filters\PanelSubscriptionFilter::class,
         'nocache'       => \App\Filters\NoCacheFilter::class,
         'csrfheader'    => \App\Filters\CsrfHeaderFilter::class,
+        'activitylog'   => \App\Filters\ActivityLogFilter::class,
     ];
 
     /**
@@ -114,5 +115,8 @@ class Filters extends BaseFilters
      *
      * @var array<string, array<string, list<string>>>
      */
-    public array $filters = [];
+    public array $filters = [
+        // İşlem kaydı: başarılı POST'lar + giriş/çıkış (App\Services\ActivityLogger).
+        'activitylog' => ['after' => ['admin/*', 'panel/*']],
+    ];
 }

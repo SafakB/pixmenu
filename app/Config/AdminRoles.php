@@ -26,6 +26,7 @@ use CodeIgniter\Config\BaseConfig;
  *   subscriptions.manage  Paket değiştir, ek süre, restoran indirimi
  *   subscriptions.control Abonelik iptal, askıya al, askıdan çıkar
  *   plans.manage          Paket ekle/düzenle/sırala/sil
+ *   logs.view             İşlem kayıtları (admin ve panel kullanıcılarının yaptıkları; varsayılan: yalnızca süper admin)
  */
 class AdminRoles extends BaseConfig
 {

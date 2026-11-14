@@ -50,7 +50,9 @@ final class RestaurantUserController extends AdminBaseController
         $this->requireRestaurant($restaurantId);
 
         return $this->handle(function () use ($restaurantId): ResponseInterface {
-            (new UserService(Scope::admin($restaurantId)))->create($this->input());
+            $input = $this->input();
+            $id    = (new UserService(Scope::admin($restaurantId)))->create($input);
+            service('activity')->detail(['id' => $id, 'email' => trim($input['email']), 'role' => $input['role']]);
 
             return $this->done('admin/restaurants/' . $restaurantId . '/users', lang('App.created'));
         });
@@ -69,7 +71,13 @@ final class RestaurantUserController extends AdminBaseController
         $user = $this->requireUser($restaurantId, $userId);
 
         return $this->handle(function () use ($restaurantId, $user): ResponseInterface {
-            (new UserService(Scope::admin($restaurantId)))->update($user, $this->input());
+            $input = $this->input();
+            (new UserService(Scope::admin($restaurantId)))->update($user, $input);
+            service('activity')->detail([
+                'email'            => trim($input['email']),
+                'role'             => $input['role'],
+                'password_changed' => $input['password'] !== '' ? 'evet' : 'hayır',
+            ]);
 
             return $this->done('admin/restaurants/' . $restaurantId . '/users', lang('App.saved'));
         });
@@ -92,6 +100,7 @@ final class RestaurantUserController extends AdminBaseController
 
         return $this->handle(function () use ($restaurantId, $user): ResponseInterface {
             (new UserService(Scope::admin($restaurantId)))->delete($user);
+            service('activity')->detail(['email' => $user['email'], 'role' => $user['role']]);
 
             return $this->done('admin/restaurants/' . $restaurantId . '/users', lang('App.deleted'));
         });

@@ -66,13 +66,18 @@ final class SubscriptionController extends AdminBaseController
                 throw ValidationException::single('discount', lang('App.invoice.discountInvalid'));
             }
 
+            $planId = (int) $this->request->getPost('plan_id');
+            $cycle  = (string) $this->request->getPost('billing_cycle');
+
             $result = (new SubscriptionService())->changePlan(
                 $restaurantId,
-                (int) $this->request->getPost('plan_id'),
-                (string) $this->request->getPost('billing_cycle'),
+                $planId,
+                $cycle,
                 $discount,
                 mb_substr(trim((string) $this->request->getPost('notes')), 0, 2000),
             );
+
+            service('activity')->detail(['plan' => (new PlanService())->name($planId), 'cycle' => $cycle, 'discount' => $discount]);
 
             $message = $result['open_invoices'] > 0
                 ? lang('App.subscription.changedOpenInvoices', [$result['open_invoices']])
@@ -92,6 +97,7 @@ final class SubscriptionController extends AdminBaseController
         return $this->handle(function () use ($restaurantId): ResponseInterface {
             $cancel = $this->flag('cancel') === 1;
             (new SubscriptionService())->setCancelAtPeriodEnd($restaurantId, $cancel);
+            service('activity')->detail(['cancel' => $cancel ? 'dönem sonunda' : 'geri alındı']);
 
             return $this->done($this->base($restaurantId), lang($cancel ? 'App.subscription.cancelScheduled' : 'App.subscription.cancelUndone'));
         });
@@ -136,6 +142,7 @@ final class SubscriptionController extends AdminBaseController
             }
 
             (new SubscriptionService())->setGraceDays($restaurantId, $raw === '' ? null : (int) $raw);
+            service('activity')->detail(['grace_days' => $raw === '' ? 'varsayılan' : (int) $raw]);
 
             return $this->done($this->base($restaurantId), lang('App.subscription.graceSaved'));
         });
@@ -158,6 +165,8 @@ final class SubscriptionController extends AdminBaseController
                 $percent === '' ? null : $percent,
                 $until === '' ? null : $until,
             );
+
+            service('activity')->detail(['percent' => $percent === '' ? 'kaldırıldı' : $percent, 'until' => $until === '' ? 'süresiz' : $until]);
 
             return $this->done($this->base($restaurantId), lang($percent === '' ? 'App.subscription.discountRemoved' : 'App.subscription.discountSaved'));
         });

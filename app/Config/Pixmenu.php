@@ -69,4 +69,7 @@ final class Pixmenu extends BaseConfig
 
     /** Liste sayfalarında sayfa başına kayıt. */
     public int $perPage = 50;
+
+    /** İşlem kayıtlarının saklanma süresi (gün); eskileri `php spark activity:prune` siler. */
+    public int $activityLogRetentionDays = 180;
 }

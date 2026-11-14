@@ -7,6 +7,7 @@ namespace Config;
 use App\Libraries\Auth\AdminAuth;
 use App\Libraries\Auth\PanelAuth;
 use App\Libraries\Tenant\TenantContext;
+use App\Services\ActivityLogger;
 use App\Services\ImageService;
 use App\Services\LanguageResolver;
 use CodeIgniter\Config\BaseService;
@@ -14,7 +15,7 @@ use CodeIgniter\Config\BaseService;
 /**
  * Services Configuration file.
  *
- * Proje servisleri: tenant(), adminAuth(), panelAuth(), languageResolver(), images().
+ * Proje servisleri: tenant(), adminAuth(), panelAuth(), languageResolver(), activity(), images().
  */
 class Services extends BaseService
 {
@@ -55,6 +56,18 @@ class Services extends BaseService
         }
 
         return new LanguageResolver();
+    }
+
+    /**
+     * İstek başına tek işlem kaydedici; ActivityLogFilter yanıt sonrası flush() eder.
+     */
+    public static function activity(bool $getShared = true): ActivityLogger
+    {
+        if ($getShared) {
+            return static::getSharedInstance('activity');
+        }
+
+        return new ActivityLogger();
     }
 
     public static function images(bool $getShared = true): ImageService

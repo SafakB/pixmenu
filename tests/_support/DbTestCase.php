@@ -102,7 +102,7 @@ abstract class DbTestCase extends CIUnitTestCase
     protected function resetRequestServices(): void
     {
         // 'response': önceki isteğin başlık/çerezleri sonraki yanıta taşınmasın.
-        foreach (['tenant', 'panelAuth', 'adminAuth', 'languageResolver', 'response'] as $service) {
+        foreach (['tenant', 'panelAuth', 'adminAuth', 'languageResolver', 'activity', 'response'] as $service) {
             Services::resetSingle($service);
         }
     }

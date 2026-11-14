@@ -119,6 +119,10 @@ final class RestaurantController extends AdminBaseController
                 $owner,
             );
 
+            $activity = service('activity');
+            $activity->restaurant($id);
+            $activity->detail(['id' => $id, 'slug' => trim((string) $this->request->getPost('slug'))] + ($ownerEmail === '' ? [] : ['owner' => $ownerEmail]));
+
             return $this->done('admin/restaurants/' . $id, lang('App.created'), ['id' => $id]);
         });
     }
@@ -249,14 +253,18 @@ final class RestaurantController extends AdminBaseController
 
     public function toggle(int $id): ResponseInterface
     {
-        (new RestaurantService())->toggle($this->requireRestaurant($id));
+        $restaurant = $this->requireRestaurant($id);
+        (new RestaurantService())->toggle($restaurant);
+        service('activity')->detail(['is_active' => (int) $restaurant['is_active'] === 1 ? 0 : 1]);
 
         return $this->done('admin/restaurants', lang('App.statusChanged'));
     }
 
     public function delete(int $id): ResponseInterface
     {
-        (new RestaurantService())->delete($this->requireRestaurant($id));
+        $restaurant = $this->requireRestaurant($id);
+        (new RestaurantService())->delete($restaurant);
+        service('activity')->detail(['slug' => $restaurant['slug']]);
 
         return $this->done('admin/restaurants', lang('App.deleted'));
     }

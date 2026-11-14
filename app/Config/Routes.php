@@ -162,6 +162,11 @@ $routes->group('admin', ['namespace' => 'App\Controllers\Admin'], static functio
         $routes->post('restaurants/(:num)/delete', 'RestaurantController::delete/$1');
     });
 
+    // İşlem kayıtları (salt okunur)
+    $routes->group('', $perm('logs.view'), static function ($routes) {
+        $routes->get('logs', 'ActivityLogController::index');                   // ?area=&restaurant=&actor=&action=&from=&to=&page=
+    });
+
     $routes->group('', $perm('restaurants.view'), static function ($routes) {
         $routes->get('restaurants', 'RestaurantController::index');
         $routes->get('restaurants/(:num)', 'RestaurantController::show/$1');

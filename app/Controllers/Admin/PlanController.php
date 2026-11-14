@@ -39,7 +39,9 @@ final class PlanController extends AdminBaseController
     public function create(): ResponseInterface
     {
         return $this->handle(function (): ResponseInterface {
-            (new PlanService())->create($this->input(), $this->translationsInput());
+            $input = $this->input();
+            $id    = (new PlanService())->create($input, $this->translationsInput());
+            service('activity')->detail(['id' => $id] + $this->logFields($input));
 
             return $this->done('admin/plans', lang('App.created'));
         });
@@ -58,7 +60,9 @@ final class PlanController extends AdminBaseController
         $plan = $this->requirePlan($id);
 
         return $this->handle(function () use ($plan): ResponseInterface {
-            (new PlanService())->update($plan, $this->input(), $this->translationsInput());
+            $input = $this->input();
+            (new PlanService())->update($plan, $input, $this->translationsInput());
+            service('activity')->detail($this->logFields($input));
 
             return $this->done('admin/plans', lang('App.saved'));
         });
@@ -81,6 +85,7 @@ final class PlanController extends AdminBaseController
 
         return $this->handle(function () use ($plan): ResponseInterface {
             (new PlanService())->delete($plan);
+            service('activity')->detail(['code' => $plan['code']]);
 
             return $this->done('admin/plans', lang('App.deleted'));
         });
@@ -138,6 +143,23 @@ final class PlanController extends AdminBaseController
             'is_featured'         => $this->flag('is_featured'),
             'is_active'           => $this->flag('is_active'),
             'sort_order'          => $this->sortOrder(),
+        ];
+    }
+
+    /**
+     * İşlem kaydı ayrıntısı: paketin kodu ve fiyatları.
+     *
+     * @param array<string, mixed> $input
+     *
+     * @return array<string, mixed>
+     */
+    private function logFields(array $input): array
+    {
+        return [
+            'code'          => $input['code'],
+            'price_monthly' => $input['price_monthly'],
+            'price_yearly'  => $input['price_yearly'],
+            'currency'      => $input['currency_code'],
         ];
     }
 

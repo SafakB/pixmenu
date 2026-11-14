@@ -2,7 +2,7 @@
   "files": {
     "app/Config/View.php": "969b92b00b9268e71d6a8363f38042ac39d0c24be4f1721d3335991498dc2cd0",
     "app/Helpers/pixmenu_helper.php": "d60af9d00b4be67b00bbf303d93afacb7f7f55f1af7a3ceed7d4596db13be1ab",
-    "app/Views/layouts/admin.php": "12b4c75b2c191b18a6a394144bb769399587b5f293a7fb4e8f2abe7a5e2703cd",
+    "app/Views/layouts/admin.php": "c055e6f0533f96924939aaca3f6e3cf0faf300621bf21ce9d9f6444433c8c6bf",
     "app/Views/layouts/auth.php": "0f4e2eee7dd396b03c66f9dfc6cf81cded342253d7e7114105fc10f92ebbe35d",
     "app/Views/layouts/panel.php": "bdea2d922e7cdcc9dc24b787986818a1b5c4f0a54b7d6762b39da0ea405d60ed",
     "app/Views/partials/flash.php": "76809f6c0bf41e0f3ac6f85ffb975f5cecf25d46cf15913d7936aef425be9252",
@@ -18,7 +18,7 @@
     "app/Views/partials/layout/user_menu.php": "acb38b5c3171d860df5b90d853ac04b71905e86c808dacc7e648c8f3eca6dd3b",
     "app/Views/partials/login_form.php": "208934aed4bf9249b3c649d063996e35edc84353153787a28be6f1c1c412e549",
     "app/Views/partials/translations.php": "404da629cc8cb89d4302e5c81ac0045f765959def56c31469edc86f5e8bebe8c",
-    "docs/VIEW_CONTRACT.md": "b20c2c63a51500bf4aa96e6492352bef9b710d25288022c8de82b25ada779e49",
+    "docs/VIEW_CONTRACT.md": "e1a0193a0a4accc1d92a6e3804583ae47b6b648f31a7df3c3570654f0727821a",
     "public/assets/js/app.js": "47b9e55c55fa6e0dfb414e93cd29c613d7a394e8bc747f807234315a585033ba",
     "public/assets/js/layout.js": "2a183a91dc4ab99e0d94dd387bec4d4fc0b7ce01ba4318d589cb99885931dd39",
     "public/assets/js/pix-confirm.js": "856f249ab134f03b040a26fbd6baa963c0e5b29b83f3094e5c76209efc5a9ab3"

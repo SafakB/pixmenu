@@ -53,6 +53,30 @@ abstract class AdminBaseController extends BaseController
     }
 
     /**
+     * Silinmişler dahil tüm restoranların adı (id => ad) — fatura ve işlem kaydı listeleri.
+     *
+     * @return array<int, string>
+     */
+    protected function restaurantNames(): array
+    {
+        $restaurants = (new RestaurantModel())->withDeleted()->orderBy('id', 'ASC')->findAll();
+        $chains      = [];
+
+        foreach ($restaurants as $r) {
+            $chains[(int) $r['id']] = [(int) $r['default_language_id']];
+        }
+
+        $names = service('languageResolver')->resolveManyWithChains(RestaurantTranslationModel::class, $chains);
+        $out   = [];
+
+        foreach ($restaurants as $r) {
+            $out[(int) $r['id']] = (string) ($names[(int) $r['id']]['name'] ?? $r['slug']);
+        }
+
+        return $out;
+    }
+
+    /**
      * @param array<string, mixed> $data
      */
     protected function render(string $view, array $data = []): string

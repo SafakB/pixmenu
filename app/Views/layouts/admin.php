@@ -15,6 +15,8 @@ $menu = [
     ['label' => 'Diller', 'path' => 'admin/languages', 'icon' => 'ri-translate-2', 'match' => ['admin/languages', 'admin/languages/*'], 'can' => 'definitions.manage'],
     ['label' => 'Alerjenler', 'path' => 'admin/allergens', 'icon' => 'ri-error-warning-line', 'match' => ['admin/allergens', 'admin/allergens/*'], 'can' => 'definitions.manage'],
     ['label' => 'Menü şablonları', 'path' => 'admin/templates', 'icon' => 'ri-layout-masonry-line', 'match' => ['admin/templates', 'admin/templates/*'], 'can' => 'definitions.manage'],
+    ['title' => 'Sistem'],
+    ['label' => 'İşlem Kayıtları', 'path' => 'admin/logs', 'icon' => 'ri-history-line', 'match' => ['admin/logs'], 'can' => 'logs.view'],
 ];
 $visible = [];
 $heading = null; // $title sayfa başlığıdır; burada kullanılmaz

@@ -54,6 +54,8 @@ abstract class AbstractAuthController extends BaseController
             return redirect()->back()->withInput()->with('error', lang('App.auth.invalid'));
         }
 
+        service('activity')->succeed();
+
         return $this->redirectTo($this->area());
     }
 
@@ -62,6 +64,11 @@ abstract class AbstractAuthController extends BaseController
      */
     public function logout(): ResponseInterface
     {
+        // İşlem kaydı için aktör, oturum silinmeden önce alınır.
+        $activity = service('activity');
+        $activity->actor($this->auth()->user());
+        $activity->succeed();
+
         $this->auth()->logout();
 
         return $this->redirectTo($this->area() . '/login')->with('success', lang('App.auth.loggedOut'));

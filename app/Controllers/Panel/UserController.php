@@ -56,7 +56,9 @@ final class UserController extends PanelBaseController
         $this->requireOwner();
 
         return $this->handle(function (): ResponseInterface {
-            (new UserService(Scope::tenant()))->create($this->input());
+            $input = $this->input();
+            $id    = (new UserService(Scope::tenant()))->create($input);
+            service('activity')->detail(['id' => $id, 'email' => trim($input['email']), 'role' => $input['role']]);
 
             return $this->done('panel/users', lang('App.created'));
         });
@@ -78,7 +80,13 @@ final class UserController extends PanelBaseController
         $user = $this->requireManager($userId);
 
         return $this->handle(function () use ($user): ResponseInterface {
-            (new UserService(Scope::tenant()))->update($user, $this->input());
+            $input = $this->input();
+            (new UserService(Scope::tenant()))->update($user, $input);
+            service('activity')->detail([
+                'email'            => trim($input['email']),
+                'role'             => $input['role'],
+                'password_changed' => $input['password'] !== '' ? 'evet' : 'hayır',
+            ]);
 
             return $this->done('panel/users', lang('App.saved'));
         });
@@ -103,6 +111,7 @@ final class UserController extends PanelBaseController
 
         return $this->handle(function () use ($user): ResponseInterface {
             (new UserService(Scope::tenant()))->delete($user, $this->tenant->userId());
+            service('activity')->detail(['email' => $user['email'], 'role' => $user['role']]);
 
             return $this->done('panel/users', lang('App.deleted'));
         });

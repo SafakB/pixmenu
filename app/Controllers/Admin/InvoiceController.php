@@ -8,7 +8,6 @@ use App\Exceptions\ValidationException;
 use App\Libraries\Billing\Period;
 use App\Models\InvoiceModel;
 use App\Models\RestaurantModel;
-use App\Models\RestaurantTranslationModel;
 use App\Services\InvoiceService;
 use App\Services\PlanService;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -113,14 +112,18 @@ final class InvoiceController extends AdminBaseController
 
         return $this->handle(function () use ($invoice): ResponseInterface {
             $paidAt = trim((string) $this->request->getPost('paid_at'));
+            $paidAt = $paidAt === '' ? Period::today() : $paidAt;
+            $method = (string) $this->request->getPost('payment_method');
 
             (new InvoiceService())->markPaid(
                 $invoice,
-                (string) $this->request->getPost('payment_method'),
+                $method,
                 trim((string) $this->request->getPost('payment_reference')),
-                $paidAt === '' ? Period::today() : $paidAt,
+                $paidAt,
                 (int) $this->admin['id'],
             );
+
+            $this->logInvoice($invoice, ['total' => $invoice['total'] . ' ' . $invoice['currency_code'], 'method' => $method, 'paid_at' => $paidAt]);
 
             return $this->done('admin/invoices/' . $invoice['id'], lang('App.invoice.paid'));
         });
@@ -143,6 +146,8 @@ final class InvoiceController extends AdminBaseController
 
             (new InvoiceService())->updateDiscount($invoice, $discount);
 
+            $this->logInvoice($invoice, ['discount_old' => $invoice['discount'] ?? null, 'discount_new' => $discount]);
+
             return $this->done('admin/invoices/' . $invoice['id'], lang('App.invoice.discountUpdated'));
         });
     }
@@ -153,6 +158,8 @@ final class InvoiceController extends AdminBaseController
 
         return $this->handle(function () use ($invoice): ResponseInterface {
             (new InvoiceService())->void($invoice);
+
+            $this->logInvoice($invoice, ['total' => $invoice['total'] . ' ' . $invoice['currency_code']]);
 
             return $this->done('admin/invoices/' . $invoice['id'], lang('App.invoice.voided'));
         });
@@ -167,26 +174,15 @@ final class InvoiceController extends AdminBaseController
     }
 
     /**
-     * Silinmişler dahil tüm restoranların adı (id => ad).
+     * İşlem kaydı ayrıntısı: fatura no + restoran (URL'de restoran yok).
      *
-     * @return array<int, string>
+     * @param array<string, mixed> $invoice
+     * @param array<string, mixed> $extra
      */
-    private function restaurantNames(): array
+    private function logInvoice(array $invoice, array $extra): void
     {
-        $restaurants = (new RestaurantModel())->withDeleted()->orderBy('id', 'ASC')->findAll();
-        $chains      = [];
-
-        foreach ($restaurants as $r) {
-            $chains[(int) $r['id']] = [(int) $r['default_language_id']];
-        }
-
-        $names = service('languageResolver')->resolveManyWithChains(RestaurantTranslationModel::class, $chains);
-        $out   = [];
-
-        foreach ($restaurants as $r) {
-            $out[(int) $r['id']] = (string) ($names[(int) $r['id']]['name'] ?? $r['slug']);
-        }
-
-        return $out;
+        $activity = service('activity');
+        $activity->restaurant((int) $invoice['restaurant_id']);
+        $activity->detail(['number' => $invoice['number']] + $extra);
     }
 }

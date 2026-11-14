@@ -43,6 +43,9 @@ abstract class BaseController extends Controller
      */
     protected function jsonSuccess(array|object $data = [], string $message = '', int $status = 200): ResponseInterface
     {
+        // İşlem kaydı: yalnızca POST'ta yazılır (ActivityLogFilter).
+        service('activity')->succeed();
+
         return $this->response->setStatusCode($status)->setJSON([
             'status'  => 'success',
             'data'    => $data === [] ? new \stdClass() : $data,
@@ -94,6 +97,8 @@ abstract class BaseController extends Controller
         if ($this->wantsJson()) {
             return $this->jsonSuccess($data, $message);
         }
+
+        service('activity')->succeed();
 
         return $this->redirectTo($to)->with('success', $message);
     }

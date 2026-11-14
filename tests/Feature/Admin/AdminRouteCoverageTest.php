@@ -78,7 +78,7 @@ final class AdminRouteCoverageTest extends CIUnitTestCase
 
         // Yalnızca süper adminin ('*') sahip olduğu izinler config'te listelenmez; rotalardan toplanır.
         return array_values(array_unique(array_merge(array_keys($all), [
-            'restaurants.delete', 'invoices.void', 'subscriptions.control', 'plans.manage',
+            'restaurants.delete', 'invoices.void', 'subscriptions.control', 'plans.manage', 'logs.view',
         ])));
     }
 

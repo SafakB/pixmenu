@@ -40,7 +40,9 @@ final class DomainController extends AdminBaseController
         $this->requireRestaurant($restaurantId);
 
         return $this->handle(function () use ($restaurantId): ResponseInterface {
-            (new DomainService())->save($restaurantId, (string) $this->request->getPost('domain'), $this->flag('is_active') === 1);
+            $domain = (string) $this->request->getPost('domain');
+            (new DomainService())->save($restaurantId, $domain, $this->flag('is_active') === 1);
+            service('activity')->detail(['domain' => DomainService::normalize($domain) ?? trim($domain), 'is_active' => $this->flag('is_active')]);
 
             return $this->done($this->base($restaurantId), lang('App.domain.saved'));
         });
@@ -56,6 +58,7 @@ final class DomainController extends AdminBaseController
         return $this->handle(function () use ($restaurantId): ResponseInterface {
             $verified = $this->flag('verified') === 1;
             (new DomainService())->setVerified($restaurantId, $verified);
+            service('activity')->detail(['verified' => $verified ? 1 : 0]);
 
             return $this->done($this->base($restaurantId), lang($verified ? 'App.domain.verified' : 'App.domain.unverified'));
         });
@@ -66,7 +69,10 @@ final class DomainController extends AdminBaseController
         $this->requireRestaurant($restaurantId);
 
         return $this->handle(function () use ($restaurantId): ResponseInterface {
-            (new DomainService())->remove($restaurantId);
+            $service = new DomainService();
+            $domain  = $service->current($restaurantId)['domain'] ?? null;
+            $service->remove($restaurantId);
+            service('activity')->detail(['domain' => $domain]);
 
             return $this->done($this->base($restaurantId), lang('App.domain.removed'));
         });

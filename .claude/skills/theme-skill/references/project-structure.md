@@ -55,7 +55,7 @@ Admin menüsünde her öğe `'can' => '<izin>'` taşır; layout `admin_can()` il
  'match' => ['admin/languages', 'admin/languages/*']]                      // match ops.; yoksa path
 ```
 Aktiflik `url_is()` ile; tek seviyeli menü (alt menü/collapse yok). Mevcut menüler:
-- **admin**: Gösterge Paneli (`admin`), Restoranlar · *Abonelik*: Paketler, Faturalar · *Tanımlar*: Diller, Alerjenler, Menü şablonları (`admin/templates`; kod anahtarlı, sıralama JSON `ids` string listesi)
+- **admin**: Gösterge Paneli (`admin`), Restoranlar · *Abonelik*: Paketler, Faturalar · *Tanımlar*: Diller, Alerjenler, Menü şablonları (`admin/templates`; kod anahtarlı, sıralama JSON `ids` string listesi) · *Sistem*: İşlem Kayıtları (`admin/logs`; salt okunur, izin `logs.view` — varsayılan yalnızca süper admin)
 - **panel**: Gösterge Paneli, Şubeler · *Restoran* (yalnız owner): Restoran Bilgileri, Kullanıcılar, Abonelik · *Hesap*: Profil
 
 Şubeye bağlı sayfalar (`panel/branches/{b}/categories|products`) "Şubeler" altında aktif görünür (`panel/branches/*`).
