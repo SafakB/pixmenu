@@ -4,7 +4,7 @@ import type { AllergenRef, Menu } from '../api/types'
 import { useMenuHelpers } from '../core/menuHelpers'
 
 /**
- * compact:  ürün satırında küçük ikon/ad dizisi ("iz miktarda" olanlar soluk)
+ * compact:  ürün satırında küçük ikon/ad dizisi ("eser miktarda" olanlar soluk)
  * detailed: ürün detayında ikon + ad + seviye listesi
  */
 const props = defineProps<{ list: AllergenRef[]; menu: Menu; detailed?: boolean }>()

@@ -6,7 +6,7 @@ import { useMenuHelpers } from '../../core/menuHelpers'
 import AllergenBadges from './AllergenBadges.vue'
 
 /**
- * Yatay ürün kartı: solda fotoğraf (alerjen rozetleri üstünde), sağda ad, açıklama, fiyat.
+ * Yatay ürün kartı: solda fotoğraf, sağda ad, açıklama, alerjen rozetleri ve fiyat.
  * Kartın tamamı tek düğmedir; "+" yalnızca görsel ipucu, dokununca ürün penceresi açılır.
  */
 const props = defineProps<{ product: Product; menu: Menu }>()
@@ -33,13 +33,6 @@ const image = computed(() => props.product.thumb_url ?? props.product.image_url)
           height="360"
           class="absolute inset-0 size-full object-cover"
         />
-        <AllergenBadges
-          v-if="product.allergens.length"
-          :list="product.allergens"
-          :menu="menu"
-          :max="3"
-          class="absolute start-2 top-2 end-2 flex-col items-start"
-        />
       </span>
 
       <span class="flex min-w-0 flex-1 flex-col p-4">
@@ -48,7 +41,7 @@ const image = computed(() => props.product.thumb_url ?? props.product.image_url)
           {{ product.description }}
         </span>
         <AllergenBadges
-          v-if="!image && product.allergens.length"
+          v-if="product.allergens.length"
           :list="product.allergens"
           :menu="menu"
           class="mt-2 flex-wrap"

@@ -11,7 +11,7 @@ const tr = {
   productCountOne: '{n} ürün',
   allergens: 'Alerjenler',
   contains: 'İçerir',
-  mayContain: 'İz miktarda içerebilir',
+  mayContain: 'Eser miktarda içerebilir',
   chooseBranch: 'Şube seçin',
   allBranches: 'Tüm şubeler',
   back: 'Geri',
