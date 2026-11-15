@@ -6,41 +6,59 @@ namespace App\Controllers\Admin;
 
 use App\Models\BranchModel;
 use App\Models\BranchTranslationModel;
+use App\Models\CategoryModel;
 use App\Models\MenuTemplateModel;
+use App\Models\ProductModel;
+use App\Models\RestaurantUserBranchModel;
 use App\Services\BranchService;
 use App\Services\Scope;
+use App\Services\SiteService;
 use App\Services\TranslationService;
 use CodeIgniter\HTTP\ResponseInterface;
 
 final class BranchController extends AdminBaseController
 {
     /**
-     * View: admin/branches/index — restaurant, branches[{id, slug, name, public_code, menu_url, template_code, template_name, is_active, sort_order}]
+     * View: admin/branches/index — restaurant,
+     * branches[{id, slug, name, public_code, menu_url, template_code, template_name, is_active, sort_order,
+     *           category_count, product_count, managers[{name, initials}]}]
      */
     public function index(int $restaurantId): string
     {
         $restaurant = $this->requireRestaurant($restaurantId);
         $branches   = (new BranchModel())->forRestaurant($restaurantId)->accessible(null);
+        $branchIds  = array_map('intval', array_column($branches, 'id'));
         $names      = service('languageResolver')->resolveMany(
             BranchTranslationModel::class,
-            array_map('intval', array_column($branches, 'id')),
+            $branchIds,
             [(int) $restaurant['default_language_id']],
         );
 
+        $categoryCounts = (new CategoryModel())->forRestaurant($restaurantId)->countsByBranch($branchIds);
+        $productCounts  = (new ProductModel())->forRestaurant($restaurantId)->countsByBranch($branchIds);
+        $managers       = (new RestaurantUserBranchModel())->forRestaurant($restaurantId)->activeManagersByBranch($branchIds);
+
         $templates  = array_column((new MenuTemplateModel())->findAll(), 'name', 'code');
+        $menuBase   = (new SiteService())->canonicalBase($restaurantId, (string) $restaurant['slug']);
 
         return $this->render('admin/branches/index', [
             'restaurant' => $restaurant + ['name' => $this->restaurantName($restaurant)],
             'branches'   => array_map(static fn (array $branch): array => [
-                'id'            => (int) $branch['id'],
-                'slug'          => $branch['slug'],
-                'name'          => $names[(int) $branch['id']]['name'] ?? $branch['slug'],
-                'public_code'   => $branch['public_code'],
-                'menu_url'      => site_url('m/' . $branch['public_code']),
-                'template_code' => $branch['template_code'],
-                'template_name' => $templates[$branch['template_code']] ?? $branch['template_code'],
-                'is_active'     => (int) $branch['is_active'] === 1,
-                'sort_order'    => (int) $branch['sort_order'],
+                'id'             => (int) $branch['id'],
+                'slug'           => $branch['slug'],
+                'name'           => $names[(int) $branch['id']]['name'] ?? $branch['slug'],
+                'public_code'    => $branch['public_code'],
+                'menu_url'       => SiteService::branchUrl($menuBase, $branch),
+                'template_code'  => $branch['template_code'],
+                'template_name'  => $templates[$branch['template_code']] ?? $branch['template_code'],
+                'is_active'      => (int) $branch['is_active'] === 1,
+                'sort_order'     => (int) $branch['sort_order'],
+                'category_count' => $categoryCounts[(int) $branch['id']] ?? 0,
+                'product_count'  => $productCounts[(int) $branch['id']] ?? 0,
+                'managers'       => array_map(static fn (array $user): array => [
+                    'name'     => $user['name'],
+                    'initials' => pix_initials($user['name']),
+                ], $managers[(int) $branch['id']] ?? []),
             ], $branches),
         ]);
     }

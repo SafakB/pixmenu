@@ -76,6 +76,7 @@ return [
     'restaurant' => [
         'slugTaken'     => 'Bu kısa ad (slug) zaten kullanılıyor.',
         'slugInvalid'     => 'Kısa ad yalnızca küçük harf, rakam ve tire içerebilir.',
+        'slugReserved'    => 'Bu kısa ad sistem tarafından ayrılmıştır; menü alt alan adı olarak kullanılamaz.',
         'currencyInvalid' => 'Geçerli bir para birimi seçin.',
         'currencyLocked'  => 'Restoranın ürünleri varken para birimi değiştirilemez; fiyatlar dönüştürülmez.',
         'logoDeleted'     => 'Logo silindi.',

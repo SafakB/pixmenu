@@ -113,7 +113,12 @@ final class CustomDomainTest extends DbTestCase
     public function testAppHostKeepsNormalRoutes(): void
     {
         $this->onHost((string) parse_url(config('App')->baseURL, PHP_URL_HOST));
-        $this->get('m/aaaaaaaaa1')->assertOK();
+
+        // /m/ rotası var; restoranın özel alan adı olduğu için kanonik menü adresine yönlenir.
+        $response = $this->get('m/aaaaaaaaa1');
+        $response->assertStatus(302);
+        $this->assertSame('https://menu.restoran-a.test/a1', $response->getRedirectUrl());
+
         $this->get('admin/login')->assertOK();
     }
 

@@ -19,6 +19,7 @@ use App\Models\SubscriptionModel;
 use App\Services\DomainService;
 use App\Services\PlanService;
 use App\Services\RestaurantService;
+use App\Services\SiteService;
 use App\Services\SubscriptionService;
 use App\Services\TranslationService;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -155,6 +156,7 @@ final class RestaurantController extends AdminBaseController
 
         $invoices = (new InvoiceModel())->forRestaurant($id)->pending();
         $today    = date('Y-m-d');
+        $menuBase = (new SiteService())->canonicalBase($id, (string) $restaurant['slug']);
 
         return $this->render('admin/restaurants/show', [
             'billing' => [
@@ -183,7 +185,7 @@ final class RestaurantController extends AdminBaseController
                 'slug'        => $branch['slug'],
                 'name'        => $branchNames[(int) $branch['id']]['name'] ?? $branch['slug'],
                 'public_code' => $branch['public_code'],
-                'menu_url'    => site_url('m/' . $branch['public_code']),
+                'menu_url'    => SiteService::branchUrl($menuBase, $branch),
                 'is_active'   => (int) $branch['is_active'] === 1,
             ], $branches),
             'users' => array_map(static fn (array $user): array => [

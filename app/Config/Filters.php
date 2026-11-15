@@ -118,5 +118,7 @@ class Filters extends BaseFilters
     public array $filters = [
         // İşlem kaydı: başarılı POST'lar + giriş/çıkış (App\Services\ActivityLogger).
         'activitylog' => ['after' => ['admin/*', 'panel/*']],
+        // Herkese açık menü API'si her origin'den okunabilir (menu-ui; Config\Cors::$menu).
+        'cors:menu' => ['before' => ['api/*'], 'after' => ['api/*']],
     ];
 }

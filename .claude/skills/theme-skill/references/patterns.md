@@ -94,6 +94,26 @@ Paket adı rozeti: renk paketin `badge_class` alanından gelir (admin paket form
 `<span class="badge <?= esc($p['badge_class'] ?: 'bg-primary', 'attr') ?>"><?= esc($p['name']) ?></span>`
 (`admin/restaurants/index`'te controller hazır `plan_badge_class` verir.) Abonelik durumu ayrı rozettir: `partials/billing/badge` (`kind` = `subscription`).
 
+Kişi avatar grubu (resim yok → baş harf dairesi + tooltip'te tam ad). Veri: `managers[{name, initials}]`; şube→aktif manager eşlemesi `RestaurantUserBranchModel::activeManagersByBranch($branchIds)` (admin'de `->forRestaurant($id)` ile), baş harf `pix_initials()`. Kullanım: `panel/dashboard` kartı footer'ı, `admin/branches/index` ve `panel/branches/index` "Yetkililer" sütunu (listede boşsa `—`). Şube listelerinde kategori/ürün sayıları ayrı sütunlardır (ikon + sayı; panelde ilgili sayfaya link, admin'de düz metin), menü kodu basılmaz, link metni "Menüyü Göster"dir. Link adresi her zaman controller'ın verdiği `menu_url`'dür (`href="<?= esc($branch['menu_url'], 'attr') ?>" target="_blank" rel="noopener"`); view'da `site_url('m/' …)` kurulmaz — `SiteService::branchUrl()` kanonik adresi (özel alan adı / `slug.pixmenu.com` alt alan adı, yoksa `m/{kod}`) üretir ve başka host'a gidebilir. Panel listesinde "İşlemler" sütunu yalnızca owner'a gösterilir (manager'ın butonu yok).
+
+```php
+<?php if ($branch['managers'] === []): ?>
+    <span class="text-muted small">Atanmış yönetici yok</span>
+<?php else: ?>
+    <div class="avatar-group">
+        <?php foreach ($branch['managers'] as $manager): ?>
+            <div class="avatar-group-item material-shadow" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="<?= esc($manager['name'], 'attr') ?>">
+                <div class="avatar-xxs">
+                    <span class="avatar-title rounded-circle bg-success-subtle text-success fs-10 fw-semibold"><?= esc($manager['initials']) ?></span>
+                </div>
+            </div>
+        <?php endforeach ?>
+    </div>
+<?php endif ?>
+```
+
+Şube başına sayaçlar (N+1 sorgu yok): `CategoryModel::countsByBranch($ids)`, `ProductModel::countsByBranch($ids)` → `branch_id => adet`.
+
 ```php
 <?php if ($restaurants === []): ?>
     <div class="text-center py-5">

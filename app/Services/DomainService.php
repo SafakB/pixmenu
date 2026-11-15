@@ -187,6 +187,13 @@ final class DomainService
             }
         }
 
+        // Menü alt alan adı kökü (sirketadi.pixmenu.com) özel alan adı olarak tanımlanamaz.
+        $menuRoot = (new SiteService())->rootDomain();
+
+        if ($menuRoot !== '' && ($domain === $menuRoot || str_ends_with($domain, '.' . $menuRoot))) {
+            return true;
+        }
+
         foreach (config('Billing')->reservedDomains as $reserved) {
             $reserved = strtolower($reserved);
 

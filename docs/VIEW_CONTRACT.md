@@ -73,7 +73,7 @@ Tema: **Velzon** (`admin_template/` kaynak, depoda yok). Layout'lar `partials/la
 | `admin/restaurants/languages` | `GET admin/restaurants/{id}/languages` | `restaurant` (satır + `name`), `languages[{id, code, native_name, is_active, selected, is_default}]`. Alan: `language_ids[]` (işaretliler kalır, diğerleri çıkarılır) |
 | `admin/users/index` | `GET admin/restaurants/{id}/users` | `restaurant` (satır + `name`), `users[{id, name, email, role, is_active, branch_ids[]}]` |
 | `admin/users/form` | `GET …/users/new`, `…/users/{uid}/edit` | `restaurant` (satır + `name`), `user` (satır\|null; `password_hash` yok), `branches[{id, name}]`, `assigned[]` (şube ID'leri), `action`. Alanlar: `name`, `email`, `password` (düzenlemede boş = değişmez), `role` (owner\|manager), `branch_ids[]` (manager için ≥ 1), `is_active` |
-| `admin/branches/index` | `GET admin/restaurants/{id}/branches` | `restaurant` (satır + `name`), `branches[{id, slug, name, public_code, menu_url, template_code, template_name, is_active, sort_order}]` |
+| `admin/branches/index` | `GET admin/restaurants/{id}/branches` | `restaurant` (satır + `name`), `branches[{id, slug, name, public_code, menu_url, template_code, template_name, is_active, sort_order, category_count, product_count, managers[{name, initials}]}]` (`managers`: şubeye atanmış aktif manager'lar) |
 | `admin/branches/form` | `GET …/branches/new`, `…/branches/{bid}/edit` | `restaurant` (satır + `name`), `branch` (satır\|null), `languages`, `translations`, `templates[{code, name, is_active, ...}]` (aktif + mevcut), `action`. Alanlar: `slug` (ops.), `default_language_id`, `template_code` (yalnızca admin), `phone`, `is_active`, `sort_order`, `translations[*][name\|address\|description]` |
 
 ### Abonelik ve faturalama (admin)
@@ -101,10 +101,10 @@ Sıralama (JSON): `POST admin/languages/reorder`, `POST admin/allergens/reorder`
 | View | Rota | Erişim | Değişkenler |
 |---|---|---|---|
 | `panel/auth/login` | `GET panel/login` | — | `error`. Form: `POST panel/login` → `email`, `password` |
-| `panel/dashboard` | `GET panel` | owner + manager | `restaurantName`, `branches[{id, name, is_active, public_code}]` (manager: yalnızca atanmış şubeler) |
+| `panel/dashboard` | `GET panel` | owner + manager | `restaurantName`, `branches[{id, name, is_active, public_code, menu_url, category_count, product_count, managers[{name, initials}]}]` (`managers`: şubeye atanmış aktif manager'lar; `initials` Türkçe büyük harfle "ŞB") (manager: yalnızca atanmış şubeler) |
 | `panel/profile` | `GET panel/profile` | owner + manager | `user{id, name, email, role}`. Formlar: `POST panel/profile` → `name`, `email`; `POST panel/profile/password` → `current_password`, `password`, `password_confirm` |
 | `panel/restaurant` | `GET panel/restaurant` | owner | `restaurant{slug, currency_code}` (salt okunur), `logo_url`, `languages`, `translations`. Alanlar: `logo` (dosya), `translations[*][name\|description]`. Logo silme: `POST panel/restaurant/logo/delete` |
-| `panel/branches/index` | `GET panel/branches` | owner + manager | `branches[{id, slug, name, public_code, menu_url, is_active, sort_order}]`, `canAddBranch` (paket limiti dolu değil), `maxBranches\|null`. Limit doluysa "Yeni şube" pasif gösterilir |
+| `panel/branches/index` | `GET panel/branches` | owner + manager | `branches[{id, slug, name, public_code, menu_url, is_active, sort_order, category_count, product_count, managers[{name, initials}]}]` (`managers`: şubeye atanmış aktif manager'lar), `canAddBranch` (paket limiti dolu değil), `maxBranches\|null`. Limit doluysa "Yeni şube" pasif gösterilir |
 | `panel/branches/form` | `GET panel/branches/new`, `…/{id}/edit` | owner | `branch` (satır\|null), `languages`, `translations`, `action`. Alanlar: admin şube formuyla aynı, `template_code` hariç (şablonu yalnızca admin seçer; panel güncellemesi şablona dokunmaz, panelden açılan şube `standart` alır) |
 | `panel/users/index` | `GET panel/users` | owner | `users[{id, name, email, role, is_active, branch_ids[], editable}]` (`editable=false` → owner kayıtları; düzenleme/silme bağlantısı gösterilmez) |
 | `panel/users/form` | `GET panel/users/new`, `…/{id}/edit` | owner | `user` (satır\|null), `branches[{id, name}]`, `assigned[]`, `action`. Alanlar: `name`, `email`, `password`, `branch_ids[]` (≥ 1), `is_active`. **Rol alanı yoktur**; panelden açılan kullanıcı her zaman manager'dır |
@@ -127,9 +127,11 @@ Manager, owner'a özel sayfalara giderse veya atanmadığı bir şubeye erişirs
 
 ## Herkese açık menü
 
+Ziyaretçi menüsü `menu-ui/` (Vue SPA) uygulamasıdır ve aşağıdaki **Menü sitesi API**'sini kullanır. CI4'ün HTML view'ları yedek olarak kalır.
+
 | View | Rota | Değişkenler |
 |---|---|---|
-| `menu/show` | `GET m/{public_code}?lang=xx` | `menu` — aşağıdaki JSON'ın `data` kısmıyla **aynı yapı** |
+| `menu/show` | `GET m/{public_code}?lang=xx` | `menu` — aşağıdaki JSON'ın `data` kısmıyla **aynı yapı**. Restoranın kanonik menü adresi varsa (özel alan adı veya `menuRootDomain` alt alan adı) view yerine **302** ile `{kanonik}/{şube-slug}?lang=xx` adresine yönlenir |
 | `menu/show` (özel alan adı) | `GET /`, `GET /{şube-slug}` (restoranın alan adında) | `menu`, `menuUrl` (dil bağlantılarının tabanı: `/m/{kod}`, `/` veya `/{slug}`) |
 | `menu/branches` | `GET /` (özel alan adı, birden fazla aktif şube) | `restaurant{name, logo_url}`, `branches[{slug, name, address, url}]` |
 | `errors/not_found` | tüm 404'ler | `message` |
@@ -158,12 +160,50 @@ Manager, owner'a özel sayfalara giderse veya atanmadığı bir şubeye erişirs
 ```
 
 - `price` string'dir; biçimlendirme `Intl.NumberFormat(lang, {style:'currency', currency})` ile yapılır.
-- `branch.template`: admin'in şubeye atadığı menü şablonu kodu (`menu_templates.code`, varsayılan `standart`). Tasarım bu projede değil, ön uç uygulamasında uygulanır.
+- `branch.template`: admin'in şubeye atadığı menü şablonu kodu (`menu_templates.code`, varsayılan `standart`). Tasarım `menu-ui/src/templates/{kod}/` altındadır: `standart` (tek sayfa) ve `kategori` (önce kategori kartları). Ön uçta karşılığı olmayan kod `standart` ile gösterilir.
 - Ürünler alerjenlere `id` ile referans verir; adlar üstteki `allergens` dizisindedir.
 - `language.direction` `rtl` olabilir (`<html dir>`).
 - Dil seçimi: geçerli `?lang` → `pixmenu_lang_{public_code}` çerezi (HTML menüde; 30 gün) → şubenin varsayılan dili. JSON API çerez okumaz/yazmaz.
 - Ürünü olmayan, pasif veya silinmiş kategoriler/ürünler listede yer almaz.
 - Restoran askıdaysa (abonelik) menü 404 döner.
+
+### Menü sitesi API (menu-ui)
+
+`GET /api/v1/site?restaurant={slug}&branch={şube-slug}&lang=xx` veya `GET /api/v1/site?host={hostname}&branch=…&lang=…`
+
+Restoran üç yoldan bulunur:
+
+- `restaurant`: restoranın slug'ı (menu-ui `.env` → `VITE_RESTAURANT`).
+- `host` alt alan adı: `{slug}.{Pixmenu::$menuRootDomain}`. Tek etiket olmalı; `Pixmenu::$reservedSubdomains` içindekiler reddedilir.
+- `host` özel alan adı: `DomainService::resolve()` (paket `allow_custom_domain` + alan adı aktif).
+
+Restoran aktif, silinmemiş ve askıda olmamalıdır; aksi hâlde 404 (`json_error_body`).
+
+```json
+{
+  "status": "success",
+  "data": {
+    "restaurant":    { "slug": "sirketadi", "name": "", "logo_url": null },
+    "language":      { "code": "tr", "direction": "ltr" },
+    "languages":     [ { "code": "tr", "native_name": "Türkçe" } ],
+    "branches":      [ { "slug": "merkez", "code": "k3f9a0c21b", "name": "", "address": null } ],
+    "canonical_url": "https://sirketadi.pixmenu.com",
+    "menu":          { "…": "GET /api/v1/menu/{code} `data` yapısının aynısı" }
+  }
+}
+```
+
+- `menu`: `branch` verildiyse o şubenin menüsü (bilinmeyen/pasif şube → 404). Verilmediyse tek aktif şube varsa onun menüsü, birden fazlaysa `null` (ön uç şube seçimini gösterir).
+- `language`: menü varsa menünün dili, yoksa `?lang` (restoranın aktif dillerindeyse) veya restoranın varsayılan dili. Şube adları bu dil → restoran varsayılanı zinciriyle çözülür.
+- `canonical_url` (sonunda `/` yok): aktif ve paketi uygun özel alan adı → `menuScheme://alan-adı`; değilse `menuRootDomain` doluysa `menuScheme://slug.kök[:menuPort]`; değilse `null`. Host modunda ön uç, adres çubuğundaki host farklıysa buraya yönlenir.
+- Admin/panel `menu_url` değerleri de aynı kuraldan üretilir: `{canonical_url}/{şube-slug}`, kanonik adres yoksa `m/{public_code}`.
+- Durumsuz ve çerezsizdir, `Cache-Control: public, max-age=60`.
+
+**CORS:** `api/*` için `cors:menu` filtresi (`Config\Cors::$menu`) uygulanır: `Access-Control-Allow-Origin: *`, yalnızca `GET`, credentials kapalı. Preflight için `OPTIONS api/v1/*` rotası vardır. İstemci özel başlık göndermemelidir (basit istek).
+
+**Restoran slug'ı** alt alan adı olduğu için en fazla 63 karakterdir ve ayrılmış adlardan (`www`, `admin`, `api`, …) biri olamaz.
+
+**Config** (`.env`): `pixmenu.menuRootDomain` (boş = alt alan adı kapalı), `pixmenu.menuScheme` (varsayılan `https`), `pixmenu.menuPort` (yalnızca yerel geliştirme).
 
 ## E-posta şablonları (`emails/billing/*`)
 

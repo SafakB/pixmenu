@@ -451,4 +451,41 @@ final class RestaurantAdminTest extends DbTestCase
         $this->asAdmin()->post("admin/restaurants/{$this->fx->restaurantB}/branches", $post);
         $this->seeInDatabase('branches', ['slug' => 'a1', 'restaurant_id' => $this->fx->restaurantB]);
     }
+
+    public function testRestaurantSlugMustBeUsableAsMenuSubdomain(): void
+    {
+        $b    = $this->fx->restaurantB;
+        $post = fn (string $slug): array => [
+            'slug' => $slug, 'currency_code' => 'TRY', 'is_active' => '1',
+            'default_language_id' => (string) $this->fx->lang['tr'],
+            'translations' => ['tr' => ['name' => 'Restoran B']],
+        ];
+
+        // DNS etiketi en fazla 63 karakter; ayrılmış alt alan adları kullanılamaz.
+        foreach ([str_repeat('a', 64), 'admin', 'www', 'api'] as $slug) {
+            $this->asAdmin()->post("admin/restaurants/{$b}", $post($slug));
+            $this->assertArrayHasKey('slug', $_SESSION['errors'] ?? [], $slug);
+            $this->assertSame('restoran-b', $this->row('restaurants', $b)['slug'], $slug);
+        }
+
+        $this->asAdmin()->post("admin/restaurants/{$b}", $post(str_repeat('b', 63)));
+        $this->assertSame(str_repeat('b', 63), $this->row('restaurants', $b)['slug']);
+    }
+
+    public function testGeneratedRestaurantSlugIsShortAndNeverReserved(): void
+    {
+        $post = fn (string $name): array => [
+            'currency_code' => 'TRY', 'language_ids' => [(string) $this->fx->lang['tr']],
+            'default_language_id' => (string) $this->fx->lang['tr'], 'translations' => ['tr' => ['name' => $name]],
+        ];
+
+        $this->asAdmin()->post('admin/restaurants', $post('Admin'));
+        $this->seeInDatabase('restaurants', ['slug' => 'admin-menu']);
+
+        // 143 karakterlik ad (çeviri adı sınırı 150) → slug 60 karakterde kesilir.
+        $this->asAdmin()->post('admin/restaurants', $post(trim(str_repeat('Uzun Restoran Adı ', 8))));
+        $row = $this->db->table('restaurants')->like('slug', 'uzun-restoran-adi', 'after')->get()->getRowArray();
+        $this->assertNotNull($row);
+        $this->assertLessThanOrEqual(60, strlen((string) $row['slug']));
+    }
 }

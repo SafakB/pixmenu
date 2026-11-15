@@ -322,8 +322,11 @@ final class RestaurantService
         }
 
         if ($data['slug'] !== '') {
-            if (preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $data['slug']) !== 1 || strlen($data['slug']) > 100) {
+            // Slug menünün alt alan adıdır (sirketadi.pixmenu.com): DNS etiketi sınırı 63.
+            if (preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $data['slug']) !== 1 || strlen($data['slug']) > SiteService::MAX_SLUG_LENGTH) {
                 $errors['slug'] = lang('App.restaurant.slugInvalid');
+            } elseif (in_array($data['slug'], config('Pixmenu')->reservedSubdomains, true)) {
+                $errors['slug'] = lang('App.restaurant.slugReserved');
             } elseif ($this->slugExists($data['slug'], $exceptId)) {
                 $errors['slug'] = lang('App.restaurant.slugTaken');
             }
@@ -371,6 +374,7 @@ final class RestaurantService
 
     /**
      * Slug boşsa varsayılan dildeki isimden üretilir; çakışırsa -2, -3… eklenir.
+     * Taban 60 karakterle sınırlıdır (ekle birlikte 63'ü aşmasın); ayrılmış adlara `-menu` eklenir.
      */
     private function resolveSlug(string $slug, string $name): string
     {
@@ -378,8 +382,9 @@ final class RestaurantService
             return $slug;
         }
 
-        $base = pix_slug($name);
+        $base = pix_slug($name, SiteService::MAX_SLUG_LENGTH - 3);
         $base = $base === '' ? 'restoran' : $base;
+        $base = in_array($base, config('Pixmenu')->reservedSubdomains, true) ? $base . '-menu' : $base;
         $slug = $base;
 
         for ($i = 2; $this->slugExists($slug, null); $i++) {

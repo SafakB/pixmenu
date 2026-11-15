@@ -126,6 +126,30 @@ final class ProductModel extends TenantModel
         return $counts;
     }
 
+    /**
+     * Verilen şubelerdeki (silinmemiş) ürün sayıları.
+     *
+     * @param list<int> $branchIds
+     *
+     * @return array<int, int> branch_id => adet
+     */
+    public function countsByBranch(array $branchIds): array
+    {
+        if ($branchIds === []) {
+            return [];
+        }
+
+        $rows = $this->scopedBuilder()
+            ->select('branch_id, COUNT(*) AS total')
+            ->whereIn('branch_id', $branchIds)
+            ->where('deleted_at', null)
+            ->groupBy('branch_id')
+            ->get()
+            ->getResultArray();
+
+        return array_map('intval', array_column($rows, 'total', 'branch_id'));
+    }
+
     public function countInCategory(int $categoryId): int
     {
         return (int) $this->where('category_id', $categoryId)->countAllResults();

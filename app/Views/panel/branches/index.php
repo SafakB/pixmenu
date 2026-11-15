@@ -39,9 +39,14 @@
                     <thead class="table-light">
                         <tr>
                             <th>Şube</th>
+                            <th>Kategori</th>
+                            <th>Ürün</th>
+                            <th>Yetkililer</th>
                             <th>Menü</th>
                             <th>Durum</th>
-                            <th class="text-end">İşlemler</th>
+                            <?php if ($isOwner): ?>
+                                <th class="text-end">İşlemler</th>
+                            <?php endif ?>
                         </tr>
                     </thead>
                     <tbody>
@@ -60,9 +65,37 @@
                                 </div>
                             </td>
                             <td>
+                                <a href="<?= site_url($base . '/categories') ?>" class="d-inline-flex align-items-center gap-1 text-reset"
+                                   data-bs-toggle="tooltip" title="Kategoriler" aria-label="Kategoriler">
+                                    <i class="ri-folder-2-line text-primary fs-16"></i>
+                                    <span class="fw-medium"><?= esc((string) $branch['category_count']) ?></span>
+                                </a>
+                            </td>
+                            <td>
+                                <a href="<?= site_url($base . '/products') ?>" class="d-inline-flex align-items-center gap-1 text-reset"
+                                   data-bs-toggle="tooltip" title="Ürünler" aria-label="Ürünler">
+                                    <i class="ri-restaurant-line text-success fs-16"></i>
+                                    <span class="fw-medium"><?= esc((string) $branch['product_count']) ?></span>
+                                </a>
+                            </td>
+                            <td>
+                                <?php if ($branch['managers'] === []): ?>
+                                    <span class="text-muted small">—</span>
+                                <?php else: ?>
+                                    <div class="avatar-group">
+                                        <?php foreach ($branch['managers'] as $manager): ?>
+                                            <div class="avatar-group-item material-shadow" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="<?= esc($manager['name'], 'attr') ?>">
+                                                <div class="avatar-xxs">
+                                                    <span class="avatar-title rounded-circle bg-success-subtle text-success fs-10 fw-semibold"><?= esc($manager['initials']) ?></span>
+                                                </div>
+                                            </div>
+                                        <?php endforeach ?>
+                                    </div>
+                                <?php endif ?>
+                            </td>
+                            <td>
                                 <a href="<?= esc($branch['menu_url'], 'attr') ?>" target="_blank" rel="noopener">
-                                    <span class="font-monospace"><?= esc($branch['public_code']) ?></span>
-                                    <i class="ri-external-link-line align-bottom ms-1"></i>
+                                    <i class="ri-external-link-line align-bottom me-1"></i>Menüyü Göster
                                 </a>
                             </td>
                             <td>
@@ -72,13 +105,9 @@
                                     <span class="badge bg-danger-subtle text-danger">Pasif</span>
                                 <?php endif ?>
                             </td>
-                            <td class="text-end">
-                                <div class="d-inline-flex gap-1">
-                                    <a href="<?= site_url($base . '/categories') ?>" class="btn btn-sm btn-icon btn-soft-secondary"
-                                       data-bs-toggle="tooltip" title="Kategoriler" aria-label="Kategoriler"><i class="ri-folder-2-line"></i></a>
-                                    <a href="<?= site_url($base . '/products') ?>" class="btn btn-sm btn-icon btn-soft-secondary"
-                                       data-bs-toggle="tooltip" title="Ürünler" aria-label="Ürünler"><i class="ri-restaurant-line"></i></a>
-                                    <?php if ($isOwner): ?>
+                            <?php if ($isOwner): ?>
+                                <td class="text-end">
+                                    <div class="d-inline-flex gap-1">
                                         <a href="<?= site_url($base . '/edit') ?>" class="btn btn-sm btn-icon btn-soft-primary"
                                            data-bs-toggle="tooltip" title="Düzenle" aria-label="Düzenle"><i class="ri-pencil-line"></i></a>
                                         <?= form_open($base . '/toggle', ['class' => 'd-inline'] + ($isActive ? [
@@ -98,9 +127,9 @@
                                             <button type="submit" class="btn btn-sm btn-icon btn-soft-danger"
                                                     data-bs-toggle="tooltip" title="Sil" aria-label="Sil"><i class="ri-delete-bin-line"></i></button>
                                         <?= form_close() ?>
-                                    <?php endif ?>
-                                </div>
-                            </td>
+                                    </div>
+                                </td>
+                            <?php endif ?>
                         </tr>
                     <?php endforeach ?>
                     </tbody>

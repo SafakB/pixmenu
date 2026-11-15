@@ -72,4 +72,27 @@ final class Pixmenu extends BaseConfig
 
     /** İşlem kayıtlarının saklanma süresi (gün); eskileri `php spark activity:prune` siler. */
     public int $activityLogRetentionDays = 180;
+
+    /**
+     * Menü alt alan adlarının kökü: `sirketadi.{menuRootDomain}` → restoranın slug'ı `sirketadi`.
+     * Boşsa alt alan adı çözümlemesi kapalıdır. .env: `pixmenu.menuRootDomain = pixmenu.com`
+     * (yerelde `localhost` → `sirketadi.localhost`).
+     */
+    public string $menuRootDomain = '';
+
+    /** Kanonik menü adreslerinin şeması (yerelde `http`). */
+    public string $menuScheme = 'https';
+
+    /** Kanonik menü adreslerine eklenecek port; yalnızca yerel geliştirme için (ör. Vite `5173`). Boş = yok. */
+    public string $menuPort = '';
+
+    /**
+     * Restoran slug'ı olamayacak alt alan adları (uygulamanın kendi servisleri için ayrılmış).
+     *
+     * @var list<string>
+     */
+    public array $reservedSubdomains = [
+        'www', 'admin', 'panel', 'api', 'app', 'mail', 'smtp', 'ftp', 'cdn', 'static', 'assets',
+        'menu', 'm', 'blog', 'help', 'destek', 'status', 'dev', 'test', 'staging',
+    ];
 }

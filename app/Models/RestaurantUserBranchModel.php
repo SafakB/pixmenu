@@ -72,6 +72,43 @@ final class RestaurantUserBranchModel extends TenantModel
     }
 
     /**
+     * Şubelere atanmış aktif (silinmemiş) manager'lar, ada göre sıralı.
+     *
+     * @param list<int> $branchIds
+     *
+     * @return array<int, list<array{id: int, name: string}>> branch_id => manager[]
+     */
+    public function activeManagersByBranch(array $branchIds): array
+    {
+        if ($branchIds === []) {
+            return [];
+        }
+
+        $rows = $this->scopedBuilder()
+            ->select('restaurant_user_branches.branch_id, restaurant_users.id, restaurant_users.name')
+            ->join(
+                'restaurant_users',
+                'restaurant_users.id = restaurant_user_branches.user_id AND restaurant_users.restaurant_id = restaurant_user_branches.restaurant_id',
+            )
+            ->whereIn('restaurant_user_branches.branch_id', $branchIds)
+            ->where('restaurant_users.role', 'manager')
+            ->where('restaurant_users.is_active', 1)
+            ->where('restaurant_users.deleted_at', null)
+            ->orderBy('restaurant_users.name', 'ASC')
+            ->orderBy('restaurant_users.id', 'ASC')
+            ->get()
+            ->getResultArray();
+
+        $map = [];
+
+        foreach ($rows as $row) {
+            $map[(int) $row['branch_id']][] = ['id' => (int) $row['id'], 'name' => (string) $row['name']];
+        }
+
+        return $map;
+    }
+
+    /**
      * Kullanıcının şube atamalarını verilen kümeyle değiştirir.
      * Çağıran taraf ID'lerin tenant'a ait olduğunu ÖNCEDEN doğrulamış olmalıdır;
      * bileşik FK ikinci savunma hattıdır.

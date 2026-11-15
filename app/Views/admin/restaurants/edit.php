@@ -31,10 +31,10 @@ $invalid     = static fn (string $field): string => isset($errors[$field]) ? ' i
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="slug">Slug</label>
-                        <input type="text" class="form-control<?= $invalid('slug') ?>" id="slug" name="slug" maxlength="100"
+                        <input type="text" class="form-control<?= $invalid('slug') ?>" id="slug" name="slug" maxlength="63"
                                value="<?= esc((string) old('slug', $restaurant['slug'], false), 'attr') ?>">
                         <?php if (isset($errors['slug'])): ?><div class="invalid-feedback"><?= esc($errors['slug']) ?></div><?php endif ?>
-                        <div class="form-text">Menü adresinde kullanılır; küçük harf, rakam ve tire. Boş bırakılırsa mevcut slug korunur.</div>
+                        <div class="form-text">Menünün alt alan adıdır (<code>slug.pixmenu.com</code>); küçük harf, rakam ve tire, en fazla 63 karakter. Değiştirilirse eski menü adresi çalışmaz. Boş bırakılırsa mevcut slug korunur.</div>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label" for="currency_code">Para birimi <span class="text-danger">*</span></label>

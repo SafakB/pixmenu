@@ -104,4 +104,29 @@ class Cors extends BaseConfig
          */
         'maxAge' => 7200,
     ];
+
+    /**
+     * Herkese açık menü API'si (/api/v1/*) — menu-ui başka bir origin'den (alt alan adı,
+     * restoranın özel alan adı) okur. Özel alan adları önceden bilinemediği için origin
+     * serbesttir; uç noktalar salt okunur, kimliksiz ve çerezsizdir (credentials kapalı).
+     *
+     * @var array{
+     *      allowedOrigins: list<string>,
+     *      allowedOriginsPatterns: list<string>,
+     *      supportsCredentials: bool,
+     *      allowedHeaders: list<string>,
+     *      exposedHeaders: list<string>,
+     *      allowedMethods: list<string>,
+     *      maxAge: int,
+     *  }
+     */
+    public array $menu = [
+        'allowedOrigins'         => ['*'],
+        'allowedOriginsPatterns' => [],
+        'supportsCredentials'    => false,
+        'allowedHeaders'         => [],
+        'exposedHeaders'         => [],
+        'allowedMethods'         => ['GET'],
+        'maxAge'                 => 7200,
+    ];
 }

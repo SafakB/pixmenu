@@ -36,7 +36,10 @@ $branchBase    = 'admin/restaurants/' . $restaurant['id'] . '/branches';
                         <tr>
                             <th style="width:70px">Sıra</th>
                             <th>Şube</th>
-                            <th>Menü adresi</th>
+                            <th>Kategori</th>
+                            <th>Ürün</th>
+                            <th>Yetkililer</th>
+                            <th>Menü</th>
                             <th>Şablon</th>
                             <th>Durum</th>
                             <th class="text-end">İşlemler</th>
@@ -52,9 +55,35 @@ $branchBase    = 'admin/restaurants/' . $restaurant['id'] . '/branches';
                                 <div class="text-muted small"><?= esc($branch['slug']) ?></div>
                             </td>
                             <td>
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <i class="ri-folder-2-line text-primary fs-16"></i>
+                                    <span class="fw-medium"><?= esc((string) $branch['category_count']) ?></span>
+                                </span>
+                            </td>
+                            <td>
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    <i class="ri-restaurant-line text-success fs-16"></i>
+                                    <span class="fw-medium"><?= esc((string) $branch['product_count']) ?></span>
+                                </span>
+                            </td>
+                            <td>
+                                <?php if ($branch['managers'] === []): ?>
+                                    <span class="text-muted small">—</span>
+                                <?php else: ?>
+                                    <div class="avatar-group">
+                                        <?php foreach ($branch['managers'] as $manager): ?>
+                                            <div class="avatar-group-item material-shadow" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-placement="top" title="<?= esc($manager['name'], 'attr') ?>">
+                                                <div class="avatar-xxs">
+                                                    <span class="avatar-title rounded-circle bg-success-subtle text-success fs-10 fw-semibold"><?= esc($manager['initials']) ?></span>
+                                                </div>
+                                            </div>
+                                        <?php endforeach ?>
+                                    </div>
+                                <?php endif ?>
+                            </td>
+                            <td>
                                 <a href="<?= esc($branch['menu_url'], 'attr') ?>" target="_blank" rel="noopener">
-                                    <span class="font-monospace"><?= esc($branch['public_code']) ?></span>
-                                    <i class="ri-external-link-line align-bottom ms-1"></i>
+                                    <i class="ri-external-link-line align-bottom me-1"></i>Menüyü Göster
                                 </a>
                             </td>
                             <td>

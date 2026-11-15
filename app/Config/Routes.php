@@ -250,4 +250,8 @@ $routes->get('m/(:alphanum)', 'Menu\MenuController::show/$1');                 /
 
 $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1'], static function ($routes) {
     $routes->get('menu/(:alphanum)', 'MenuController::show/$1');               // JSON menü, ?lang=en
+    $routes->get('site', 'SiteController::show');                              // menu-ui: ?restaurant=|host=&branch=&lang=
+
+    // CORS preflight: filtreler yalnızca var olan rotada çalışır; yanıtı `cors` filtresi üretir.
+    $routes->options('(:any)', static function () {});
 });

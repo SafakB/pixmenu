@@ -2,6 +2,8 @@
 
 CodeIgniter 4.7, view'lar `app/Views`. Tema: Velzon (HTML sürümü, HTTrack mirror'ı `admin_template/`, git'te yok).
 
+Velzon yalnızca admin/panel/login içindir. Ziyaretçi menüsü ayrı bir uygulamadır: `menu-ui/` (Vue 3 + Tailwind, `GET /api/v1/site`); `app/Views/menu/*` yalnızca yedek HTML'dir. Bu skill menüye uygulanmaz — menü şablonları `menu-ui/src/templates/{kod}/` altındadır (bkz. `docs/VIEW_CONTRACT.md` "Menü sitesi API").
+
 ## Layout'lar
 
 | Layout | Kullanan | Section'lar | Değişkenler |
@@ -97,6 +99,7 @@ Diğer partial'lar (`app/Views/partials/`):
 - `asset_url(string $path): string` → `base_url('assets/'.$path)` + `?v=filemtime` (dosya varsa).
 - `upload_url(?string $path): ?string` → yüklenen dosyanın tam URL'si (`public/uploads`).
 - `pix_money($tutar, ?$paraBirimi)` → `1.499,90 TRY`; `pix_date(?$tarih, $saatli = false)` → `12.11.2026` (boşsa `—`). Fatura/abonelik view'larında tutar ve tarih bunlarla basılır.
+- `pix_initials(string $adSoyad): string` → avatar baş harfleri: ilk + son kelimenin ilk harfi, Türkçe büyük harf (`"Şafak Bahçe"` → `ŞB`, `"irem"` → `İ`, boş → `?`). Controller'da hesaplanıp view'a `initials` olarak verilir (kalıp: `patterns.md` §3).
 - `admin_can(string $izin): bool` → oturumdaki adminin rolü izni veriyor mu (`Config\AdminRoles`). Admin view'larında yetkisiz düğme/link/kartı **gizlemek** için: `<?php if (admin_can('restaurants.manage')): ?>…<?php endif ?>`. Asıl koruma rotadaki `adminperm:<izin>` filtresidir (403 → `admin/forbidden`); gizlemek yalnızca UX. İzin listesi: `app/Config/AdminRoles.php`.
 - BaseController helper'ları: `url`, `form`, `text`, `pixmenu`.
 

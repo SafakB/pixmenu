@@ -50,6 +50,30 @@ final class CategoryModel extends TenantModel
         ));
     }
 
+    /**
+     * Verilen şubelerdeki (silinmemiş) kategori sayıları.
+     *
+     * @param list<int> $branchIds
+     *
+     * @return array<int, int> branch_id => adet
+     */
+    public function countsByBranch(array $branchIds): array
+    {
+        if ($branchIds === []) {
+            return [];
+        }
+
+        $rows = $this->scopedBuilder()
+            ->select('branch_id, COUNT(*) AS total')
+            ->whereIn('branch_id', $branchIds)
+            ->where('deleted_at', null)
+            ->groupBy('branch_id')
+            ->get()
+            ->getResultArray();
+
+        return array_map('intval', array_column($rows, 'total', 'branch_id'));
+    }
+
     public function nextSortOrder(int $branchId): int
     {
         $row = $this->selectMax('sort_order', 'max_order')->where('branch_id', $branchId)->first();

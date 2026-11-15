@@ -62,6 +62,29 @@ if (! function_exists('pix_slug')) {
     }
 }
 
+if (! function_exists('pix_initials')) {
+    /**
+     * Avatar için baş harfler: "Şafak Bahçe" → "ŞB", "ali" → "A".
+     * İlk ve son kelimenin ilk harfi; Türkçe büyük harf kuralı (i → İ, ı → I) uygulanır.
+     */
+    function pix_initials(string $name): string
+    {
+        $words = preg_split('/\s+/u', trim($name), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+
+        if ($words === []) {
+            return '?';
+        }
+
+        $letters = mb_substr($words[0], 0, 1);
+
+        if (count($words) > 1) {
+            $letters .= mb_substr($words[array_key_last($words)], 0, 1);
+        }
+
+        return mb_strtoupper(strtr($letters, ['i' => 'İ', 'ı' => 'I']));
+    }
+}
+
 if (! function_exists('pix_deleted_slug')) {
     /**
      * Soft delete'te unique çakışmasını önlemek için değerin sonuna `--deleted-{id}` ekler

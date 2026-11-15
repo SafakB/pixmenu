@@ -6,8 +6,12 @@ namespace App\Controllers\Panel;
 
 use App\Models\BranchModel;
 use App\Models\BranchTranslationModel;
+use App\Models\CategoryModel;
+use App\Models\ProductModel;
+use App\Models\RestaurantUserBranchModel;
 use App\Services\BranchService;
 use App\Services\Scope;
+use App\Services\SiteService;
 use App\Services\SubscriptionService;
 use App\Services\TranslationService;
 use CodeIgniter\HTTP\ResponseInterface;
@@ -17,28 +21,41 @@ final class BranchController extends PanelBaseController
     /**
      * Owner: tüm şubeler; manager: yalnızca atanmış şubeler.
      *
-     * View: panel/branches/index — branches[{id, slug, name, public_code, menu_url, is_active, sort_order}],
+     * View: panel/branches/index — branches[{id, slug, name, public_code, menu_url, is_active, sort_order,
+     *       category_count, product_count, managers[{name, initials}]}],
      *       canAddBranch (bool: paket şube limiti dolu değil), maxBranches (int|null; null = sınırsız)
      */
     public function index(): string
     {
         $branches      = (new BranchModel())->accessible($this->tenant->allowedBranchIds());
+        $branchIds     = array_map('intval', array_column($branches, 'id'));
         $subscriptions = new SubscriptionService();
         $names         = service('languageResolver')->resolveMany(
             BranchTranslationModel::class,
-            array_map('intval', array_column($branches, 'id')),
+            $branchIds,
             [(int) $this->restaurant['default_language_id']],
         );
 
+        $categoryCounts = (new CategoryModel())->countsByBranch($branchIds);
+        $productCounts  = (new ProductModel())->countsByBranch($branchIds);
+        $managers       = (new RestaurantUserBranchModel())->activeManagersByBranch($branchIds);
+        $menuBase       = (new SiteService())->canonicalBase($this->tenant->restaurantId(), (string) $this->restaurant['slug']);
+
         return $this->render('panel/branches/index', [
             'branches' => array_map(static fn (array $branch): array => [
-                'id'          => (int) $branch['id'],
-                'slug'        => $branch['slug'],
-                'name'        => $names[(int) $branch['id']]['name'] ?? $branch['slug'],
-                'public_code' => $branch['public_code'],
-                'menu_url'    => site_url('m/' . $branch['public_code']),
-                'is_active'   => (int) $branch['is_active'] === 1,
-                'sort_order'  => (int) $branch['sort_order'],
+                'id'             => (int) $branch['id'],
+                'slug'           => $branch['slug'],
+                'name'           => $names[(int) $branch['id']]['name'] ?? $branch['slug'],
+                'public_code'    => $branch['public_code'],
+                'menu_url'       => SiteService::branchUrl($menuBase, $branch),
+                'is_active'      => (int) $branch['is_active'] === 1,
+                'sort_order'     => (int) $branch['sort_order'],
+                'category_count' => $categoryCounts[(int) $branch['id']] ?? 0,
+                'product_count'  => $productCounts[(int) $branch['id']] ?? 0,
+                'managers'       => array_map(static fn (array $user): array => [
+                    'name'     => $user['name'],
+                    'initials' => pix_initials($user['name']),
+                ], $managers[(int) $branch['id']] ?? []),
             ], $branches),
             'canAddBranch' => $subscriptions->canAddBranch($this->tenant->restaurantId()),
             'maxBranches'  => $subscriptions->entitlements($this->tenant->restaurantId())['max_branches'],
