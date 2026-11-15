@@ -16,16 +16,24 @@ final class ProductModel extends TenantModel
     ];
 
     /**
-     * Şubenin ürünleri; isteğe bağlı kategori ve isim araması (herhangi bir dilde).
+     * Şubenin ürünleri; isteğe bağlı kategori, isim araması (herhangi bir dilde) ve fiyat aralığı.
      *
      * @return list<array<string, mixed>>
      */
-    public function forBranch(int $branchId, ?int $categoryId = null, ?string $search = null): array
+    public function forBranch(int $branchId, ?int $categoryId = null, ?string $search = null, ?float $minPrice = null, ?float $maxPrice = null): array
     {
         $this->where('products.branch_id', $branchId);
 
         if ($categoryId !== null) {
             $this->where('products.category_id', $categoryId);
+        }
+
+        if ($minPrice !== null) {
+            $this->where('products.price >=', $minPrice);
+        }
+
+        if ($maxPrice !== null) {
+            $this->where('products.price <=', $maxPrice);
         }
 
         $search = $search === null ? '' : trim($search);
@@ -45,6 +53,26 @@ final class ProductModel extends TenantModel
             ->orderBy('products.sort_order', 'ASC')
             ->orderBy('products.id', 'ASC')
             ->findAll();
+    }
+
+    /**
+     * Şubedeki ürünlerin fiyat sınırları (filtreden bağımsız; fiyat filtresi aralığı için).
+     *
+     * @return array{min: float, max: float}
+     */
+    public function priceRange(int $branchId): array
+    {
+        // first() ORDER BY id ekler; ONLY_FULL_GROUP_BY altında toplama sorgusunu bozmasın diye findAll().
+        $row = $this->selectMin('products.price', 'min_price')
+            ->selectMax('products.price', 'max_price')
+            ->where('products.branch_id', $branchId)
+            ->asArray()
+            ->findAll()[0] ?? null;
+
+        return [
+            'min' => (float) ($row['min_price'] ?? 0),
+            'max' => (float) ($row['max_price'] ?? 0),
+        ];
     }
 
     /**

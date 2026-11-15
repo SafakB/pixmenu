@@ -46,3 +46,5 @@ Yama sonrası sözdizimi kontrolü: `node -e "new Function(require('fs').readFil
    <?= $this->section('js') ?><script src="<?= asset_url('libs/x/x.min.js') ?>"></script><?= $this->endSection() ?>
    ```
 3. Bu dosyayı güncelle, `python -I .claude/skills/theme-skill/scripts/check_drift.py --accept`.
+
+**CSS sırası tuzağı:** `css` section'ı `app.min.css`'ten *sonra* basılır. Velzon bazı kütüphanelerin görünümünü `app.min.css` içinde özelleştirir (ör. nouislider: 4px ray, 16px yuvarlak `--vz-success` tutamak). Kütüphanenin kendi `.min.css`'i sonra geldiği için bu stili ezer → kocaman varsayılan görünüm. Çözüm: sayfadaki `<style>`'da Velzon kurallarını bileşenin id'si altında tekrarla (örnek: `panel/products/index.php` → `#product-price-range …`).

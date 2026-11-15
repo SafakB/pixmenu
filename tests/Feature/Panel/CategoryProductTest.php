@@ -224,6 +224,32 @@ final class CategoryProductTest extends DbTestCase
         $this->asPanelUser($this->fx->ownerA)->get($this->base() . '/products')->assertDontSee('Mercimek A1');
     }
 
+    public function testProductListFiltersByPriceRange(): void
+    {
+        // Fixture: Mercimek A1 = 100.00, Ezogelin A1 = 110.00
+        $url = $this->base() . '/products';
+
+        $min = $this->asPanelUser($this->fx->ownerA)->get($url . '?min_price=105');
+        $min->assertOK();
+        $min->assertSee('Ezogelin A1');
+        $min->assertDontSee('Mercimek A1');
+
+        $max = $this->asPanelUser($this->fx->ownerA)->get($url . '?max_price=100,50');
+        $max->assertSee('Mercimek A1');
+        $max->assertDontSee('Ezogelin A1');
+
+        // min > max ise yer değiştirir
+        $swapped = $this->asPanelUser($this->fx->ownerA)->get($url . '?min_price=110&max_price=100');
+        $swapped->assertSee('Mercimek A1');
+        $swapped->assertSee('Ezogelin A1');
+
+        // Geçersiz değer yok sayılır
+        $invalid = $this->asPanelUser($this->fx->ownerA)->get($url . '?min_price=abc&max_price=-5');
+        $invalid->assertOK();
+        $invalid->assertSee('Mercimek A1');
+        $invalid->assertSee('Ezogelin A1');
+    }
+
     // ------------------------------------------------------------- Görseller
 
     public function testProductImageIsStoredUnderTenantDirectoryReplacedAndDeleted(): void

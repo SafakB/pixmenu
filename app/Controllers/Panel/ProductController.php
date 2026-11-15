@@ -26,9 +26,10 @@ use CodeIgniter\HTTP\ResponseInterface;
 final class ProductController extends PanelBaseController
 {
     /**
-     * ?category=ID&q=
+     * ?category=ID&q=&min_price=&max_price=
      *
-     * View: panel/products/index — branch{id, name}, categories[{id, name}], filters{category, q},
+     * View: panel/products/index — branch{id, name}, categories[{id, name}], filters{category, q, min_price, max_price},
+     *       price_range{min, max}, currency,
      *       products[{id, name, category_id, category_name, price, thumb_url, is_active, sort_order}]
      */
     public function index(int $branchId): string
@@ -48,7 +49,15 @@ final class ProductController extends PanelBaseController
         }
 
         $search   = mb_substr(trim((string) ($this->request->getGet('q') ?? '')), 0, 100);
-        $products = (new ProductModel())->forBranch($branchId, $categoryFilter, $search);
+        $minPrice = $this->priceParam('min_price');
+        $maxPrice = $this->priceParam('max_price');
+
+        if ($minPrice !== null && $maxPrice !== null && $minPrice > $maxPrice) {
+            [$minPrice, $maxPrice] = [$maxPrice, $minPrice];
+        }
+
+        $model    = new ProductModel();
+        $products = $model->forBranch($branchId, $categoryFilter, $search, $minPrice, $maxPrice);
 
         $resolver      = service('languageResolver');
         $chain         = $resolver->chain((int) $branch['default_language_id'], (int) $this->restaurant['default_language_id']);
@@ -59,7 +68,9 @@ final class ProductController extends PanelBaseController
         return $this->render('panel/products/index', [
             'branch'     => $this->branchSummary($branch),
             'categories' => $categories,
-            'filters'    => ['category' => $categoryFilter, 'q' => $search],
+            'filters'    => ['category' => $categoryFilter, 'q' => $search, 'min_price' => $minPrice, 'max_price' => $maxPrice],
+            'price_range' => $model->priceRange($branchId),
+            'currency'    => $this->restaurant['currency_code'],
             'products'   => array_map(static fn (array $product): array => [
                 'id'            => (int) $product['id'],
                 'name'          => $names[(int) $product['id']]['name'] ?? '#' . $product['id'],
@@ -167,6 +178,20 @@ final class ProductController extends PanelBaseController
         }
 
         return $this->jsonSuccess([], lang('App.reorder.saved'));
+    }
+
+    /**
+     * Fiyat filtresi parametresi: "129,90" de kabul edilir; sayı değilse veya negatifse yok sayılır.
+     */
+    private function priceParam(string $key): ?float
+    {
+        $raw = str_replace(',', '.', trim((string) ($this->request->getGet($key) ?? '')));
+
+        if ($raw === '' || ! is_numeric($raw) || (float) $raw < 0) {
+            return null;
+        }
+
+        return (float) $raw;
     }
 
     /**
