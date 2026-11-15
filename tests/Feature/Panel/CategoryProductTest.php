@@ -86,6 +86,46 @@ final class CategoryProductTest extends DbTestCase
         $this->assertSame(1, (int) $this->row('categories', $this->fx->categoryA1)['is_active']);
     }
 
+    public function testCategoryEmojiIsLimitedToConfiguredListAndCanBeCleared(): void
+    {
+        $create = $this->base() . '/categories';
+
+        // Listede olmayan değerler reddedilir, kayıt eklenmez.
+        foreach (['abc', '💣'] as $invalid) {
+            unset($_SESSION['errors']);
+            $this->asPanelUser($this->fx->ownerA)->post($create, ['emoji' => $invalid, 'translations' => ['tr' => ['name' => 'Geçersiz ' . $invalid]]]);
+            $this->assertArrayHasKey('emoji', $_SESSION['errors'] ?? []);
+            $this->dontSeeInDatabase('category_translations', ['name' => 'Geçersiz ' . $invalid]);
+        }
+
+        $this->asPanelUser($this->fx->ownerA)->post($create, ['is_active' => '1', 'emoji' => '🍲', 'translations' => ['tr' => ['name' => 'Emojili']]]);
+        $id = (int) $this->db->table('category_translations')->where('name', 'Emojili')->get()->getRowArray()['category_id'];
+        $this->assertSame('🍲', $this->row('categories', $id)['emoji']);
+
+        // "Emoji yok" → null
+        $this->asPanelUser($this->fx->ownerA)->post($create . '/' . $id, ['emoji' => '', 'translations' => ['tr' => ['name' => 'Emojili']]]);
+        $this->assertNull($this->row('categories', $id)['emoji']);
+    }
+
+    public function testStoredEmojiRemovedFromListIsKeptOnUpdate(): void
+    {
+        // Listeden sonradan çıkarılmış bir emoji: değişmeden kaydedilebilir, yeniden seçilemez.
+        $this->db->table('categories')->where('id', $this->fx->categoryA1)->update(['emoji' => '💣']);
+        $url  = $this->base() . '/categories/' . $this->fx->categoryA1;
+        $post = ['is_active' => '1', 'emoji' => '💣', 'translations' => ['tr' => ['name' => 'Çorbalar A1']]];
+
+        $this->asPanelUser($this->fx->ownerA)->post($url, $post);
+        $this->assertSame('💣', $this->row('categories', $this->fx->categoryA1)['emoji']);
+
+        $this->asPanelUser($this->fx->ownerA)->post($url, ['emoji' => '🍲'] + $post);
+        $this->assertSame('🍲', $this->row('categories', $this->fx->categoryA1)['emoji']);
+
+        unset($_SESSION['errors']);
+        $this->asPanelUser($this->fx->ownerA)->post($url, ['emoji' => '💣'] + $post);
+        $this->assertArrayHasKey('emoji', $_SESSION['errors'] ?? []);
+        $this->assertSame('🍲', $this->row('categories', $this->fx->categoryA1)['emoji']);
+    }
+
     /** §4.4: içinde ürün olan kategori silinemez, ürün sayısı bildirilir */
     public function testCategoryWithProductsCannotBeDeleted(): void
     {

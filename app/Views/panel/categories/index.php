@@ -59,6 +59,8 @@
                                     <div class="avatar-sm flex-shrink-0 me-3">
                                         <?php if ($category['image_url'] !== null): ?>
                                             <img src="<?= esc($category['image_url'], 'attr') ?>" alt="" class="img-fluid rounded avatar-sm object-fit-cover">
+                                        <?php elseif ($category['emoji'] !== null && $category['emoji'] !== ''): ?>
+                                            <div class="avatar-title bg-light rounded fs-20" aria-hidden="true"><?= esc($category['emoji']) ?></div>
                                         <?php else: ?>
                                             <div class="avatar-title bg-light text-muted rounded fs-20"><i class="ri-image-line"></i></div>
                                         <?php endif ?>

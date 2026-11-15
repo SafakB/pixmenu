@@ -13,8 +13,8 @@ const product = (id: number, name: string, description: string | null = null): P
 })
 
 const categories: Category[] = [
-  { id: 1, name: 'Çorbalar', description: null, image_url: null, products: [product(1, 'Mercimek Çorbası'), product(2, 'Ezogelin')] },
-  { id: 2, name: 'Tatlılar', description: null, image_url: null, products: [product(3, 'Sütlaç', 'Fırında, tarçınlı'), product(4, 'Künefe')] },
+  { id: 1, name: 'Çorbalar', description: null, image_url: null, emoji: null, products: [product(1, 'Mercimek Çorbası'), product(2, 'Ezogelin')] },
+  { id: 2, name: 'Tatlılar', description: null, image_url: null, emoji: null, products: [product(3, 'Sütlaç', 'Fırında, tarçınlı'), product(4, 'Künefe')] },
 ]
 
 describe('normalizeSearch', () => {

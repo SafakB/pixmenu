@@ -964,7 +964,7 @@ AJAX istekleri CSRF token'ını `X-CSRF-TOKEN` başlığında gönderir; yanıt 
     "allergens": [ { "id": 1, "code": "gluten", "name": "Gluten", "icon_url": "..." } ],
     "categories": [
       {
-        "id": 10, "name": "Soups", "description": null, "image_url": null,
+        "id": 10, "name": "Soups", "description": null, "image_url": null, "emoji": "🍲",
         "products": [
           {
             "id": 88, "name": "Lentil Soup", "description": "...", "price": "129.90",

@@ -97,7 +97,7 @@ final class MenuService
 
         // 3) Kategoriler
         $categories = $db->table('categories')
-            ->select('id, image_path')
+            ->select('id, image_path, emoji')
             ->where('restaurant_id', $restaurantId)
             ->where('branch_id', $branchId)
             ->where('is_active', 1)
@@ -200,6 +200,7 @@ final class MenuService
                 'name'        => $text['name'],
                 'description' => $text['description'],
                 'image_url'   => upload_url($category['image_path']),
+                'emoji'       => $category['emoji'],
                 'products'    => $productsByCategory[$categoryId],
             ];
         }

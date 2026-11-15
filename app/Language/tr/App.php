@@ -104,7 +104,8 @@ return [
 
     'category' => [
         'hasProducts' => 'Bu kategoride {0} ürün olduğu için silinemez. Önce ürünleri taşıyın veya silin.',
-        'invalid'     => 'Seçilen kategori bu şubeye ait değil.',
+        'invalid'      => 'Seçilen kategori bu şubeye ait değil.',
+        'invalidEmoji' => 'Lütfen listeden geçerli bir emoji seçin.',
     ],
 
     'product' => [

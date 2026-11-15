@@ -10,7 +10,7 @@ final class CategoryModel extends TenantModel
     protected $primaryKey     = 'id';
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
-    protected $allowedFields  = ['restaurant_id', 'branch_id', 'image_path', 'is_active', 'sort_order'];
+    protected $allowedFields  = ['restaurant_id', 'branch_id', 'image_path', 'emoji', 'is_active', 'sort_order'];
 
     /**
      * @return list<array<string, mixed>>

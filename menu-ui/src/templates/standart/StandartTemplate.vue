@@ -132,7 +132,7 @@ onBeforeUnmount(() => observer?.disconnect())
           :aria-current="category.id === activeId ? 'true' : undefined"
           @click="goTo(category.id)"
         >
-          {{ category.name }}
+          <span v-if="category.emoji" aria-hidden="true" class="me-1">{{ category.emoji }}</span>{{ category.name }}
           <span
             v-if="category.id === activeId"
             class="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-(--pm-accent)"
@@ -153,7 +153,9 @@ onBeforeUnmount(() => observer?.disconnect())
         :data-category-id="category.id"
         class="scroll-mt-32 pt-10"
       >
-        <h2 class="font-serif text-[1.75rem] leading-tight font-semibold">{{ category.name }}</h2>
+        <h2 class="font-serif text-[1.75rem] leading-tight font-semibold">
+          <span v-if="category.emoji" aria-hidden="true" class="me-2">{{ category.emoji }}</span>{{ category.name }}
+        </h2>
         <p v-if="category.description" class="mt-1.5 max-w-prose text-stone-500">{{ category.description }}</p>
 
         <ul class="mt-2 divide-y divide-stone-100">

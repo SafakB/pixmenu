@@ -108,8 +108,8 @@ Sıralama (JSON): `POST admin/languages/reorder`, `POST admin/allergens/reorder`
 | `panel/branches/form` | `GET panel/branches/new`, `…/{id}/edit` | owner | `branch` (satır\|null), `languages`, `translations`, `action`. Alanlar: admin şube formuyla aynı, `template_code` hariç (şablonu yalnızca admin seçer; panel güncellemesi şablona dokunmaz, panelden açılan şube `standart` alır) |
 | `panel/users/index` | `GET panel/users` | owner | `users[{id, name, email, role, is_active, branch_ids[], editable}]` (`editable=false` → owner kayıtları; düzenleme/silme bağlantısı gösterilmez) |
 | `panel/users/form` | `GET panel/users/new`, `…/{id}/edit` | owner | `user` (satır\|null), `branches[{id, name}]`, `assigned[]`, `action`. Alanlar: `name`, `email`, `password`, `branch_ids[]` (≥ 1), `is_active`. **Rol alanı yoktur**; panelden açılan kullanıcı her zaman manager'dır |
-| `panel/categories/index` | `GET panel/branches/{b}/categories` | owner + manager | `branch{id, name}`, `categories[{id, name, image_url, is_active, sort_order, product_count}]` |
-| `panel/categories/form` | `GET …/categories/new`, `…/categories/{c}/edit` | owner + manager | `branch{id, name}`, `category` (satır\|null), `image_url`, `languages`, `translations`, `action`. Alanlar: `image` (dosya ≤ 3 MB), `remove_image`, `is_active`, `sort_order` (boş = sona ekle), `translations[*][name\|description]` |
+| `panel/categories/index` | `GET panel/branches/{b}/categories` | owner + manager | `branch{id, name}`, `categories[{id, name, image_url, emoji, is_active, sort_order, product_count}]` (`emoji` string\|null) |
+| `panel/categories/form` | `GET …/categories/new`, `…/categories/{c}/edit` | owner + manager | `branch{id, name}`, `category` (satır\|null), `image_url`, `emojiGroups{grup adı: [emoji…]}` (`Config\CategoryEmojis`), `languages`, `translations`, `action`. Alanlar: `image` (dosya ≤ 3 MB), `remove_image`, `emoji` (boş = yok; yalnızca `emojiGroups` içindeki değerler kabul edilir, değişmeyen kayıtlı değer hariç), `is_active`, `sort_order` (boş = sona ekle), `translations[*][name\|description]` |
 | `panel/products/index` | `GET panel/branches/{b}/products?category=&q=&min_price=&max_price=` | owner + manager | `branch{id, name}`, `categories[{id, name}]`, `filters{category, q, min_price, max_price}` (fiyatlar float\|null; sayı olmayan/negatif değer yok sayılır, min > max ise yer değiştirir), `price_range{min, max}` (şubedeki tüm ürünlerin fiyat sınırları), `currency`, `products[{id, name, category_id, category_name, price, thumb_url, is_active, sort_order}]` |
 | `panel/products/form` | `GET …/products/new`, `…/products/{p}/edit` | owner + manager | `branch{id, name}`, `product` (satır\|null), `image_url`, `categories[{id, name}]`, `allergens[{id, code, name, icon_url}]`, `selectedAllergens{allergen_id: level}`, `languages`, `translations`, `currency`, `action`. Alanlar: `category_id`, `price` (virgüllü giriş kabul edilir: `129,90`), `image` (dosya ≤ 5 MB), `is_active`, `sort_order`, `translations[*][name\|description]`, `allergens[{allergen_id}]=contains\|may_contain` (boş değer = seçilmemiş; gönderilmeyenler silinir) |
 
@@ -148,7 +148,7 @@ Ziyaretçi menüsü `menu-ui/` (Vue SPA) uygulamasıdır ve aşağıdaki **Menü
     "languages":  [ { "code": "tr", "native_name": "Türkçe" } ],
     "allergens":  [ { "id": 1, "code": "gluten", "name": "Gluten", "icon_url": null } ],
     "categories": [
-      { "id": 10, "name": "", "description": null, "image_url": null,
+      { "id": 10, "name": "", "description": null, "image_url": null, "emoji": null,
         "products": [
           { "id": 88, "name": "", "description": null, "price": "129.90",
             "image_url": null, "thumb_url": null,

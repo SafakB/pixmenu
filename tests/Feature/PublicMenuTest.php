@@ -53,6 +53,7 @@ final class PublicMenuTest extends DbTestCase
     {
         $this->fx->productAllergen($this->fx->restaurantA, $this->fx->productA1, $this->fx->allergen['gluten'], 'contains');
         $this->fx->productAllergen($this->fx->restaurantA, $this->fx->productA1, $this->fx->allergen['milk'], 'may_contain');
+        $this->db->table('categories')->where('id', $this->fx->categoryA1)->update(['emoji' => '🍲']);
 
         $menu = $this->api(self::CODE_A1);
 
@@ -66,8 +67,9 @@ final class PublicMenuTest extends DbTestCase
 
         $this->assertCount(1, $menu['categories']); // "Tatlılar A1" ürünsüz → listelenmez
         $category = $menu['categories'][0];
-        $this->assertSame(['id', 'name', 'description', 'image_url', 'products'], array_keys($category));
+        $this->assertSame(['id', 'name', 'description', 'image_url', 'emoji', 'products'], array_keys($category));
         $this->assertSame('Çorbalar A1', $category['name']);
+        $this->assertSame('🍲', $category['emoji']);
 
         $product = $category['products'][0];
         $this->assertSame(['id', 'name', 'description', 'price', 'image_url', 'thumb_url', 'allergens'], array_keys($product));

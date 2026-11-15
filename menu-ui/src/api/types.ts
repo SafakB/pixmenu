@@ -43,6 +43,8 @@ export interface Category {
   name: string
   description: string | null
   image_url: string | null
+  /** Panelde seçilen emoji (görsel yoksa gösterilir); seçilmediyse null. */
+  emoji: string | null
   products: Product[]
 }
 

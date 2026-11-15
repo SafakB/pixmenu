@@ -32,7 +32,7 @@ $levelLabels   = ['contains' => 'içerir', 'may_contain' => 'eser miktarda içer
 <main>
     <?php foreach ($menu['categories'] as $category): ?>
         <section>
-            <h2><?= esc($category['name']) ?></h2>
+            <h2><?php if (($category['emoji'] ?? null) !== null): ?><span aria-hidden="true"><?= esc($category['emoji']) ?></span> <?php endif ?><?= esc($category['name']) ?></h2>
             <?php if ($category['description'] !== null): ?><p><?= esc($category['description']) ?></p><?php endif ?>
             <ul>
                 <?php foreach ($category['products'] as $product): ?>

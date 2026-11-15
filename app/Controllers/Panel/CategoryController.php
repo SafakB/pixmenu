@@ -22,7 +22,7 @@ final class CategoryController extends PanelBaseController
 {
     /**
      * View: panel/categories/index — branch{id, name},
-     *       categories[{id, name, image_url, is_active, sort_order, product_count}]
+     *       categories[{id, name, image_url, emoji, is_active, sort_order, product_count}]
      */
     public function index(int $branchId): string
     {
@@ -39,6 +39,7 @@ final class CategoryController extends PanelBaseController
                 'id'            => (int) $category['id'],
                 'name'          => $names[(int) $category['id']]['name'] ?? '#' . $category['id'],
                 'image_url'     => upload_url($category['image_path']),
+                'emoji'         => $category['emoji'],
                 'is_active'     => (int) $category['is_active'] === 1,
                 'sort_order'    => (int) $category['sort_order'],
                 'product_count' => $counts[(int) $category['id']] ?? 0,
@@ -47,7 +48,7 @@ final class CategoryController extends PanelBaseController
     }
 
     /**
-     * View: panel/categories/form — branch, category(null), image_url, languages, translations, action
+     * View: panel/categories/form — branch, category(null), image_url, emojiGroups, languages, translations, action
      */
     public function new(int $branchId): string
     {
@@ -63,7 +64,7 @@ final class CategoryController extends PanelBaseController
 
             (new CategoryService(Scope::tenant()))->create(
                 $branch,
-                ['is_active' => $this->flag('is_active'), 'sort_order' => $this->optionalSortOrder()],
+                ['is_active' => $this->flag('is_active'), 'sort_order' => $this->optionalSortOrder(), 'emoji' => $this->emojiInput()],
                 $this->translationsInput(),
                 $this->uploaded('image'),
             );
@@ -73,7 +74,7 @@ final class CategoryController extends PanelBaseController
     }
 
     /**
-     * View: panel/categories/form — branch, category, image_url, languages, translations, action
+     * View: panel/categories/form — branch, category, image_url, emojiGroups, languages, translations, action
      */
     public function edit(int $branchId, int $categoryId): string
     {
@@ -97,6 +98,7 @@ final class CategoryController extends PanelBaseController
                     'is_active'    => $this->flag('is_active'),
                     'sort_order'   => $this->optionalSortOrder(),
                     'remove_image' => $this->flag('remove_image') === 1,
+                    'emoji'        => $this->emojiInput(),
                 ],
                 $this->translationsInput(),
                 $this->uploaded('image'),
@@ -154,6 +156,7 @@ final class CategoryController extends PanelBaseController
             'branch'       => $this->branchSummary($branch),
             'category'     => $category,
             'image_url'    => upload_url($category['image_path'] ?? null),
+            'emojiGroups'  => config('CategoryEmojis')->groups,
             // is_default: zorunlu dil = ŞUBENİN varsayılan dili
             'languages'    => $translations->formLanguages($context['languages'], $context['required_id']),
             'translations' => $category === null ? [] : $translations->load(CategoryTranslationModel::class, (int) $category['id']),
@@ -175,6 +178,16 @@ final class CategoryController extends PanelBaseController
         )['name'] ?? $branch['slug'];
 
         return ['id' => (int) $branch['id'], 'name' => (string) $name];
+    }
+
+    /**
+     * Seçilen emoji; boş ("Yok") ise null. Liste denetimi serviste yapılır.
+     */
+    private function emojiInput(): ?string
+    {
+        $emoji = trim((string) $this->request->getPost('emoji'));
+
+        return $emoji === '' ? null : $emoji;
     }
 
     /**

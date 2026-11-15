@@ -13,6 +13,7 @@ import ProductItem from './ProductItem.vue'
 
 /**
  * Şablon "kategori" — önce fotoğraflı kategori kartları, dokununca o kategorinin ürünleri.
+ * Kartta görsel yoksa kategorinin emojisi, o da yoksa adının baş harfi gösterilir.
  * Açık kategori adres çubuğunda ?c={id} olarak durur: geri tuşu kartlara döner, bağlantı paylaşılabilir.
  */
 const props = defineProps<{ site: Site; menu: Menu }>()
@@ -79,7 +80,9 @@ function back(): void {
           >
             <AppIcon name="chevronStart" class="size-6 rtl:rotate-180" />
           </button>
-          <h1 class="min-w-0 flex-1 truncate text-lg font-bold">{{ category.name }}</h1>
+          <h1 class="min-w-0 flex-1 truncate text-lg font-bold">
+            <span v-if="category.emoji" aria-hidden="true" class="me-1.5">{{ category.emoji }}</span>{{ category.name }}
+          </h1>
         </div>
       </div>
 
@@ -118,7 +121,9 @@ function back(): void {
         <template v-else-if="searching">
           <p v-if="results.length === 0" class="py-16 text-center text-stone-500">{{ t('noResults') }}</p>
           <section v-for="result in results" :key="result.id" class="pt-6">
-            <h2 class="text-sm font-semibold text-stone-500">{{ result.name }}</h2>
+            <h2 class="text-sm font-semibold text-stone-500">
+              <span v-if="result.emoji" aria-hidden="true" class="me-1">{{ result.emoji }}</span>{{ result.name }}
+            </h2>
             <ul class="divide-y divide-stone-200">
               <ProductItem
                 v-for="product in result.products"
@@ -151,6 +156,13 @@ function back(): void {
                 decoding="async"
                 class="absolute inset-0 size-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:transition-none"
               />
+              <span
+                v-else-if="item.emoji"
+                aria-hidden="true"
+                class="absolute inset-x-0 top-[38%] -translate-y-1/2 text-center text-6xl leading-none drop-shadow-sm transition-transform duration-300 select-none group-hover:scale-110 motion-reduce:transition-none sm:text-7xl"
+              >
+                {{ item.emoji }}
+              </span>
               <span
                 v-else
                 aria-hidden="true"

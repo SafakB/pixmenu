@@ -66,7 +66,7 @@ final class CategoryService
 
     /**
      * @param array<string, mixed>                 $branch       doğrulanmış şube
-     * @param array{is_active: int, sort_order: int|null} $data
+     * @param array{is_active: int, sort_order: int|null, emoji?: string|null} $data
      * @param array<string, array<string, string>> $translations
      */
     public function create(array $branch, array $data, array $translations, ?UploadedFile $image): int
@@ -74,15 +74,18 @@ final class CategoryService
         $branchId = (int) $branch['id'];
         $context  = $this->languageContext($branch);
         $this->assertTranslations($translations, $context);
+        $emoji = $data['emoji'] ?? null;
+        $this->assertEmoji($emoji);
 
         $images = service('images');
         $stored = $image === null ? null : $images->store($image, 'category', $this->scope->restaurantId());
 
-        $id = $this->atomic(function () use ($branchId, $data, $translations, $context, $stored): int {
+        $id = $this->atomic(function () use ($branchId, $data, $emoji, $translations, $context, $stored): int {
             $model = $this->categories();
             $id    = (int) $model->insert([
                 'branch_id'  => $branchId,
                 'image_path' => $stored['path'] ?? null,
+                'emoji'      => $emoji,
                 'is_active'  => $data['is_active'],
                 'sort_order' => $data['sort_order'] ?? $this->categories()->nextSortOrder($branchId),
             ]);
@@ -100,7 +103,7 @@ final class CategoryService
     /**
      * @param array<string, mixed>                 $branch       doğrulanmış şube
      * @param array<string, mixed>                 $category     doğrulanmış kategori (bu şubeye ait)
-     * @param array{is_active: int, sort_order: int|null, remove_image: bool} $data
+     * @param array{is_active: int, sort_order: int|null, remove_image: bool, emoji?: string|null} $data  emoji gönderilmezse mevcut değer korunur
      * @param array<string, array<string, string>> $translations
      */
     public function update(array $branch, array $category, array $data, array $translations, ?UploadedFile $image): void
@@ -108,12 +111,18 @@ final class CategoryService
         $id      = (int) $category['id'];
         $context = $this->languageContext($branch);
         $this->assertTranslations($translations, $context);
+        $emoji = array_key_exists('emoji', $data) ? $data['emoji'] : $category['emoji'];
+
+        if ($emoji !== $category['emoji']) {
+            $this->assertEmoji($emoji); // değişmeyen (listeden sonradan çıkarılmış olabilir) değer yeniden denetlenmez
+        }
 
         $images = service('images');
         $stored = $image === null ? null : $images->store($image, 'category', $this->scope->restaurantId());
 
-        $this->atomic(function () use ($id, $category, $data, $translations, $context, $stored): void {
+        $this->atomic(function () use ($id, $category, $data, $emoji, $translations, $context, $stored): void {
             $fields = [
+                'emoji'      => $emoji,
                 'is_active'  => $data['is_active'],
                 'sort_order' => $data['sort_order'] ?? (int) $category['sort_order'],
             ];
@@ -208,6 +217,17 @@ final class CategoryService
 
         if ($errors !== []) {
             throw new ValidationException($errors);
+        }
+    }
+
+    /**
+     * Emoji yalnızca `Config\CategoryEmojis` listesinden seçilebilir; null = emoji yok.
+     * Görsel diske yazılmadan ÖNCE çağrılır (hata durumunda sahipsiz dosya kalmasın).
+     */
+    private function assertEmoji(?string $emoji): void
+    {
+        if ($emoji !== null && ! config('CategoryEmojis')->isAllowed($emoji)) {
+            throw ValidationException::single('emoji', lang('App.category.invalidEmoji'));
         }
     }
 }
