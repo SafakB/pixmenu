@@ -7,7 +7,7 @@ import { useProductDialog } from '../../core/productDialog'
 
 /**
  * Ürün penceresi: her ekran boyutunda ortada, bulanık arka plan üstünde yuvarlak kart.
- * Alerjenler seviyesine göre iki grupta ("İçerir" / "İz miktarda içerebilir") haplar halinde.
+ * Alerjenler seviyesine göre iki grupta ("İçerir" / "Eser miktarda içerebilir") haplar halinde.
  */
 const props = defineProps<{ product: Product | null; menu: Menu }>()
 const emit = defineEmits<{ close: [] }>()
