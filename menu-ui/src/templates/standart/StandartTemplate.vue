@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
+import { computed, ref } from 'vue'
 import type { Menu, Product, Site } from '../../api/types'
 import AppHeader from '../../components/AppHeader.vue'
 import MenuFooter from '../../components/MenuFooter.vue'
 import ProductSheet from '../../components/ProductSheet.vue'
 import SearchBox from '../../components/SearchBox.vue'
 import { useMenuHelpers } from '../../core/menuHelpers'
+import { sectionId, useScrollSpy } from '../../core/scrollSpy'
 import { filterCategories } from '../../core/search'
 import MenuRow from './MenuRow.vue'
 
@@ -21,90 +22,16 @@ const selected = ref<Product | null>(null)
 const searching = computed(() => query.value.trim() !== '')
 const visible = computed(() => filterCategories(props.menu.categories, query.value, lang.value))
 
-// --- Aktif kategori (scrollspy) ---------------------------------------------
+// Aktif kategori (scrollspy): yapışkan sekmeler kaydırdıkça izler.
 const root = ref<HTMLElement | null>(null)
 const nav = ref<HTMLElement | null>(null)
-const tabs = new Map<number, HTMLElement>()
-const activeId = ref<number | null>(null)
-const inView = new Set<number>()
-const behavior: ScrollBehavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth'
-let observer: IntersectionObserver | null = null
-let lockUntil = 0
-
-function setTab(id: number, element: Element | ComponentPublicInstance | null): void {
-  if (element instanceof HTMLElement) {
-    tabs.set(id, element)
-  } else {
-    tabs.delete(id)
-  }
-}
-
-function activate(id: number): void {
-  if (activeId.value === id) {
-    return
-  }
-
-  activeId.value = id
-  const tab = tabs.get(id)
-
-  if (tab && nav.value) {
-    // Yalnızca sekme şeridi kaydırılır (scrollIntoView sayfa kaydırmasını kesebilir). LTR/RTL'de aynı çalışır.
-    const tabBox = tab.getBoundingClientRect()
-    const navBox = nav.value.getBoundingClientRect()
-    nav.value.scrollBy({ left: tabBox.left + tabBox.width / 2 - (navBox.left + navBox.width / 2), behavior })
-  }
-}
-
-function observe(): void {
-  observer?.disconnect()
-  inView.clear()
-
-  if (searching.value || root.value === null || typeof IntersectionObserver === 'undefined') {
-    return
-  }
-
-  observer = new IntersectionObserver(
-    (entries) => {
-      for (const entry of entries) {
-        const id = Number((entry.target as HTMLElement).dataset.categoryId)
-
-        if (entry.isIntersecting) {
-          inView.add(id)
-        } else {
-          inView.delete(id)
-        }
-      }
-
-      if (Date.now() < lockUntil) {
-        return // sekmeye tıklanınca başlayan yumuşak kaydırma sürüyor
-      }
-
-      const first = props.menu.categories.find((category) => inView.has(category.id))
-
-      if (first) {
-        activate(first.id)
-      }
-    },
-    { rootMargin: '-130px 0px -55% 0px' },
-  )
-
-  root.value.querySelectorAll<HTMLElement>('[data-category-id]').forEach((section) => observer?.observe(section))
-}
-
-function goTo(id: number): void {
-  lockUntil = Date.now() + 900
-  activate(id)
-  document.getElementById(`kategori-${id}`)?.scrollIntoView({ behavior, block: 'start' })
-}
-
-onMounted(() => {
-  activeId.value = props.menu.categories[0]?.id ?? null
-  observe()
+const { activeId, setTab, goTo } = useScrollSpy({
+  root,
+  nav,
+  categories: () => props.menu.categories,
+  paused: () => searching.value,
+  rootMargin: '-130px 0px -55% 0px',
 })
-
-watch([() => props.menu, searching], observe, { flush: 'post' })
-
-onBeforeUnmount(() => observer?.disconnect())
 </script>
 
 <template>
@@ -148,7 +75,7 @@ onBeforeUnmount(() => observer?.disconnect())
 
       <section
         v-for="category in visible"
-        :id="`kategori-${category.id}`"
+        :id="sectionId(category.id)"
         :key="category.id"
         :data-category-id="category.id"
         class="scroll-mt-32 pt-10"

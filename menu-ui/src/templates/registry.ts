@@ -10,6 +10,7 @@ import { defineAsyncComponent, type Component } from 'vue'
 const loaders = {
   standart: () => import('./standart/StandartTemplate.vue'),
   kategori: () => import('./kategori/KategoriTemplate.vue'),
+  modern: () => import('./modern/ModernTemplate.vue'),
 } satisfies Record<string, () => Promise<{ default: Component }>>
 
 export type TemplateCode = keyof typeof loaders

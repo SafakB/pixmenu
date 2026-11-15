@@ -160,7 +160,7 @@ Ziyaretçi menüsü `menu-ui/` (Vue SPA) uygulamasıdır ve aşağıdaki **Menü
 ```
 
 - `price` string'dir; biçimlendirme `Intl.NumberFormat(lang, {style:'currency', currency})` ile yapılır.
-- `branch.template`: admin'in şubeye atadığı menü şablonu kodu (`menu_templates.code`, varsayılan `standart`). Tasarım `menu-ui/src/templates/{kod}/` altındadır: `standart` (tek sayfa) ve `kategori` (önce kategori kartları). Ön uçta karşılığı olmayan kod `standart` ile gösterilir.
+- `branch.template`: admin'in şubeye atadığı menü şablonu kodu (`menu_templates.code`, varsayılan `standart`). Tasarım `menu-ui/src/templates/{kod}/` altındadır: `standart` (tek sayfa), `kategori` (önce kategori kartları) ve `modern` (tek sayfa, fotoğraflı ürün kartları). Ön uçta karşılığı olmayan kod `standart` ile gösterilir.
 - Ürünler alerjenlere `id` ile referans verir; adlar üstteki `allergens` dizisindedir.
 - `language.direction` `rtl` olabilir (`<html dir>`).
 - Dil seçimi: geçerli `?lang` → `pixmenu_lang_{public_code}` çerezi (HTML menüde; 30 gün) → şubenin varsayılan dili. JSON API çerez okumaz/yazmaz.

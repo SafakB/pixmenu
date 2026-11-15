@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import type { Menu, Product } from '../api/types'
 import { useMenuHelpers } from '../core/menuHelpers'
+import { useProductDialog } from '../core/productDialog'
 import AllergenList from './AllergenList.vue'
 import AppIcon from './AppIcon.vue'
 
@@ -13,48 +13,10 @@ const props = defineProps<{ product: Product | null; menu: Menu }>()
 const emit = defineEmits<{ close: [] }>()
 
 const { t, price } = useMenuHelpers(() => props.menu)
-const dialog = ref<HTMLDialogElement | null>(null)
-const shown = ref<Product | null>(null) // kapanırken içerik boşalmasın
-
-function lockScroll(locked: boolean): void {
-  document.documentElement.classList.toggle('overflow-hidden', locked)
-}
-
-watch(
+const { shown, close, onClose, onBackdropClick } = useProductDialog(
   () => props.product,
-  async (product) => {
-    const element = dialog.value
-
-    if (element === null) {
-      return
-    }
-
-    if (product !== null) {
-      shown.value = product
-      await nextTick()
-
-      if (!element.open) {
-        element.showModal()
-        lockScroll(true)
-      }
-    } else if (element.open) {
-      element.close()
-    }
-  },
+  () => emit('close'),
 )
-
-function onClose(): void {
-  lockScroll(false)
-  emit('close')
-}
-
-function onBackdropClick(event: MouseEvent): void {
-  if (event.target === dialog.value) {
-    dialog.value?.close()
-  }
-}
-
-onBeforeUnmount(() => lockScroll(false))
 </script>
 
 <template>
@@ -79,7 +41,7 @@ onBeforeUnmount(() => lockScroll(false))
         type="button"
         :aria-label="t('close')"
         class="absolute end-3 top-3 rounded-full bg-white/90 p-2 text-stone-700 shadow-sm backdrop-blur hover:bg-white focus-visible:ring-2 focus-visible:ring-(--pm-accent) focus-visible:outline-none"
-        @click="dialog?.close()"
+        @click="close"
       >
         <AppIcon name="close" class="size-5" />
       </button>
