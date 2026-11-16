@@ -46,7 +46,7 @@ final class GoogleOAuth implements GoogleIdentityProvider
 
     public function identity(string $code, string $codeVerifier): array
     {
-        $token = $this->request('post', self::TOKEN_URL, [
+        $token = $this->request('POST', self::TOKEN_URL, [
             'form_params' => [
                 'code'          => $code,
                 'client_id'     => $this->config->clientId,
@@ -63,7 +63,7 @@ final class GoogleOAuth implements GoogleIdentityProvider
             throw new GoogleOAuthException('Google token yanıtında access_token yok.');
         }
 
-        $info = $this->request('get', self::USERINFO_URL, [
+        $info = $this->request('GET', self::USERINFO_URL, [
             'headers' => ['Authorization' => 'Bearer ' . $accessToken],
         ]);
 
@@ -93,7 +93,8 @@ final class GoogleOAuth implements GoogleIdentityProvider
     {
         try {
             $client   = single_service('curlrequest', ['timeout' => 10, 'http_errors' => false]);
-            $response = $client->request($method, $url, $options + ['headers' => []]);
+            // CURLRequest metodu büyük harfe çevirmez; HTTP metotları harfe duyarlıdır ('post' → 405).
+            $response = $client->request(strtoupper($method), $url, $options + ['headers' => []]);
             $status   = $response->getStatusCode();
             $body     = json_decode((string) $response->getBody(), true);
         } catch (Throwable $e) {
@@ -101,7 +102,17 @@ final class GoogleOAuth implements GoogleIdentityProvider
         }
 
         if ($status !== 200 || ! is_array($body)) {
-            throw new GoogleOAuthException('Google beklenmeyen yanıt: HTTP ' . $status);
+            $detail = '';
+
+            if (is_array($body) && is_string($body['error'] ?? null)) {
+                $detail = ' ' . $body['error'];
+
+                if (is_string($body['error_description'] ?? null)) {
+                    $detail .= ': ' . $body['error_description'];
+                }
+            }
+
+            throw new GoogleOAuthException('Google beklenmeyen yanıt: HTTP ' . $status . $detail);
         }
 
         return $body;
