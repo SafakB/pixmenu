@@ -13,7 +13,7 @@ $errors   = session('errors') ?? [];
 $hasOld   = old('translations', null, false) !== null;
 $isActive = $hasOld ? old('is_active', null, false) === '1' : (int) ($branch['is_active'] ?? 1) === 1;
 $default  = (string) old('default_language_id', $branch['default_language_id'] ?? '', false);
-$template = (string) old('template_code', $branch['template_code'] ?? 'standart', false);
+$template = (string) old('template_code', $branch['template_code'] ?? \App\Models\MenuTemplateModel::DEFAULT_CODE, false);
 $invalid  = static fn (string $field): string => isset($errors[$field]) ? ' is-invalid' : '';
 $feedback = static fn (string $field): string => isset($errors[$field]) ? '<div class="invalid-feedback">' . esc($errors[$field]) . '</div>' : '';
 ?>

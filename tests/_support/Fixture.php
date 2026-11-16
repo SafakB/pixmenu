@@ -210,6 +210,7 @@ final class Fixture
         $id = $this->insert('branches', [
             'restaurant_id' => $restaurantId, 'slug' => $slug, 'public_code' => $code,
             'default_language_id' => $this->lang['tr'], 'is_active' => 1, 'sort_order' => $sort,
+            'template_code' => 'standart', // "eski" şube: DB varsayılanından (modern) bağımsız
             'created_at' => $this->now, 'updated_at' => $this->now,
         ]);
         $this->insert('branch_translations', ['branch_id' => $id, 'language_id' => $this->lang['tr'], 'name' => $name, 'address' => $name . ' adresi']);

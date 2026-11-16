@@ -121,6 +121,7 @@ final class SignupTest extends DbTestCase
         $branch = $this->db->table('branches')->where('restaurant_id', $rid)->get()->getRowArray();
         $this->assertNotNull($branch);
         $this->assertSame('0216 000 00 00', $branch['phone']);
+        $this->assertSame('modern', $branch['template_code']);
         $this->seeInDatabase('branch_translations', ['branch_id' => $branch['id'], 'name' => 'Moda', 'address' => 'Moda Cad. No:1 Kadıköy']);
 
         $this->seeInDatabase('subscriptions', ['restaurant_id' => $rid, 'plan_id' => $this->fx->plan['demo'], 'billing_cycle' => 'trial', 'status' => 'trialing', 'is_current' => 1]);

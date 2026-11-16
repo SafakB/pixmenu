@@ -14,7 +14,7 @@ use CodeIgniter\Model;
 final class MenuTemplateModel extends Model
 {
     /** Silinemez/pasifleştirilemez; yeni şubelerin varsayılan şablonu. */
-    public const DEFAULT_CODE = 'standart';
+    public const DEFAULT_CODE = 'modern';
 
     protected $table            = 'menu_templates';
     protected $primaryKey       = 'code';

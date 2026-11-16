@@ -54,30 +54,45 @@ final class MenuTemplateAdminTest extends DbTestCase
 
     public function testDefaultTemplateCannotBeDeletedOrDeactivated(): void
     {
-        $this->asAdmin()->post('admin/templates/standart/delete')->assertSessionHas('error');
-        $this->asAdmin()->post('admin/templates/standart/toggle')->assertSessionHas('error');
-        $this->asAdmin()->post('admin/templates/standart', ['name' => 'Standart']); // is_active gönderilmedi
-
-        $this->seeInDatabase('menu_templates', ['code' => 'standart', 'is_active' => 1]);
-    }
-
-    public function testTemplateInUseCannotBeDeletedOrDeactivated(): void
-    {
-        $this->db->table('branches')->where('id', $this->fx->branchA1)->update(['template_code' => 'modern']);
-
+        // Varsayılan şablon `modern`; hiçbir şube kullanmasa da kilitli.
         $this->asAdmin()->post('admin/templates/modern/delete')->assertSessionHas('error');
         $this->asAdmin()->post('admin/templates/modern/toggle')->assertSessionHas('error');
+        $this->asAdmin()->post('admin/templates/modern', ['name' => 'Modern']); // is_active gönderilmedi
 
         $this->seeInDatabase('menu_templates', ['code' => 'modern', 'is_active' => 1]);
     }
 
+    public function testTemplateInUseCannotBeDeletedOrDeactivated(): void
+    {
+        // Fixture şubeleri `standart` kullanır.
+        $this->asAdmin()->post('admin/templates/standart/delete')->assertSessionHas('error');
+        $this->asAdmin()->post('admin/templates/standart/toggle')->assertSessionHas('error');
+
+        $this->seeInDatabase('menu_templates', ['code' => 'standart', 'is_active' => 1]);
+    }
+
     public function testUnusedTemplateCanBeToggledAndDeleted(): void
     {
-        $this->asAdmin()->post('admin/templates/modern/toggle');
-        $this->seeInDatabase('menu_templates', ['code' => 'modern', 'is_active' => 0]);
+        $this->db->table('branches')->update(['template_code' => 'modern']);
 
-        $this->asAdmin()->post('admin/templates/modern/delete');
-        $this->dontSeeInDatabase('menu_templates', ['code' => 'modern']);
+        $this->asAdmin()->post('admin/templates/standart/toggle');
+        $this->seeInDatabase('menu_templates', ['code' => 'standart', 'is_active' => 0]);
+
+        $this->asAdmin()->post('admin/templates/standart/delete');
+        $this->dontSeeInDatabase('menu_templates', ['code' => 'standart']);
+    }
+
+    public function testNewBranchGetsDefaultTemplate(): void
+    {
+        $a = $this->fx->restaurantA;
+
+        $this->asAdmin()->post("admin/restaurants/{$a}/branches", $this->branchPost([
+            'slug' => 'yeni', 'is_active' => '0', 'translations' => ['tr' => ['name' => 'Yeni Şube', 'address' => '']],
+        ]));
+
+        $row = $this->db->table('branches')->where('restaurant_id', $a)->where('slug', 'yeni')->get()->getRowArray();
+        $this->assertNotNull($row);
+        $this->assertSame('modern', $row['template_code']);
     }
 
     public function testReorder(): void

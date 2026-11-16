@@ -91,7 +91,7 @@ return [
         'codeInvalid'   => 'Şablon kodu yalnızca küçük harf, rakam ve tire içerebilir (en fazla 30 karakter).',
         'codeTaken'     => 'Bu şablon kodu zaten kullanılıyor.',
         'inUse'         => 'Bu şablon {0} şubede kullanıldığı için silinemez veya pasifleştirilemez. Önce şubelere başka şablon atayın.',
-        'defaultLocked' => 'Standart şablon silinemez ve pasifleştirilemez.',
+        'defaultLocked' => 'Varsayılan şablon silinemez ve pasifleştirilemez.',
         'notSelectable' => 'Geçerli bir menü şablonu seçin.',
     ],
 
