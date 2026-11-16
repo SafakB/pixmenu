@@ -100,7 +100,7 @@ $usedCount   = count(array_filter($templates, static fn ($t) => (int) $t['branch
                         <div class="min-w-0">
                             <p class="fw-medium text-muted font-monospace mb-0 text-truncate"><?= esc($code) ?></p>
                             <h4 class="mt-3 mb-1 ff-secondary fw-semibold text-truncate"><?= esc($template['name']) ?></h4>
-                            <p class="text-muted mb-3 text-truncate"><?= esc((string) ($template['description'] ?? '')) ?: '&nbsp;' ?></p>
+                            <p class="text-muted mb-3 text-truncate text-wrap"><?= esc((string) ($template['description'] ?? '')) ?: '&nbsp;' ?></p>
                             <p class="mb-0">
                                 <?php if ($isActive): ?>
                                     <span class="badge bg-success-subtle text-success">Aktif</span>
