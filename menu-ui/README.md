@@ -78,6 +78,7 @@ Admin, şube başına bir şablon atar: **Admin → Menü şablonları**, şube 
 | `standart` | Tek sayfa, basılı menü kartı. Yapışkan kategori sekmeleri kaydırdıkça aktif kategoriyi izler. Ürün adı ile fiyat noktalı çizgiyle birleşir. |
 | `kategori` | Önce fotoğraflı kategori kartları; dokununca o kategorinin ürünleri açılır. Açık kategori adreste `?c={id}` olarak durur, böylece telefonun geri tuşu kartlara döner. |
 | `modern` | Tek sayfa, fotoğraflı yatay ürün kartları (geniş ekranda iki sütun). Yapışkan başlıkta kategori çipleri aktif kategoriyi izler; büyüteç ikonu çiplerin yerine arama kutusunu açar. Ürün penceresi her ekranda ortada açılır. |
+| `serenate` | Tek sayfa, akşam renklerinde (koyu) ve telefon öncelikli. Büyük serif marka başlığı; fotoğraflı ürünler geniş görselli kart, fotoğrafsızlar basılı menü satırı olarak görünür. Gezinme altta yüzen dock'tadır: aktif kategoriyi gösterir, dokununca kategoriler alttan açılır; arama ekranın üstünde açılır. Ürün sayfası telefonda alttan yükselir. |
 
 Ön uçta karşılığı olmayan bir kod `standart` ile gösterilir; konsola bir uyarı düşer.
 

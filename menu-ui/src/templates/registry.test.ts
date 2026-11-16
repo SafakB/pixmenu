@@ -6,6 +6,7 @@ describe('resolveTemplateCode', () => {
     expect(resolveTemplateCode('standart')).toBe('standart')
     expect(resolveTemplateCode('kategori')).toBe('kategori')
     expect(resolveTemplateCode('modern')).toBe('modern')
+    expect(resolveTemplateCode('serenate')).toBe('serenate')
   })
 
   it('bilinmeyen veya boş kodu varsayılana düşürür ve bir kez uyarır', () => {

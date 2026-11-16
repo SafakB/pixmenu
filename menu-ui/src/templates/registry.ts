@@ -11,6 +11,7 @@ const loaders = {
   standart: () => import('./standart/StandartTemplate.vue'),
   kategori: () => import('./kategori/KategoriTemplate.vue'),
   modern: () => import('./modern/ModernTemplate.vue'),
+  serenate: () => import('./serenate/SerenateTemplate.vue'),
 } satisfies Record<string, () => Promise<{ default: Component }>>
 
 export type TemplateCode = keyof typeof loaders
