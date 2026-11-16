@@ -51,7 +51,8 @@ final class RestaurantUserController extends AdminBaseController
 
         return $this->handle(function () use ($restaurantId): ResponseInterface {
             $input = $this->input();
-            $id    = (new UserService(Scope::admin($restaurantId)))->create($input);
+            // Admin'in girdiği adres güvenilir kabul edilir (Google bağlamada şifre korunur).
+            $id    = (new UserService(Scope::admin($restaurantId)))->create($input + ['email_verified' => true]);
             service('activity')->detail(['id' => $id, 'email' => trim($input['email']), 'role' => $input['role']]);
 
             return $this->done('admin/restaurants/' . $restaurantId . '/users', lang('App.created'));

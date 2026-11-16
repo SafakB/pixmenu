@@ -103,6 +103,8 @@ final class RestaurantController extends AdminBaseController
                 'name'     => (string) $this->request->getPost('owner_name'),
                 'email'    => $ownerEmail,
                 'password' => (string) $this->request->getPost('owner_password'),
+                // Admin'in girdiği adres güvenilir kabul edilir (Google bağlamada şifre korunur).
+                'email_verified' => true,
             ];
 
             $id = (new RestaurantService())->create(

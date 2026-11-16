@@ -24,6 +24,7 @@ $canVoid   = admin_can('invoices.void');
             'restaurantName'      => $restaurant['name'],
             'seller'              => $seller,
             'paymentInstructions' => $paymentInstructions,
+            'payUrl'              => null,
         ]) ?>
     </div>
     <div class="col-xxl-4 col-xl-5 d-print-none">

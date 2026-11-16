@@ -6,7 +6,7 @@
 ob_start();
 ?>
 <p>Ücretsiz deneme sürenizin bitmesine <strong><?= esc((string) $daysLeft) ?> gün</strong> kaldı (son gün: <?= esc(pix_date($subscription['current_period_end'])) ?>).</p>
-<p>Menünüzün kesintisiz yayında kalması için ücretli bir pakete geçmek üzere bizimle iletişime geçin.</p>
+<p>Menünüzün kesintisiz yayında kalması için panelinizdeki <strong>Abonelik › Paketler</strong> sayfasından ücretli bir pakete geçebilirsiniz.</p>
 <?php
 echo view('emails/billing/layout', [
     'subject'        => $subject,

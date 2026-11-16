@@ -76,6 +76,57 @@ final class PanelAuth extends BaseAuth
     }
 
     /**
+     * Google kimliğiyle giriş (Google e-postayı doğrulamış olmalı — çağıran kontrol eder).
+     *
+     *  - `google_id` eşleşen kullanıcı → giriş (`ok`).
+     *  - Yoksa aynı e-postalı kullanıcı → hesaba bağlanır ve giriş (`linked`). Hesabın e-postası
+     *    doğrulanmamışsa (self-servis kayıt) önceki şifre kaldırılır ve diğer oturumlar düşer
+     *    (`linked_password_cleared`): başkasının adresiyle önceden açılmış hesap ele geçirilemez.
+     *  - Hesap başka bir Google kimliğine bağlıysa → `conflict` (üzerine yazılmaz).
+     *  - Kullanıcı yok → `not_found` (kayıt akışına yönlendirilir).
+     *  - Kullanıcı veya restoran pasif → `unusable`.
+     *
+     * @return 'ok'|'linked'|'linked_password_cleared'|'not_found'|'conflict'|'unusable'
+     */
+    public function attemptGoogle(string $sub, string $email): string
+    {
+        $users = static fn (): RestaurantUserModel => (new RestaurantUserModel())->withoutTenantScope();
+        $email = mb_strtolower(trim($email));
+        $user  = $sub === '' ? null : $users()->where('google_id', $sub)->first();
+
+        if ($user !== null) {
+            return $this->login($user) ? 'ok' : 'unusable';
+        }
+
+        $user = $this->findByEmail($email);
+
+        if ($user === null) {
+            return 'not_found';
+        }
+
+        if (! empty($user['google_id'])) {
+            return 'conflict';
+        }
+
+        if (! $this->isUsable($user, null)) {
+            return 'unusable';
+        }
+
+        $now    = date('Y-m-d H:i:s');
+        $fields = ['google_id' => $sub];
+        $result = 'linked';
+
+        if (empty($user['email_verified_at'])) {
+            $fields += ['email_verified_at' => $now, 'password_hash' => null, 'password_changed_at' => $now];
+            $result = 'linked_password_cleared';
+        }
+
+        $users()->update((int) $user['id'], $fields);
+
+        return $this->login($user) ? $result : 'unusable';
+    }
+
+    /**
      * Doğrulanmış kullanıcının restoranı (user() null değilse dolu).
      *
      * @return array<string, mixed>|null

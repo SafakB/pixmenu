@@ -15,6 +15,7 @@
             'restaurantName'      => $restaurantName,
             'seller'              => $seller,
             'paymentInstructions' => $paymentInstructions,
+            'payUrl'              => $payUrl,
         ]) ?>
     </div>
 </div>

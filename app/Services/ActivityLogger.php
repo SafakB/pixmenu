@@ -17,6 +17,9 @@ use CodeIgniter\HTTP\IncomingRequest;
  *
  * detail(): yalnızca çağıranın AÇIKÇA verdiği küçük alanlar. Parola, token veya
  * ham istek gövdesi buraya ASLA verilmez.
+ *
+ * record(): rotadan çıkarılamayan akışlar için açık eylem kodu + alan (ör. Google ile giriş
+ * GET callback'i, /kayit). Açık kayıt GET isteğinde de yazılır.
  */
 final class ActivityLogger
 {
@@ -32,12 +35,35 @@ final class ActivityLogger
     /** @var array<string, mixed>|null */
     private ?array $actor = null;
 
+    private ?string $area = null;
+
+    private ?string $actionCode = null;
+
     /**
      * Bu istek başarılı bir işlemdir; yanıt sonrası kaydedilecek.
      */
     public function succeed(): void
     {
         $this->marked = true;
+    }
+
+    /**
+     * Rotadan çıkarılamayan başarılı işlem: eylem kodu (`nesne.fiil`) ve alan açıkça verilir.
+     * Aktör yanıt sonrası alanın auth servisinden okunur (giriş/kayıttan sonra dolu olur).
+     */
+    public function record(string $action, string $area = 'panel'): void
+    {
+        $this->marked     = true;
+        $this->actionCode = $action;
+        $this->area       = in_array($area, self::AREAS, true) ? $area : 'panel';
+    }
+
+    /**
+     * record() ile açık kayıt istendi mi? (ActivityLogFilter GET'te yalnızca bunu yazar.)
+     */
+    public function hasExplicitRecord(): bool
+    {
+        return $this->actionCode !== null;
     }
 
     /**
@@ -74,12 +100,15 @@ final class ActivityLogger
      */
     public function flush(IncomingRequest $request): void
     {
-        [$marked, $detail, $restaurantId, $actor] = [$this->marked, $this->detail, $this->restaurantId, $this->actor];
+        [$marked, $detail, $restaurantId, $actor, $explicitArea, $actionCode]
+            = [$this->marked, $this->detail, $this->restaurantId, $this->actor, $this->area, $this->actionCode];
 
         $this->marked       = false;
         $this->detail       = [];
         $this->restaurantId = null;
         $this->actor        = null;
+        $this->area         = null;
+        $this->actionCode   = null;
 
         if (! $marked) {
             return;
@@ -87,7 +116,7 @@ final class ActivityLogger
 
         try {
             $path = trim($request->getPath(), '/');
-            $area = explode('/', $path)[0];
+            $area = $explicitArea ?? explode('/', $path)[0];
 
             if (! in_array($area, self::AREAS, true)) {
                 return;
@@ -111,7 +140,7 @@ final class ActivityLogger
                 'actor_id'      => (int) $actor['id'],
                 'actor_label'   => mb_substr((string) ($actor['email'] ?? ''), 0, 190),
                 'restaurant_id' => $restaurantId,
-                'action'        => mb_substr($this->action(), 0, 60),
+                'action'        => mb_substr($actionCode ?? $this->action(), 0, 60),
                 'path'          => mb_substr($path, 0, 190),
                 'ip'            => mb_substr($request->getIPAddress(), 0, 45),
                 'detail'        => $detail === [] ? null : json_encode($detail, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PARTIAL_OUTPUT_ON_ERROR),

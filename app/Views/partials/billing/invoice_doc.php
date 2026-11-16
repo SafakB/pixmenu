@@ -1,7 +1,8 @@
 <?php
 /**
  * Yazdırılabilir fatura gövdesi (admin + panel). Sayfaya ayrıca partials/billing/print_css eklenir.
- * Parametreler: invoice (satır + display_status, method_label), restaurantName, seller{name, address, tax_info}, paymentInstructions
+ * Parametreler: invoice (satır + display_status, method_label), restaurantName, seller{name, address, tax_info}, paymentInstructions,
+ *              payUrl (string|null — panelde ödenmemiş faturanın ödeme ekranı; admin her zaman null geçer)
  */
 $cur = $invoice['currency_code'];
 ?>
@@ -102,6 +103,9 @@ $cur = $invoice['currency_code'];
             </div>
         <?php endif ?>
         <div class="hstack gap-2 justify-content-end d-print-none mt-4">
+            <?php if ($payUrl !== null): ?>
+                <a href="<?= esc($payUrl, 'attr') ?>" class="btn btn-primary"><i class="ri-bank-card-line align-bottom me-1"></i> Kartla öde</a>
+            <?php endif ?>
             <button type="button" class="btn btn-success" onclick="window.print()"><i class="ri-printer-line align-bottom me-1"></i> Yazdır</button>
         </div>
     </div>

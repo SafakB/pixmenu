@@ -10,12 +10,12 @@ Hedef: restoranlara paket tanımlamak, dönemsel fatura kesmek, ödenmeyen fatur
 
 | Konu | Karar |
 |---|---|
-| Tahsilat | Manuel. Sistem fatura keser; admin "ödendi" işaretler. Ödeme sağlayıcı yok. |
+| Tahsilat | Manuel. Sistem fatura keser; admin "ödendi" işaretler. Owner'ın ödenmemiş faturası için panelde kart ödeme **ekranı** vardır (`panel/subscription/invoices/{id}/pay`); sanal POS (PayTR) henüz bağlı değildir — **TODO(PayTR)**: ödeme onayı `InvoiceService::markPaid(…, 'card', merchant_oid)` ile işlenecek. |
 | Fatura niteliği | Sistem içi tahsilat kaydı + yazdırılabilir görünüm. Resmi e-fatura dışarıda kesilir. PDF yok. |
 | Dönem | Aylık + yıllık, cron ile otomatik yenileme. |
 | Demo | Süreli ücretsiz deneme (varsayılan 14 gün), fatura kesilmez; süre bitince askıya alınır. |
 | Askıya alma | Menü kapanır, panel kısıtlı açık. `is_active`'ten ayrı bir durum. |
-| Paket yönetimi | Yalnızca admin. Owner paketini/faturalarını görür, paket karşılaştırma sayfasını bilgi amaçlı görür. |
+| Paket yönetimi | Paket tanımları yalnızca admin'de. Owner self-servis olarak yalnızca **deneme → ücretli** geçiş yapar (kayıt sırasında veya `panel/subscription/plans`'tan; `SubscriptionService::upgradeFromTrial`). Ücretli → ücretli değişiklik admin'dedir. |
 | Paket değişimi | Hemen geçer, bugünden yeni dönem başlar, tam fatura kesilir (admin elle indirim girebilir). |
 | Limit aşımı | Geçiş engellenir (fazla şube pasifleştirilmeden / alan adı kaldırılmadan paket düşürülemez). |
 | Özel alan adı | Altyapı bu plana dahil. Restoran başına 1 alan adı; restorana bağlanır. |
@@ -184,9 +184,11 @@ Ayrıca: restoran oluşturma formuna paket + dönem seçimi; restoran listesi ve
 |---|---|
 | `panel/subscription` | Paket, dönem, durum, kullanım (şube 1/1), fatura listesi |
 | `panel/subscription/invoices/(:num)` | Fatura detayı (yazdırılabilir) |
-| `panel/subscription/plans` | Paket karşılaştırma — bilgi amaçlı |
+| `panel/subscription/plans` | Paket karşılaştırma; denemedeki owner için "Bu pakete geç" (`POST panel/subscription/upgrade`) |
+| `panel/subscription/invoices/(:num)/pay` | Kart ödeme ekranı (GET) + stub POST — **TODO(PayTR)** |
 
-- **Paket karşılaştırma sayfası tasarım referansı:** `admin_template/pages-pricing.html` (aylık/yıllık geçiş düğmesi, paket kartları, özellik listesi, "Popüler" şeridi). Kartlar `plans` tablosundan beslenir; mevcut paket "Paketiniz" rozetiyle işaretlenir; satın alma düğmesi yerine "Yükseltmek için bizimle iletişime geçin" yer alır. Sayfa yalnızca bilgi amaçlıdır.
+- **Paket karşılaştırma sayfası tasarım referansı:** `admin_template/pages-pricing.html` (aylık/yıllık geçiş düğmesi, paket kartları, özellik listesi, "Popüler" şeridi). Kartlar `plans` tablosundan beslenir (`partials/billing/plan_card`, landing ve kayıt sihirbazıyla ortak); mevcut paket "Paketiniz" rozetiyle işaretlenir. Denemedeki (veya aboneliği olmayan, elle askıya alınmamış) owner ücretli bir pakete hemen geçer: eski abonelik `ended`, yeni dönem bugünden başlar, ilk dönem faturası `pending` kesilir ve ödeme ekranına yönlendirilir. Ücretli paketteki owner "iletişime geçin" metnini görür.
+- **Self-servis kayıt (`/kayit`):** seçilen paketle `RestaurantService::create` aboneliği başlatır; ücretli pakette ilk fatura `pending` kesilir (vade +`paymentTermDays`). Ödeme yapılmazsa mevcut kurallarla `past_due` → askı işler; yani ücretli kayıt ödemesiz olarak en fazla vade + gecikme eşiği (varsayılan ~14 gün) kullanılabilir.
 - Panel layout'unda uyarı bandı: deneme bitimine N gün kaldı / vadesi geçmiş fatura var / abonelik askıda.
 - Şube listesinde limit doluysa "Yeni şube" düğmesi pasif + açıklama (`canAddBranch`).
 
@@ -246,4 +248,4 @@ Her faz sonunda `php spark migrate:refresh` hatasız ve `vendor/bin/phpunit` ye�
 
 ## 12. Kapsam dışı
 
-Online ödeme (sanal POS), resmi e-fatura entegrasyonu ve PDF, owner'ın kendi kendine paket değiştirmesi, dönem içi kıst (proration) hesabı, özel menü tasarımı/tema altyapısı, alt alan adı (`restoran.pixmenu.com`), otomatik DNS/SSL doğrulaması.
+Online ödeme tahsilatı (sanal POS — ekran hazır, PayTR entegrasyonu TODO), resmi e-fatura entegrasyonu ve PDF, owner'ın ücretli paketler arasında kendi kendine geçişi, dönem içi kıst (proration) hesabı, özel menü tasarımı/tema altyapısı, alt alan adı (`restoran.pixmenu.com`), otomatik DNS/SSL doğrulaması.

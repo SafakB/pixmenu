@@ -22,8 +22,10 @@ use App\Services\Concerns\Transactional;
  * Askı durumu her zaman reconcile() ile verilerden yeniden hesaplanır; böylece cron,
  * ödeme, iptal ve paket değişimi aynı kuralları paylaşır ve işlem idempotent kalır.
  *
- * Admin ve cron tarafından restoran kimliğiyle çağrılır; panel yalnızca okuma
- * metodlarını (entitlements, canAddBranch, notice) kendi tenant kimliğiyle kullanır.
+ * Admin ve cron tarafından restoran kimliğiyle çağrılır; panel okuma metodlarını
+ * (entitlements, canAddBranch, notice) ve tek self-servis yazmayı (upgradeFromTrial:
+ * deneme → ücretli paket) kendi tenant kimliğiyle kullanır. Self-servis kayıt start()'ı
+ * RestaurantService::create üzerinden çağırır.
  */
 final class SubscriptionService
 {
@@ -286,6 +288,43 @@ final class SubscriptionService
             ->countAllResults();
 
         return ['subscription_id' => $id, 'open_invoices' => (int) $open];
+    }
+
+    /**
+     * Owner self-servis geçişi: deneme paketinden (süresi dolup askıya alınmış olsa da) veya
+     * aboneliği hiç olmayan durumdan ücretli bir pakete. Ücretli → ücretli değişiklik admin'dedir.
+     * Geçiş anında ilk dönem faturası `pending` kesilir; ödeme ekranı bu faturayı öder.
+     *
+     * @return array{subscription_id: int, invoice_id: int|null}
+     */
+    public function upgradeFromTrial(int $restaurantId, int $planId, string $cycle, ?string $today = null): array
+    {
+        $restaurant = (new RestaurantModel())->find($restaurantId)
+            ?? throw new BusinessRuleException(lang('App.notFound'));
+
+        if (($restaurant['suspension_reason'] ?? null) === 'manual') {
+            throw new BusinessRuleException(lang('App.subscription.upgradeManual'));
+        }
+
+        $current = $this->current($restaurantId);
+
+        if ($current !== null && $current['billing_cycle'] !== 'trial') {
+            throw new BusinessRuleException(lang('App.subscription.upgradeNotTrial'));
+        }
+
+        $plan = $this->requirePlan($planId);
+
+        if ($plan['trial_days'] !== null) {
+            throw ValidationException::single('plan_id', lang('App.subscription.upgradeTargetTrial'));
+        }
+
+        $subscriptionId = $current === null
+            ? $this->start($restaurantId, $planId, $cycle, $today)
+            : $this->changePlan($restaurantId, $planId, $cycle, '0.00', 'Owner self-servis geçiş (deneme → ücretli)', $today)['subscription_id'];
+
+        $invoice = (new InvoiceModel())->forRestaurant($restaurantId)->openForSubscription($subscriptionId);
+
+        return ['subscription_id' => $subscriptionId, 'invoice_id' => $invoice === null ? null : (int) $invoice['id']];
     }
 
     /**

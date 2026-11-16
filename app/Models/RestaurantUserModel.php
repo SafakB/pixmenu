@@ -11,7 +11,7 @@ final class RestaurantUserModel extends TenantModel
     protected $useTimestamps  = true;
     protected $useSoftDeletes = true;
     protected $allowedFields  = [
-        'restaurant_id', 'name', 'email', 'password_hash', 'role',
+        'restaurant_id', 'name', 'email', 'email_verified_at', 'password_hash', 'google_id', 'role',
         'is_active', 'last_login_at', 'password_changed_at',
     ];
 
@@ -40,6 +40,14 @@ final class RestaurantUserModel extends TenantModel
         }
 
         return $builder->countAllResults() > 0;
+    }
+
+    /**
+     * Google kimliği (`sub`) TÜM SİSTEMDE tekildir; emailExistsGlobally ile aynı gerekçeyle kapsam dışı.
+     */
+    public function googleIdExists(string $googleId): bool
+    {
+        return $this->db->table($this->table)->where('google_id', $googleId)->countAllResults() > 0;
     }
 
     /**

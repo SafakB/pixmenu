@@ -10,9 +10,10 @@ use CodeIgniter\HTTP\RequestInterface;
 use CodeIgniter\HTTP\ResponseInterface;
 
 /**
- * /admin/* ve /panel/* — başarılı yazma işlemlerini (POST) ve giriş/çıkışı kaydeder.
- * Neyin kaydedileceğine controller karar verir (ActivityLogger::succeed()); bu filtre
- * yalnızca yanıt hazırlandıktan sonra kaydı yazar. Config\Filters::$filters ile bağlanır.
+ * /admin/* ve /panel/* (+ /kayit POST rota filtresi) — başarılı yazma işlemlerini (POST) ve
+ * giriş/çıkışı kaydeder. Neyin kaydedileceğine controller karar verir (ActivityLogger::succeed()
+ * veya record()); bu filtre yalnızca yanıt hazırlandıktan sonra kaydı yazar. GET istekleri yalnızca
+ * açık kayıt (record(): ör. Google ile giriş callback'i) varsa yazılır.
  */
 final class ActivityLogFilter implements FilterInterface
 {
@@ -23,7 +24,7 @@ final class ActivityLogFilter implements FilterInterface
 
     public function after(RequestInterface $request, ResponseInterface $response, $arguments = null)
     {
-        if ($request instanceof IncomingRequest && $request->is('post')) {
+        if ($request instanceof IncomingRequest && ($request->is('post') || service('activity')->hasExplicitRecord())) {
             service('activity')->flush($request);
         }
 

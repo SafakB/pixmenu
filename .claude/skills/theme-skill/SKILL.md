@@ -1,6 +1,6 @@
 ---
 name: theme-skill
-description: PixMenu'de Velzon admin temasını (admin_template/) giydirme ve tema altyapısı rehberi. Bir view'ı temaya uygun hale getirme ("giydir", "temaya uyarla", "tasarımını yap", "Velzon'daki gibi yap"), admin/panel sayfalarında tablo, form, kart, rozet, modal, SweetAlert onayı, sürükle-bırak sıralama, dil sekmeli çeviri alanları, dashboard widget'ı yapma; layout, sidebar menüsü, topbar, login sayfası, flash mesajları, customizer değişikliği; public/assets'e yeni kütüphane ekleme veya app.js yaması gibi her işte bu skill'i kullan. app/Views altındaki admin/panel view'larına görsel dokunan her istekte, kullanıcı "tema" demese bile tetiklenmelidir.
+description: PixMenu'de Velzon admin temasını (admin_template/) giydirme ve tema altyapısı rehberi. Bir view'ı temaya uygun hale getirme ("giydir", "temaya uyarla", "tasarımını yap", "Velzon'daki gibi yap"), admin/panel sayfalarında tablo, form, kart, rozet, modal, SweetAlert onayı, sürükle-bırak sıralama, dil sekmeli çeviri alanları, dashboard widget'ı yapma; layout, sidebar menüsü, topbar, login/kayıt sayfası, tanıtım (landing) sitesi, paket kartları, flash mesajları, customizer değişikliği; public/assets'e yeni kütüphane ekleme veya app.js yaması gibi her işte bu skill'i kullan. app/Views altındaki admin/panel/site view'larına görsel dokunan her istekte, kullanıcı "tema" demese bile tetiklenmelidir.
 ---
 
 # PixMenu tema entegrasyonu (Velzon)

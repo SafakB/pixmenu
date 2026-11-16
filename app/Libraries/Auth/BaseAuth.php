@@ -55,27 +55,43 @@ abstract class BaseAuth
 
     /**
      * E-posta + parola ile giriş. Başarısızlık nedenini ASLA ayırt etmez.
+     *
+     * Şifresi olmayan hesap (yalnızca Google ile giriş; password_hash NULL) bu yolla
+     * HİÇBİR şifreyle giremez — DUMMY_HASH yalnızca zamanlama eşitliği içindir.
      */
     public function attempt(string $email, string $password): bool
     {
-        $user = $this->findByEmail(trim($email));
-        $hash = $user['password_hash'] ?? self::DUMMY_HASH;
+        $user        = $this->findByEmail(trim($email));
+        $hash        = $user['password_hash'] ?? null;
+        $hasPassword = is_string($hash) && $hash !== '';
 
-        // Kullanıcı olmasa da doğrulama maliyeti aynı kalır.
-        $passwordOk = password_verify($password, (string) $hash);
+        // Kullanıcı (veya şifresi) olmasa da doğrulama maliyeti aynı kalır.
+        $passwordOk = password_verify($password, $hasPassword ? $hash : self::DUMMY_HASH) && $hasPassword;
 
         if ($user === null || ! $passwordOk || ! $this->isUsable($user, null)) {
             return false;
         }
 
-        $id     = (int) $user['id'];
-        $fields = ['last_login_at' => date('Y-m-d H:i:s')];
-
-        if (password_needs_rehash((string) $user['password_hash'], PASSWORD_DEFAULT)) {
-            $fields['password_hash'] = password_hash($password, PASSWORD_DEFAULT);
+        if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
+            $this->updateUser((int) $user['id'], ['password_hash' => password_hash($password, PASSWORD_DEFAULT)]);
         }
 
-        $this->updateUser($id, $fields);
+        return $this->login($user);
+    }
+
+    /**
+     * Kimliği başka yolla doğrulanmış kullanıcıyla oturum açar (Google, yeni kayıt).
+     * Kullanıcı/restoran kullanılabilir değilse false.
+     *
+     * @param array<string, mixed> $user
+     */
+    public function login(array $user): bool
+    {
+        if (! $this->isUsable($user, null)) {
+            return false;
+        }
+
+        $this->updateUser((int) $user['id'], ['last_login_at' => date('Y-m-d H:i:s')]);
 
         session()->regenerate(true);
         session()->set($this->sessionKey(), $this->sessionPayload($user) + ['login_at' => time()]);

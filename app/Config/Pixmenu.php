@@ -67,6 +67,12 @@ final class Pixmenu extends BaseConfig
     /** Login throttle: dakikada izin verilen deneme. */
     public int $loginAttemptsPerMinute = 5;
 
+    /** Self-servis kayıt: IP başına dakikada izin verilen form gönderimi (hatalı denemeler dahil). */
+    public int $signupAttemptsPerMinute = 5;
+
+    /** Self-servis kayıt: IP başına günde açılabilecek hesap (yalnızca doğrulamayı geçen denemeler sayılır). */
+    public int $signupsPerIpPerDay = 5;
+
     /** Liste sayfalarında sayfa başına kayıt. */
     public int $perPage = 50;
 

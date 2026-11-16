@@ -2,12 +2,16 @@
 /**
  * Panel uyarı bandı (SubscriptionService::notice()).
  * Parametreler: notice (array|null), isOwner (bool)
+ *
+ * Deneme / deneme bitti / abonelik yok durumunda owner'a "Paket seç" (self-servis geçiş) gösterilir.
  */
 if (empty($notice)) {
     return;
 }
 
-$owner = ! empty($isOwner);
+$owner      = ! empty($isOwner);
+$choosePlan = $notice['type'] === 'trial'
+    || ($notice['type'] === 'suspended' && in_array($notice['reason'] ?? '', ['trial_expired', 'no_subscription'], true));
 
 switch ($notice['type']) {
     case 'suspended':
@@ -32,7 +36,9 @@ switch ($notice['type']) {
 <div class="alert alert-<?= esc($notice['level'], 'attr') ?> alert-label-icon label-arrow d-flex align-items-center flex-wrap gap-2" role="alert">
     <i class="<?= esc($icon, 'attr') ?> label-icon"></i>
     <span class="flex-grow-1"><?= esc($text) ?></span>
-    <?php if ($owner): ?>
+    <?php if ($owner && $choosePlan): ?>
+        <a href="<?= site_url('panel/subscription/plans') ?>" class="btn btn-sm btn-<?= esc($notice['level'], 'attr') ?>"><i class="ri-vip-crown-2-line align-bottom me-1"></i>Paket seç</a>
+    <?php elseif ($owner): ?>
         <a href="<?= site_url('panel/subscription') ?>" class="btn btn-sm btn-<?= esc($notice['level'], 'attr') ?>">Aboneliğim</a>
     <?php endif ?>
 </div>

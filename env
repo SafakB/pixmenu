@@ -67,3 +67,14 @@
 #--------------------------------------------------------------------
 
 # logger.threshold = 4
+
+#--------------------------------------------------------------------
+# GOOGLE İLE GİRİŞ / KAYIT (Config\Google)
+#--------------------------------------------------------------------
+# Google Cloud Console > API'ler ve Hizmetler > Kimlik bilgileri > OAuth istemci kimliği (Web uygulaması).
+# Yetkili yönlendirme URI'si: {app.baseURL}panel/auth/google/callback
+# Boş bırakılırsa Google düğmeleri gizlenir.
+
+# google.clientId = ''
+# google.clientSecret = ''
+# google.redirectUri = ''

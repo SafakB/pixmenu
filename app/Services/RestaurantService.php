@@ -37,7 +37,7 @@ final class RestaurantService
      *
      * @param array{slug: string, default_language_id: int, currency_code: string, is_active: int, language_ids: list<int>, plan_id?: int|null, billing_cycle?: string} $data
      * @param array<string, array<string, string>>                                                                       $translations
-     * @param array{name: string, email: string, password: string}|null                                                  $owner
+     * @param array{name: string, email: string, password: string, google_id?: string|null, email_verified?: bool}|null $owner (UserService::create'e aynen akar)
      */
     public function create(array $data, array $translations, ?UploadedFile $logo, ?array $owner): int
     {

@@ -30,6 +30,9 @@ $feedback = static fn (string $field): string => isset($errors[$field]) ? '<div 
                            value="<?= esc((string) old('email', $user['email'], false), 'attr') ?>">
                     <?= $feedback('email') ?>
                     <div class="form-text">Giriş için kullanılır.</div>
+                    <?php if ($googleLinked): ?>
+                        <div class="form-text"><i class="ri-google-fill align-bottom text-danger me-1"></i>Hesabınız Google ile bağlı; "Google ile giriş yap" düğmesini kullanabilirsiniz.</div>
+                    <?php endif ?>
                 </div>
             </div>
             <div class="card-footer text-end">
@@ -45,15 +48,21 @@ $feedback = static fn (string $field): string => isset($errors[$field]) ? '<div 
                 <div class="avatar-xs flex-shrink-0 me-2">
                     <span class="avatar-title bg-warning-subtle text-warning rounded-circle fs-16"><i class="ri-lock-password-line"></i></span>
                 </div>
-                <h5 class="card-title mb-0 flex-grow-1">Şifre değiştir</h5>
+                <h5 class="card-title mb-0 flex-grow-1"><?= $hasPassword ? 'Şifre değiştir' : 'Şifre belirle' ?></h5>
             </div>
             <?= form_open('panel/profile/password') ?>
             <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label" for="current_password">Mevcut şifre <span class="text-danger">*</span></label>
-                    <input type="password" class="form-control<?= $invalid('current_password') ?>" id="current_password" name="current_password" required autocomplete="current-password">
-                    <?= $feedback('current_password') ?>
-                </div>
+                <?php if ($hasPassword): ?>
+                    <div class="mb-3">
+                        <label class="form-label" for="current_password">Mevcut şifre <span class="text-danger">*</span></label>
+                        <input type="password" class="form-control<?= $invalid('current_password') ?>" id="current_password" name="current_password" required autocomplete="current-password">
+                        <?= $feedback('current_password') ?>
+                    </div>
+                <?php else: ?>
+                    <div class="alert alert-info mb-3" role="note">
+                        Hesabınızın şifresi yok; Google ile giriş yapıyorsunuz. İsterseniz e-posta ve şifreyle de girebilmek için bir şifre belirleyin.
+                    </div>
+                <?php endif ?>
                 <div class="mb-3">
                     <label class="form-label" for="password">Yeni şifre <span class="text-danger">*</span></label>
                     <input type="password" class="form-control<?= $invalid('password') ?>" id="password" name="password" required autocomplete="new-password">
@@ -67,7 +76,7 @@ $feedback = static fn (string $field): string => isset($errors[$field]) ? '<div 
                 </div>
             </div>
             <div class="card-footer text-end">
-                <button type="submit" class="btn btn-primary"><i class="ri-lock-line align-bottom me-1"></i> Şifreyi değiştir</button>
+                <button type="submit" class="btn btn-primary"><i class="ri-lock-line align-bottom me-1"></i> <?= $hasPassword ? 'Şifreyi değiştir' : 'Şifreyi kaydet' ?></button>
             </div>
             <?= form_close() ?>
         </div>

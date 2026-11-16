@@ -2,7 +2,7 @@
 
 CodeIgniter 4.7, view'lar `app/Views`. Tema: Velzon (HTML sürümü, HTTrack mirror'ı `admin_template/`, git'te yok).
 
-Velzon yalnızca admin/panel/login içindir. Ziyaretçi menüsü ayrı bir uygulamadır: `menu-ui/` (Vue 3 + Tailwind, `GET /api/v1/site`); `app/Views/menu/*` yalnızca yedek HTML'dir. Bu skill menüye uygulanmaz — menü şablonları `menu-ui/src/templates/{kod}/` altındadır (bkz. `docs/VIEW_CONTRACT.md` "Menü sitesi API").
+Velzon admin/panel/login ile **herkese açık tanıtım sitesi** (landing `/`, yasal metinler, `/kayit` sihirbazı) içindir. Ziyaretçi menüsü ayrı bir uygulamadır: `menu-ui/` (Vue 3 + Tailwind, `GET /api/v1/site`); `app/Views/menu/*` yalnızca yedek HTML'dir. Bu skill menüye uygulanmaz — menü şablonları `menu-ui/src/templates/{kod}/` altındadır (bkz. `docs/VIEW_CONTRACT.md` "Menü sitesi API").
 
 ## Layout'lar
 
@@ -10,7 +10,10 @@ Velzon yalnızca admin/panel/login içindir. Ziyaretçi menüsü ayrı bir uygul
 |---|---|---|---|
 | `layouts/admin.php` | `admin/*` | `content`, `css`, `js` | `currentAdmin{id,name,email}` (filtre verir), ops. `title`, `breadcrumbs` |
 | `layouts/panel.php` | `panel/*` | `content`, `css`, `js` | `currentUser{id,name,email,role,restaurant_id}`, `isOwner`, `billingNotice` (PanelBaseController::render verir; null olabilir), ops. `title`, `breadcrumbs` |
-| `layouts/auth.php` | `admin/auth/login`, `panel/auth/login` | `heading`, `subtitle`, `content` | ops. `title` |
+| `layouts/auth.php` | `admin/auth/login`, `panel/auth/login`, `site/signup` | `heading`, `subtitle`, `content`, ops. `css`, `js` | ops. `title`, `authColClass` (kart sütunu; varsayılan `col-md-8 col-lg-6 col-xl-5`) |
+| `layouts/landing.php` | `site/home`, `site/legal` | `content`, `js` | `seo{title, description, canonical, ogImage}`, `jsonLd` (list), `signupUrl`, `loginUrl`, `contact`, `anchorBase` (`''` ana sayfa, diğerlerinde `base_url()`) |
+
+**Landing layout'u** `partials/layout/head`'i KULLANMAZ (o `noindex` basar): kendi `<head>`'inde `index,follow`, canonical, OG/Twitter, JSON-LD (`JSON_HEX_TAG`) ve 4 CSS vardır; `layout.js`/`app.js`/customizer yüklenmez. Gövde `layout-wrapper landing` + `site/partials/navbar` (Velzon `.navbar-landing`, yapışkan) + `<main>` + `site/partials/footer` (`.custom-footer`) + back-to-top; script'ler bootstrap → `js` section → `js/pages/landing.init.js`. Velzon `landing.html`'deki sahte müşteri logoları, yorumlar, ekip, lord-icon, `document.write`, `.bg-overlay-pattern` (görseli yok → 404) alınmadı. Görseller `public/assets/images/landing/` (SVG illüstrasyonlar + `og-image.png`).
 
 admin/panel iskeleti (iki dosya aynı yapıda, yalnızca `$shell` dizisi farklı):
 
@@ -78,21 +81,25 @@ Aktiflik `url_is()` ile; tek seviyeli menü (alt menü/collapse yok). Mevcut men
 | `scripts.php` | çekirdek JS + SweetAlert2 + `pix-confirm.js` (form[data-confirm] onayı) + `pix-image-preview.js` | — |
 
 Diğer partial'lar (`app/Views/partials/`):
-- `flash.php` — `success` / `error` → `alert-*-dismissible alert-label-icon`, `errors` → liste. Login sayfasında `login_form` içinden, diğerlerinde layout'tan çağrılır.
-- `login_form.php` — `action`, `error` (429). email + göz ikonlu şifre (`password-addon.init.js`). Beni hatırla / şifremi unuttum / kayıt **yok** (backend'de karşılığı yok).
+- `flash.php` — `success` / `info` / `warning` / `error` → `alert-*-dismissible alert-label-icon`, `errors` → liste. Login ve kayıt sayfalarında view içinden, diğerlerinde layout'tan çağrılır.
+- `login_form.php` — `action`, `error` (429), `googleUrl|null`, `signupUrl|null` (hepsi açıkça geçilir; admin login ikisine `null`). email + göz ikonlu şifre (`password-addon.init.js`); panelde "veya" ayıracı + "Google ile giriş yap" + "Ücretsiz kayıt olun". Beni hatırla / şifremi unuttum **yok** (backend'de karşılığı yok).
 - `translations.php` — çeviri alanları; parametreler yalnızca `languages`, `translations`, `fields` (başka parametre yok — `saveData` sızıntısı). Dil sekmeli **kendi kartını basar** ("Çeviriler" başlıklı, `nav-tabs-custom card-header-tabs`), alan bazlı `is-invalid` + hatalı sekmede ikon, gizli sekmedeki `required` için inline `invalid` dinleyicisi içerir (patterns §5). Çağıran view onu kart içine sarmaz; 7 form birden kullanır.
 - `branch_fields.php` — admin+panel ortak şube formu gövdesi: iki kolon (çeviriler + genel bilgiler / tek "Yayın" kartı + Vazgeç/Kaydet). Parametre: `branch`, `languages`, `translations`, `cancel_url`; view yalnızca `form_open/form_close` ile sarar.
 - `user_fields.php` — admin+panel ortak kullanıcı formu gövdesi (iki kolon + kaydet kartı). Parametre: `user`, `branches`, `assigned`, `allowRole`, `cancel_url`.
 - `billing/` — abonelik/fatura parçaları (admin + panel ortak):
   - `badge.php` — durum rozeti; `kind` (`invoice` | `subscription` | `reason`), `status`. Renk/etiket eşlemesi burada; yeni durumda buraya ekle.
   - `subscription_card.php` — güncel abonelik kartı; `summary` (SubscriptionService::summary), `suspended`, `suspension_reason`, `actions` (başlığa basılan hazır HTML; boş string olabilir).
-  - `invoice_doc.php` — yazdırılabilir fatura (Velzon `apps-invoices-details` düzeni); `invoice`, `restaurantName`, `seller`, `paymentInstructions`. Sayfa `css` section'ına `billing/print_css` ekler (yazdırırken sidebar/topbar gizlenir).
-  - `notice.php` — panel uyarı bandı (deneme / gecikmiş fatura / askı); layout'tan çağrılır, view'a yazma.
+  - `invoice_doc.php` — yazdırılabilir fatura (Velzon `apps-invoices-details` düzeni); `invoice`, `restaurantName`, `seller`, `paymentInstructions`, `payUrl|null` (panelde ödenmemişse "Kartla öde"; admin `null`). Sayfa `css` section'ına `billing/print_css` ekler (yazdırırken sidebar/topbar gizlenir).
+  - `notice.php` — panel uyarı bandı (deneme / gecikmiş fatura / askı); layout'tan çağrılır, view'a yazma. Deneme, `trial_expired`, `no_subscription` durumunda owner'a "Paket seç" (→ `panel/subscription/plans`).
+  - `plan_card.php` — paket kartı (Velzon pages-pricing `.pricing-box`, "Popüler" şeridi, "Paketiniz" rozeti, `+KDV`); `plan`, `startYearly`, `isCurrent`, `footer` (hazır HTML: düğme / onaylı form / `btn-check` radyo). Panel paketler, landing fiyatlar ve kayıt sihirbazı ortak kullanır; sütunu çağıran verir.
+- `site/partials/navbar.php`, `site/partials/footer.php` — landing navbar/footer; `signupUrl`, `loginUrl`, `anchorBase` (+ footer `contact`).
 
 ## Ortak JS (`public/assets/js/`)
 
 - `pix-confirm.js` — `form[data-confirm]` submit'ini SweetAlert2 onayına bağlar. Öznitelikler: `data-confirm` (metin), `data-confirm-title`, `data-confirm-button`, `data-confirm-variant` (danger|warning|primary). Swal yoksa `confirm()` yedeği.
 - `pix-image-preview.js` — `input[type=file][data-preview="#img"]` seçilince `#img`'yi gösterir (`d-none` kalkar); ops. `data-preview-placeholder="#yer-tutucu"` gizlenir. Sayfaya önizleme JS'i yazma.
+- `pix-plan-cycle.js` — paket kartlarında aylık/yıllık: `.plan-nav [data-cycle]` düğmeleri, `.price-monthly/.price-yearly`, `input[data-cycle-input]` (gizli `billing_cycle`; pix-confirm submitter göndermediği için düğme değeri yerine), `a[data-cycle-href]` (`cycle=` güncellenir). Layout'ta değil; kullanan sayfanın `js` section'ında yüklenir.
+- `pages/landing.init.js` (landing layout), `pages/signup.init.js` (kayıt sihirbazı: adım başına `reportValidity`, `data-start-step`, paket seçiminde kart vurgusu + düğme etiketi), `pages/checkout.init.js` (ödeme ekranı: `libs/card/card.js` önizlemesi, id tabanlı `formSelectors` — kart alanlarının `name`'i yoktur).
 
 ## Helper'lar (`app/Helpers/pixmenu_helper.php`, autoload)
 

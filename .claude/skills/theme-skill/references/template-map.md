@@ -30,6 +30,11 @@ grep -n 'class="page-content"\|<footer class="footer"\|<!-- JAVASCRIPT' admin_te
 | Avatar/görsel yer tutucu | `ui-images.html` (`avatar-*`, `bg-*-subtle`) | — |
 | 404 / hata | `auth-404-basic.html`, `auth-404-alt.html` | — |
 | Görsel galerisi (alerjen ikonları vb.) | `pages-gallery.html`, `ui-images.html` | — |
+| Tanıtım sayfası (navbar, hero, özellikler, süreç, SSS, CTA, footer) | `landing.html` → `site/home` | kendi `js/pages/landing.init.js` (Swiper yok) |
+| Paket/fiyat kartları | `pages-pricing.html` → `partials/billing/plan_card` | `js/pix-plan-cycle.js` |
+| Çok adımlı form (sihirbaz) | `forms-wizard.html` (`step-arrow-nav`) → `site/signup` | kendi `js/pages/signup.init.js` |
+| Kayıt / sosyal giriş düğmesi | `auth-signup-basic.html` (`signin-other-title`) | — |
+| Ödeme / kredi kartı | `apps-ecommerce-checkout.html` (sipariş özeti), `widgets.html` "Credit Card - card js plugin" → `panel/subscription/checkout` | `libs/card/card.js` + `js/pages/checkout.init.js` |
 
 ## İkon setleri (hepsi `icons.min.css` ile yüklü)
 

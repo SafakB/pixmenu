@@ -19,6 +19,16 @@ abstract class AbstractAuthController extends BaseController
     abstract protected function area(): string;
 
     /**
+     * Login view'ına eklenecek değişkenler (panel: Google ve kayıt linkleri). 429 render'ında da verilir.
+     *
+     * @return array<string, mixed>
+     */
+    protected function loginViewData(): array
+    {
+        return [];
+    }
+
+    /**
      * GET login — oturumlu kullanıcı dashboard'a yönlendirilir.
      */
     public function login(): ResponseInterface|string
@@ -29,7 +39,7 @@ abstract class AbstractAuthController extends BaseController
             return $this->redirectTo($this->area());
         }
 
-        return view($this->area() . '/auth/login', ['error' => null]);
+        return view($this->area() . '/auth/login', ['error' => null] + $this->loginViewData());
     }
 
     /**
@@ -46,7 +56,7 @@ abstract class AbstractAuthController extends BaseController
         if (! service('throttler')->check($key, config('Pixmenu')->loginAttemptsPerMinute, MINUTE)) {
             return $this->response
                 ->setStatusCode(429)
-                ->setBody(view($this->area() . '/auth/login', ['error' => lang('App.auth.throttled')]));
+                ->setBody(view($this->area() . '/auth/login', ['error' => lang('App.auth.throttled')] + $this->loginViewData()));
         }
 
         if ($email === '' || $password === '' || ! $this->auth()->attempt($email, $password)) {

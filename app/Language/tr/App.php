@@ -21,6 +21,28 @@ return [
         'required'  => 'Oturum açmanız gerekiyor.',
         'forbidden' => 'Bu işlem için yetkiniz yok.',
         'loggedOut' => 'Oturum kapatıldı.',
+        'google'    => [
+            'cancelled'       => 'Google ile giriş iptal edildi.',
+            'failed'          => 'Google ile giriş yapılamadı. Lütfen tekrar deneyin.',
+            'unverified'      => 'Google hesabınızın e-posta adresi doğrulanmamış.',
+            'unusable'        => 'Bu hesapla giriş yapılamıyor. Lütfen destek ile iletişime geçin.',
+            'conflict'        => 'Bu e-posta adresi başka bir Google hesabına bağlı.',
+            'linked'          => 'Google hesabınız bağlandı.',
+            'passwordCleared' => 'Google hesabınız bağlandı. Güvenlik için önceki şifreniz kaldırıldı; Profil sayfasından yeni bir şifre belirleyebilirsiniz. Restoranınızdaki kullanıcıları da kontrol etmenizi öneririz.',
+            'continueSignup'  => 'Bu Google hesabıyla kayıtlı bir hesap yok. Kaydınızı tamamlayın.',
+        ],
+    ],
+
+    'signup' => [
+        'termsRequired'   => 'Devam etmek için kullanım koşullarını ve KVKK aydınlatma metnini onaylayın.',
+        'restaurantName'  => 'Restoran adı zorunludur (en fazla 150 karakter).',
+        'branchName'      => 'Şube adı zorunludur (en fazla 150 karakter).',
+        'addressTooLong'  => 'Adres en fazla 500 karakter olabilir.',
+        'currencyInvalid' => 'Geçerli bir para birimi seçin.',
+        'throttled'       => 'Çok fazla kayıt denemesi yapıldı. Lütfen daha sonra tekrar deneyin.',
+        'googleExpired'   => 'Google oturumunuzun süresi doldu. Lütfen tekrar "Google ile devam et" seçin.',
+        'welcomeTrial'    => 'Hoş geldiniz! {0} günlük ücretsiz denemeniz başladı. İlk şubeniz hazır; menünüzü oluşturmaya başlayabilirsiniz.',
+        'welcomePaid'     => 'Hoş geldiniz! Hesabınız oluşturuldu. Paketinizi kullanmaya devam etmek için ödemeyi tamamlayın.',
     ],
 
     'reorder' => [
@@ -100,6 +122,7 @@ return [
         'passwordConfirm' => 'Şifre tekrarı eşleşmiyor.',
         'passwordCurrent' => 'Mevcut şifre hatalı.',
         'passwordChanged' => 'Şifre değiştirildi. Diğer cihazlardaki oturumlar kapatıldı.',
+        'googleTaken'     => 'Bu Google hesabı zaten başka bir kullanıcıya bağlı.',
     ],
 
     'category' => [
@@ -151,6 +174,11 @@ return [
         'discountPercentInvalid' => 'İndirim oranı 0’dan büyük ve en fazla 100 olmalıdır.',
         'discountUntilInvalid'   => 'Bitiş tarihi geçersiz.',
         'suspendedPanel'     => 'Aboneliğiniz askıda olduğu için bu sayfaya erişilemiyor.',
+        'upgradeNotTrial'    => 'Paket değişikliği için bizimle iletişime geçin; panelden yalnızca deneme paketinden ücretli pakete geçilebilir.',
+        'upgradeTargetTrial' => 'Lütfen ücretli bir paket seçin.',
+        'upgradeManual'      => 'Restoranınız yönetici tarafından askıya alındığı için paket değiştirilemez. Lütfen bizimle iletişime geçin.',
+        'upgraded'           => 'Paketiniz değiştirildi. Kullanmaya devam etmek için ödemeyi tamamlayın.',
+        'upgradedNoInvoice'  => 'Paketiniz değiştirildi.',
         'cycle' => [
             'trial'   => 'Deneme',
             'monthly' => 'Aylık',
@@ -180,6 +208,8 @@ return [
         'paid'             => 'Fatura ödendi olarak işaretlendi.',
         'voided'           => 'Fatura iptal edildi.',
         'discountUpdated'  => 'Fatura indirimi güncellendi.',
+        'notPayable'       => 'Bu fatura ödeme beklemiyor.',
+        'onlineSoon'       => 'Online kart ile ödeme altyapısı yakında aktif olacak; kart bilgileriniz kaydedilmedi. Faturanız "Ödenmedi" durumunda bekliyor; ödeme bilgisi abonelik sayfasında yer alır.',
         'status' => [
             'pending' => 'Ödenmedi',
             'overdue' => 'Gecikmiş',
@@ -204,7 +234,8 @@ return [
     // altında tam eşleşme aranır; yoksa "nesne: fiil" olarak birleştirilir.
     'activity' => [
         'action' => [
-            'auth' => ['login' => 'Giriş yaptı', 'logout' => 'Çıkış yaptı'],
+            'auth'   => ['login' => 'Giriş yaptı', 'logout' => 'Çıkış yaptı'],
+            'signup' => ['register' => 'Kayıt oldu (self-servis)'],
         ],
         'subject' => [
             'language'           => 'Dil',
@@ -222,6 +253,7 @@ return [
             'category'           => 'Kategori',
             'product'            => 'Ürün',
             'profile'            => 'Profil',
+            'signup'             => 'Kayıt',
         ],
         'verb' => [
             'create'         => 'Oluşturma',
@@ -245,6 +277,7 @@ return [
             'deleteIcon'     => 'İkon silme',
             'deleteLogo'     => 'Logo silme',
             'regenerateCode' => 'QR kodu yenileme',
+            'upgrade'        => 'Paket yükseltme (self-servis)',
         ],
     ],
 ];

@@ -7,7 +7,7 @@ Backend her view'ın **dosya adını** ve view'a geçirilen **değişkenleri** b
 - **Her çıktı `esc()` ile basılır.** Öznitelik içinde `esc($x, 'attr')`.
 - **View içinde model/servis çağrısı yapılmaz**; ihtiyaç duyulan her şey aşağıdaki değişkenlerle gelir.
 - **Formlar düz HTML + POST'tur** (method spoofing yok). Her formda CSRF alanı bulunmalıdır: `form_open()` otomatik ekler; elle yazılan formda `<?= csrf_field() ?>`.
-- **Flash anahtarları:** `session('success')` (string), `session('error')` (string), `session('errors')` (dizi: alan => mesaj). Örnek: `partials/flash.php`.
+- **Flash anahtarları:** `session('success')`, `session('info')`, `session('warning')`, `session('error')` (string), `session('errors')` (dizi: alan => mesaj). Örnek: `partials/flash.php`.
 - **Eski girdi:** doğrulama hatasında `redirect()->back()->withInput()` yapılır; `old('alan', $varsayilan)` kullanılır.
 - **Hata alan adları:** çeviri alanları `translations.{kod}.{alan}` (ör. `translations.tr.name`), diğerleri form alan adıyla (`price`, `category_id`, `branch_ids`, `slug`…).
 - **Checkbox alanları** (`is_active`, `remove_image`) `value="1"` ile gönderilir; gönderilmezse 0 sayılır.
@@ -39,13 +39,15 @@ Zorunlu dil: kategori/ürün için **şubenin** varsayılan dili; restoran ve ş
 | `layouts/admin.php` | `currentAdmin{id, name, email}` |
 | `layouts/panel.php` | `currentUser{id, name, email, role, restaurant_id}`, `isOwner` (bool), `billingNotice` (uyarı bandı: `{type: trial\|overdue\|suspended, level, days?, count?, reason?}` veya null) |
 | `layouts/auth.php` | — |
+| `layouts/landing.php` | `seo{title, description, canonical, ogImage}`, `jsonLd` (list; boş olabilir), `signupUrl`, `loginUrl`, `contact{email, phone, address}`, `anchorBase` (`''` ana sayfa; diğer sayfalarda `base_url()` — navbar bağlantıları `{anchorBase}#bölüm`) |
 
 Tema: **Velzon** (`admin_template/` kaynak, depoda yok). Layout'lar `partials/layout/*` parçalarından oluşur (head, topbar, sidebar, page_title, footer, customizer, scripts, logo).
 
 | Layout | Section'lar | Opsiyonel değişkenler |
 |---|---|---|
 | `layouts/admin`, `layouts/panel` | `content`, `css` (sayfaya özel stil), `js` (sayfaya özel script; çekirdek kütüphanelerden sonra, `app.js`'ten önce basılır) | `title` (sayfa başlığı + `<title>`), `breadcrumbs` (`[{label, url?}]`; url'siz öğe aktif sayılır) |
-| `layouts/auth` | `heading`, `subtitle`, `content` | `title` |
+| `layouts/auth` | `heading`, `subtitle`, `content`, `css`, `js` (ops.) | `title`, `authColClass` (kart sütunu; varsayılan `col-md-8 col-lg-6 col-xl-5`, kayıt sihirbazı `col-lg-10 col-xl-9`) |
+| `layouts/landing` | `content`, `js` (bootstrap'tan sonra, `landing.init.js`'ten önce) | — (head `partials/layout/head` KULLANMAZ: o `noindex` basar; SEO etiketleri bu layout'tadır) |
 
 - Asset yolu: `asset_url('libs/sweetalert2/sweetalert2.min.js')` → `public/assets/...` + `?v=filemtime`.
 - Menü öğeleri layout dosyalarının başındaki dizilerdedir; aktif öğe `url_is()` ile belirlenir.
@@ -58,7 +60,7 @@ Tema: **Velzon** (`admin_template/` kaynak, depoda yok). Layout'lar `partials/la
 
 | View | Rota | Değişkenler |
 |---|---|---|
-| `admin/auth/login` | `GET admin/login` | `error` (string\|null; 429'da dolu). Form: `POST admin/login` → `email`, `password` |
+| `admin/auth/login` | `GET admin/login` | `error` (string\|null; 429'da dolu). Form: `POST admin/login` → `email`, `password`. `partials/login_form`'a `googleUrl`/`signupUrl` = `null` geçer |
 | `admin/dashboard` | `GET admin` | `stats{restaurants, branches, users, languages, allergens}`, `billing{overdue_count, overdue_sum{para birimi: tutar}, overdue[{id, number, restaurant_id, restaurant_name, total, currency_code, due_date, days_late}] (≤ 5), trials[{restaurant_id, restaurant_name, current_period_end, days_left}] (7 gün içinde biten), suspended[{id, name, suspension_reason, suspended_at}]}` |
 | `admin/languages/index` | `GET admin/languages` | `languages[{id, code, name, native_name, direction, is_active, sort_order}]` |
 | `admin/languages/form` | `GET admin/languages/new`, `…/{id}/edit` | `language` (satır\|null), `action`. Alanlar: `code` (yalnızca oluşturmada), `name`, `native_name`, `direction` (ltr\|rtl), `is_active`, `sort_order` |
@@ -100,9 +102,9 @@ Sıralama (JSON): `POST admin/languages/reorder`, `POST admin/allergens/reorder`
 
 | View | Rota | Erişim | Değişkenler |
 |---|---|---|---|
-| `panel/auth/login` | `GET panel/login` | — | `error`. Form: `POST panel/login` → `email`, `password` |
+| `panel/auth/login` | `GET panel/login` | — | `error`, `googleUrl\|null` (Google yapılandırılmışsa `panel/auth/google?intent=login`), `signupUrl` (`/kayit`). Form: `POST panel/login` → `email`, `password` |
 | `panel/dashboard` | `GET panel` | owner + manager | `restaurantName`, `branches[{id, name, is_active, public_code, menu_url, category_count, product_count, managers[{name, initials}]}]` (`managers`: şubeye atanmış aktif manager'lar; `initials` Türkçe büyük harfle "ŞB") (manager: yalnızca atanmış şubeler) |
-| `panel/profile` | `GET panel/profile` | owner + manager | `user{id, name, email, role}`. Formlar: `POST panel/profile` → `name`, `email`; `POST panel/profile/password` → `current_password`, `password`, `password_confirm` |
+| `panel/profile` | `GET panel/profile` | owner + manager | `user{id, name, email, role}`, `hasPassword` (bool; yalnızca Google ile açılan hesapta false), `googleLinked` (bool). Formlar: `POST panel/profile` → `name`, `email` (e-posta değişirse doğrulama düşer); `POST panel/profile/password` → `current_password` (şifresi olmayan hesapta sorulmaz), `password`, `password_confirm` |
 | `panel/restaurant` | `GET panel/restaurant` | owner | `restaurant{slug, currency_code}` (salt okunur), `logo_url`, `languages`, `translations`. Alanlar: `logo` (dosya), `translations[*][name\|description]`. Logo silme: `POST panel/restaurant/logo/delete` |
 | `panel/branches/index` | `GET panel/branches` | owner + manager | `branches[{id, slug, name, public_code, menu_url, is_active, sort_order, category_count, product_count, managers[{name, initials}]}]` (`managers`: şubeye atanmış aktif manager'lar), `canAddBranch` (paket limiti dolu değil), `maxBranches\|null`. Limit doluysa "Yeni şube" pasif gösterilir |
 | `panel/branches/form` | `GET panel/branches/new`, `…/{id}/edit` | owner | `branch` (satır\|null), `languages`, `translations`, `action`. Alanlar: admin şube formuyla aynı, `template_code` hariç (şablonu yalnızca admin seçer; panel güncellemesi şablona dokunmaz, panelden açılan şube `standart` alır) |
@@ -117,13 +119,30 @@ Tek tuşluk POST işlemleri: `branches/{b}/toggle|delete`, `users/{u}/toggle|del
 
 Sıralama (JSON): `POST panel/branches/{b}/categories/reorder`, `POST panel/branches/{b}/products/reorder` → `{"ids":[12,5,9]}`. ID'lerden biri bile bu şubeye ait değilse 422 döner ve hiçbir sıra değişmez.
 
-| `panel/subscription/index` | `GET panel/subscription` | owner | `summary`, `suspended`, `suspension_reason`, `invoices[{…satır, display_status}]`, `paymentInstructions` |
-| `panel/subscription/invoice` | `GET panel/subscription/invoices/{id}` | owner | `invoice` (satır + `display_status`, `method_label`), `restaurantName`, `seller`, `paymentInstructions`. Başka restoranın faturası → 404 |
-| `panel/subscription/plans` | `GET panel/subscription/plans` | owner | `plans` (aktif; admin yapısı), `currentPlanId\|null`, `currentCycle\|null`, `taxRate`. Bilgi amaçlı; satın alma yok |
+| `panel/subscription/index` | `GET panel/subscription` | owner | `summary`, `suspended`, `suspension_reason`, `invoices[{…satır, display_status}]`, `paymentInstructions`. Ödenmemiş (`status = pending`) faturada "Öde" → ödeme ekranı |
+| `panel/subscription/invoice` | `GET panel/subscription/invoices/{id}` | owner | `invoice` (satır + `display_status`, `method_label`), `restaurantName`, `seller`, `paymentInstructions`, `payUrl\|null` (ödenmemişse ödeme ekranı). Başka restoranın faturası → 404 |
+| `panel/subscription/plans` | `GET panel/subscription/plans` | owner | `plans` (`PlanService::publicListing`), `currentPlanId\|null`, `currentCycle\|null`, `taxRate`, `canSelfUpgrade` (bool: güncel abonelik deneme veya yok, elle askı değil). Kartlar `partials/billing/plan_card`. Self-servis geçiş: `POST panel/subscription/upgrade` → `plan_id` (ücretli), `billing_cycle` (monthly\|yearly; gizli alan, `pix-plan-cycle.js` senkronlar) — onaylı (`data-confirm`, `primary`); fatura kesilirse ödeme ekranına yönlenir. Ücretli → ücretli değişiklik admin'dedir ("iletişime geçin") |
+| `panel/subscription/checkout` | `GET panel/subscription/invoices/{id}/pay` | owner | `invoice` (satır + `display_status`), `planName`, `cycleLabel\|null`, `restaurantName`, `paymentInstructions`, `ownerName`. Yalnızca `pending` fatura (diğerleri fatura sayfasına yönlenir). Kart arayüzü `libs/card/card.js` + `js/pages/checkout.init.js`; **kart alanlarının `name`'i yoktur** (kart verisi sunucuya gitmez). Form: `POST …/pay` (yalnızca CSRF) — **TODO(PayTR)**: şimdilik durum değiştirmez, `info` flash ile `panel/subscription`'a döner |
 
 **Askıdaki restoran:** owner/manager giriş yapabilir; gösterge paneli, profil ve abonelik sayfaları açıktır. Diğer sayfalar owner'ı `panel/subscription`'a, manager'ı `panel`'e yönlendirir (`error` flash); AJAX istekleri 403 alır.
 
 Manager, owner'a özel sayfalara giderse veya atanmadığı bir şubeye erişirse yanıt **404**'tür (403 değil).
+
+## Herkese açık site (`/`, yalnızca uygulama host'unda)
+
+Layout: `layouts/landing` (Velzon `landing.html`) ve kayıt için `layouts/auth`. Menü alan adlarında (özel alan adı / alt alan adı) bu rotalar yoktur; orada yalnızca `robots.txt` (allow-all) sunulur.
+
+| View | Rota | Değişkenler |
+|---|---|---|
+| `site/home` | `GET /` | `plans` (`PlanService::publicListing` — iç kullanım sayıları yok), `taxRate`, `stats{languages, templates, trialDays\|null}` (gerçek DB sayıları), `faq[{q, a}]` (`Config\Site::$faq`), `contact{email, phone, address}`, `signupUrl`, `loginUrl`, `seo`, `jsonLd` (Organization, SoftwareApplication + paket teklifleri, FAQPage). Paket kartlarında CTA `kayit?plan={kod}&cycle=monthly\|yearly` (`a[data-cycle-href]`) |
+| `site/legal` | `GET kvkk`, `GET kullanim-kosullari` | `page` (privacy\|terms), `title`, `description`, `updatedAt`, `contact`, `signupUrl`, `loginUrl`, `seo`, `jsonLd` ([]). Metinler yer tutucudur — **TODO(hukuk)** |
+| `site/signup` | `GET kayit?plan=kod&cycle=monthly\|yearly&google=0` | `plans`, `taxRate`, `currencies[{code, name, symbol}]`, `languages[{id, code, name, native_name}]` (aktif), `defaultLanguageId` (tr; her zaman eklenir), `google{email, name}\|null` (bekleyen Google kaydı), `googleUrl\|null`, `preselect{plan_id, billing_cycle}`, `error\|null` (429), `loginUrl`. Oturumlu panel kullanıcısı `panel`'e yönlenir. `?google=0` bekleyen Google kimliğini bırakır |
+
+**Kayıt formu** (`POST kayit`, tek form, 3 adımlı istemci sihirbazı — `js/pages/signup.init.js`): `name`, `email`, `password`, `password_confirm` (Google kaydında yok; e-posta/şifre formdan gelse de yok sayılır, kimlik oturumdan okunur — `via=google`), `terms` (1, zorunlu), `restaurant_name`, `branch_name` (boş = "Merkez"), `phone`, `address`, `currency_code`, `language_ids[]`, `plan_id`, `billing_cycle` (ücretli pakette monthly\|yearly; gizli alan). Hata anahtarları form alanlarıdır (`restaurant_name`, `branch_name`…); view ilk hatalı adımı açar (`data-start-step`). Başarıda otomatik giriş: deneme → `panel` (`success`), ücretli → `panel/subscription/invoices/{id}/pay`. Spam: `honeypot` filtresi (`pix_hp`), IP başına dakikada `signupAttemptsPerMinute` deneme ve günde `signupsPerIpPerDay` hesap (429 → aynı view + `error`).
+
+**Google ile giriş/kayıt:** `GET panel/auth/google?intent=login|register&plan=&cycle=` → Google; dönüş `GET panel/auth/google/callback`. Hesap yoksa kimlik oturuma alınıp `kayit`'a yönlenir. `Config\Google` boşsa düğmeler gizli, rotalar 404.
+
+`robots.txt` (text/plain; `/admin`, `/panel`, `/api`, `/kayit` disallow + mutlak `Sitemap:`) ve `sitemap.xml` dinamiktir (statik `public/robots.txt` yoktur).
 
 ## Herkese açık menü
 
@@ -204,6 +223,16 @@ Restoran aktif, silinmemiş ve askıda olmamalıdır; aksi hâlde 404 (`json_err
 **Restoran slug'ı** alt alan adı olduğu için en fazla 63 karakterdir ve ayrılmış adlardan (`www`, `admin`, `api`, …) biri olamaz.
 
 **Config** (`.env`): `pixmenu.menuRootDomain` (boş = alt alan adı kapalı), `pixmenu.menuScheme` (varsayılan `https`), `pixmenu.menuPort` (yalnızca yerel geliştirme).
+
+## Ortak parçalar (self-servis ile eklenenler)
+
+- `partials/billing/plan_card` — `plan`, `startYearly`, `isCurrent`, `footer` (hazır HTML: düğme/form/radyo; boş olabilir). Sütunu çağıran verir. Aylık/yıllık: `js/pix-plan-cycle.js` (`.plan-nav [data-cycle]`, `.price-monthly/.price-yearly`, `input[data-cycle-input]`, `a[data-cycle-href]`).
+- `partials/login_form` — `action`, `error`, `googleUrl\|null`, `signupUrl\|null` (hepsi açıkça geçilir).
+- `partials/billing/invoice_doc` — ek parametre `payUrl\|null` (admin `null`).
+
+## Hesap e-postaları (`emails/account/*`)
+
+`welcome` (kayıt sonrası): `subject`, `userName`, `restaurantName`, `planName`, `trialEndsAt\|null`, `invoice\|null`, `payUrl\|null`, `panelUrl`, `loginUrl`, `viaGoogle`, `email`. Genel iskelet `emails/layout` (`subject`, `greeting`, `body`, `buttonUrl\|null`, `buttonLabel\|null`); gönderen `App\Services\Mailer` (`saveData` kapalı).
 
 ## E-posta şablonları (`emails/billing/*`)
 

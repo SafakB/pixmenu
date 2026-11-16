@@ -7,7 +7,8 @@ use CodeIgniter\Router\RouteCollection;
 /**
  * Tüm rotalar (spec §9). autoRoute KAPALI: yalnızca burada tanımlı rotalar çalışır.
  *
- * - /admin, /panel, /m, /api önekleri ayrılmıştır.
+ * - /admin, /panel, /m, /api önekleri ayrılmıştır. Kök (/), /kayit, /kvkk, /kullanim-kosullari,
+ *   /robots.txt, /sitemap.xml herkese açık sitedir (yalnızca uygulama host'unda).
  * - Statik segmentli rotalar (new, reorder) (:num) rotalarından ÖNCE tanımlanır.
  * - (:num) ile kısıtlanmayan ID parametresi yoktur.
  *
@@ -24,10 +25,26 @@ $requestHost = (string) (service('superglobals')->server('HTTP_HOST') ?? '');
 
 if ($requestHost !== '' && ! (new \App\Services\DomainService())->isAppHost($requestHost)) {
     $routes->get('/', 'Menu\DomainMenuController::index');
+    $routes->get('robots.txt', 'Site\SeoController::robots');                    // menü alan adında: allow-all, sitemap yok
     $routes->get('(:segment)', 'Menu\DomainMenuController::show/$1');
 
     return;
 }
+
+// ---------------------------------------------------------------------
+// Herkese açık site — tanıtım (landing), SEO, yasal metinler, self-servis kayıt
+// ---------------------------------------------------------------------
+$routes->group('', ['namespace' => 'App\Controllers\Site'], static function ($routes) {
+    $routes->get('/', 'HomeController::index');
+    $routes->get('robots.txt', 'SeoController::robots');
+    $routes->get('sitemap.xml', 'SeoController::sitemap');
+    $routes->get('kvkk', 'PageController::privacy');
+    $routes->get('kullanim-kosullari', 'PageController::terms');
+
+    // ?plan=kod&cycle=monthly|yearly ön seçim; ?google=0 bekleyen Google kimliğini bırakır
+    $routes->get('kayit', 'SignupController::new', ['filter' => ['honeypot', 'nocache']]);
+    $routes->post('kayit', 'SignupController::create', ['filter' => ['honeypot', 'nocache', 'activitylog']]);
+});
 
 // ---------------------------------------------------------------------
 // Admin — /admin
@@ -180,6 +197,10 @@ $routes->group('panel', ['namespace' => 'App\Controllers\Panel'], static functio
     $routes->get('login', 'AuthController::login');
     $routes->post('login', 'AuthController::attempt');
 
+    // Google ile giriş/kayıt (OAuth 2.0 + PKCE); yapılandırılmamışsa 404
+    $routes->get('auth/google', 'GoogleAuthController::redirect', ['filter' => 'nocache']);              // ?intent=login|register&plan=&cycle=
+    $routes->get('auth/google/callback', 'GoogleAuthController::callback', ['filter' => 'nocache']);
+
     $routes->group('', ['filter' => ['panelauth', 'nocache']], static function ($routes) {
         $routes->post('logout', 'AuthController::logout');
         $routes->get('/', 'DashboardController::index');
@@ -192,7 +213,10 @@ $routes->group('panel', ['namespace' => 'App\Controllers\Panel'], static functio
         $routes->group('', ['filter' => ['panelauth', 'panelowner', 'nocache']], static function ($routes) {
             $routes->get('subscription', 'SubscriptionController::index');
             $routes->get('subscription/plans', 'SubscriptionController::plans');
+            $routes->post('subscription/upgrade', 'SubscriptionController::upgrade');                  // deneme → ücretli (self-servis)
             $routes->get('subscription/invoices/(:num)', 'SubscriptionController::invoice/$1');
+            $routes->get('subscription/invoices/(:num)/pay', 'SubscriptionController::checkout/$1');   // kart ödeme ekranı
+            $routes->post('subscription/invoices/(:num)/pay', 'SubscriptionController::pay/$1');       // TODO(PayTR): şimdilik stub
         });
 
         // Yalnızca owner (manager → 404); askıdaysa abonelik sayfasına yönlendirilir

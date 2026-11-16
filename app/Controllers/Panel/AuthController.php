@@ -18,4 +18,15 @@ final class AuthController extends AbstractAuthController
     {
         return 'panel';
     }
+
+    /**
+     * View: panel/auth/login — error|null, googleUrl|null (Google yapılandırılmışsa), signupUrl
+     */
+    protected function loginViewData(): array
+    {
+        return [
+            'googleUrl' => service('googleOAuth')->isEnabled() ? site_url('panel/auth/google') . '?intent=login' : null,
+            'signupUrl' => site_url('kayit'),
+        ];
+    }
 }

@@ -15,7 +15,8 @@ use CodeIgniter\HTTP\ResponseInterface;
 final class ProfileController extends PanelBaseController
 {
     /**
-     * View: panel/profile — user{id, name, email, role}
+     * View: panel/profile — user{id, name, email, role}, hasPassword (bool; yalnızca Google ile açılan
+     *       hesapta false → "Mevcut şifre" sorulmaz), googleLinked (bool)
      */
     public function edit(): string
     {
@@ -26,6 +27,8 @@ final class ProfileController extends PanelBaseController
                 'email' => $this->currentUser['email'],
                 'role'  => $this->currentUser['role'],
             ],
+            'hasPassword'  => (new UserService(Scope::tenant()))->hasPassword($this->currentUser),
+            'googleLinked' => ! empty($this->currentUser['google_id']),
         ]);
     }
 

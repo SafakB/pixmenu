@@ -6,7 +6,7 @@
 ob_start();
 ?>
 <p>Ücretsiz deneme süreniz sona erdi ve hesabınız askıya alındı.</p>
-<p>Menünüzü yeniden yayına almak için ücretli bir pakete geçmek üzere bizimle iletişime geçin. Verileriniz silinmez.</p>
+<p>Menünüzü yeniden yayına almak için panelinizdeki <strong>Abonelik › Paketler</strong> sayfasından ücretli bir pakete geçebilirsiniz. Verileriniz silinmez.</p>
 <?php
 echo view('emails/billing/layout', [
     'subject'        => $subject,

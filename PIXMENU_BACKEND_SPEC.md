@@ -565,6 +565,9 @@ Her panel action'ı ilk iş olarak bu yardımcılardan uygun olanı çağırır.
 - Başarılı login: `session()->regenerate(true)`, `last_login_at` güncellenir.
 - Logout yalnızca POST + CSRF ile.
 - Login sayfaları (`GET`) zaten oturumlu kullanıcıyı ilgili dashboard'a yönlendirir.
+- **Google ile giriş (yalnızca panel):** OAuth 2.0 authorization code + PKCE (`Config\Google`, `service('googleOAuth')`, `Panel\GoogleAuthController`). `PanelAuth::attemptGoogle()`: `google_id` eşleşirse giriş; yoksa aynı e-postalı hesaba bağlanır. Bağlanan hesabın e-postası doğrulanmamışsa (`email_verified_at` NULL — e-postayla self-servis kayıt) önceki şifre kaldırılır ve `password_changed_at` ile diğer oturumlar düşer (önceden açılmış hesabın ele geçirilmesi önlemi). Farklı bir Google kimliğine bağlı hesabın üzerine yazılmaz. Hesap yoksa kayıt sihirbazına yönlendirilir.
+- **Şifresiz hesap:** yalnızca Google ile açılan hesapta `password_hash` NULL'dır; bu hesaba e-posta/şifre ile **hiçbir şifreyle** girilemez (sahte hash yalnızca zamanlama içindir). Profilde mevcut şifre sorulmadan ilk şifre belirlenebilir.
+- **E-posta doğrulama durumu (`email_verified_at`):** admin'in açtığı ve Google ile gelen hesaplar doğrulanmış sayılır; owner'ın açtığı manager'lar ve e-postayla self-servis kayıt sayılmaz. Kullanıcı kendi e-postasını değiştirirse doğrulama düşer; başkası e-postayı değiştirirse Google bağlantısı da düşer; silinen kullanıcının `google_id`'si boşaltılır.
 
 ### 7.2 Oturum Verisi
 
@@ -832,9 +835,24 @@ $routes->group('api/v1', ['namespace' => 'App\Controllers\Api\V1'], static funct
 - Şube veya restoran pasif/silinmiş → 404.
 - `api/*` CSRF dışında; yalnızca GET; `Cache-Control: public, max-age=60`.
 
+**Tanıtım sitesi ve self-servis kayıt** (yalnızca uygulama host'unda; `Site\*` controller'ları):
+
+```php
+GET  /                     Site\HomeController::index        // landing (index,follow; JSON-LD)
+GET  robots.txt            Site\SeoController::robots        // menü alan adında da var (allow-all)
+GET  sitemap.xml           Site\SeoController::sitemap
+GET  kvkk, kullanim-kosullari  Site\PageController          // yer tutucu yasal metinler
+GET  kayit, POST kayit     Site\SignupController             // honeypot + throttle
+GET  panel/auth/google, panel/auth/google/callback  Panel\GoogleAuthController
+POST panel/subscription/upgrade                       // deneme → ücretli (owner)
+GET  panel/subscription/invoices/(:num)/pay, POST …/pay   // kart ödeme ekranı (TODO PayTR)
+```
+
+Kayıt tek transaction'da restoran + dil(ler) + owner + ilk şube + abonelik açar (`SignupService` → `RestaurantService::create` + `BranchService::create`), owner otomatik giriş yapar. Deploy notu: tanıtım sitesi `baseURL` host'unda (ve `allowedHostnames`'te) sunulur; kök alan adı başka bir host ise oraya eklenmelidir. Google Console'daki yönlendirme URI'si `{baseURL}panel/auth/google/callback` ile birebir aynı olmalıdır.
+
 ### 9.4 Rota Çakışma Kuralları
 
-- `/admin`, `/panel`, `/m`, `/api` önekleri ayrılmıştır; başka modül bu önekleri kullanamaz.
+- `/admin`, `/panel`, `/m`, `/api` önekleri ayrılmıştır; başka modül bu önekleri kullanamaz. Kök (`/`), `/kayit`, `/kvkk`, `/kullanim-kosullari`, `/robots.txt`, `/sitemap.xml` tanıtım sitesine aittir.
 - Statik segmentli rotalar (`new`, `reorder`) `(:num)` rotalarından **önce** tanımlanır (yukarıdaki sıra korunmalıdır).
 
 
@@ -848,7 +866,7 @@ restaurants/(:num)/subscription (GET), …/subscription/change|cancel|suspend|re
 restaurants/(:num)/domain (GET, POST), …/domain/verify, …/domain/delete (POST)
 
 // panel — yalnızca owner, askıdayken de açık
-subscription, subscription/plans, subscription/invoices/(:num)
+subscription, subscription/plans, subscription/upgrade (POST), subscription/invoices/(:num), subscription/invoices/(:num)/pay (GET, POST)
 ```
 
 - **`panelsubscription` filtresi** (`PanelSubscriptionFilter`): restoran askıdaysa içerik rotaları (restoran ayarları, şubeler, kullanıcılar, kategori/ürün) kapanır — HTML: owner → `panel/subscription`, manager → `panel` (uyarı bandı); JSON: 403. Gösterge paneli, profil, çıkış ve abonelik sayfaları serbesttir. `TenantContext::isSuspended()` bilgisini `PanelAuthFilter` doldurur.
@@ -1083,10 +1101,10 @@ Aşağıdakiler bu sürümde **yapılmaz**; ajanlar kendiliğinden eklemez:
 - Şubeler arası kategori/ürün kopyalama (sonraki aşama için `BranchService::cloneMenu(fromBranchId, toBranchId)` olarak planlanmıştır).
 - Şube bazında farklı dil alt kümesi (şu an şube, restoranın tüm aktif dillerini kullanır).
 - Şube bazında farklı para birimi.
-- Sipariş, masa, ödeme.
+- Sipariş, masa, menü üzerinden ödeme.
 - Admin'in restoran adına panele girmesi (impersonation).
 - QR kod görseli üretimi (URL hazır: `/m/{public_code}`).
-- Abonelik: online ödeme (sanal POS), resmi e-fatura ve PDF, owner'ın kendi kendine paket değiştirmesi, dönem içi kıst (proration), özel menü tasarımı altyapısı (yalnızca `allow_custom_design` bayrağı var), alt alan adı (`restoran.pixmenu.com`), otomatik DNS/SSL doğrulaması (bkz. `docs/ABONELIK_PLANI.md` §12).
+- Abonelik: online ödeme tahsilatı (sanal POS — kart ekranı hazır, PayTR TODO), resmi e-fatura ve PDF, owner'ın ücretli paketler arasında kendi kendine geçişi, dönem içi kıst (proration), özel menü tasarımı altyapısı (yalnızca `allow_custom_design` bayrağı var), alt alan adı (`restoran.pixmenu.com`), otomatik DNS/SSL doğrulaması (bkz. `docs/ABONELIK_PLANI.md` §12).
 
 ---
 
@@ -1117,8 +1135,8 @@ Her controller/servis için view dosya adları ve view'a giden değişkenler PR 
 
 Bu doküman aşağıdaki varsayımlarla yazılmıştır; değişirse ilgili bölümler güncellenmelidir.
 
-1. Restoranlar ve şubeleri admin açar; owner da kendi restoranına şube açabilir.
-2. Restoranın hangi dilleri kullanacağını admin belirler; owner yalnızca şube varsayılan dilini seçer.
+1. Restoranları admin açar **veya** işletme `/kayit` ile kendisi kaydolur (e-posta/şifre ya da Google; restoran + ilk şube + paket seçimi). Owner kendi restoranına şube açabilir.
+2. Restoranın hangi dilleri kullanacağını admin belirler (self-servis kayıtta owner ilk seçimi yapar; sonradan değişiklik admin'dedir); owner yalnızca şube varsayılan dilini seçer.
 3. Kategoriler ve ürünler şubeye özeldir; aynı ürünün iki şubede olması iki ayrı kayıttır.
 4. Para birimi restoran seviyesindedir (varsayılan TRY).
 5. Restoran kullanıcısının e-postası tüm sistemde tekildir.

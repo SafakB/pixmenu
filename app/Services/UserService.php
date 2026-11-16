@@ -19,6 +19,9 @@ use App\Validation\PixmenuRules;
  *  - Owner yalnızca `manager` açabilir/düzenleyebilir; kendisini ve diğer
  *    owner'ları silemez/pasifleştiremez.
  *  - Restoranın son aktif owner'ı silinemez/pasifleştirilemez/manager'a düşürülemez.
+ *  - E-posta doğrulaması (`email_verified_at`): admin'in açtığı ve Google ile gelen hesaplar
+ *    doğrulanmış sayılır; owner'ın açtığı manager'lar ve e-posta ile self-servis kayıt sayılmaz.
+ *    Google hesabını doğrulanmamış bir hesaba bağlamak önceki şifreyi kaldırır (PanelAuth::attemptGoogle).
  */
 final class UserService
 {
@@ -29,12 +32,14 @@ final class UserService
     }
 
     /**
-     * @param array{name: string, email: string, password: string, role: string, is_active: int, branch_ids: list<int>} $input
+     * `google_id` verilirse şifre zorunlu değildir; boş bırakılırsa hesabın şifresi olmaz (yalnızca Google).
+     *
+     * @param array{name: string, email: string, password: string, role: string, is_active: int, branch_ids: list<int>, google_id?: string|null, email_verified?: bool} $input
      */
     public function create(array $input): int
     {
         $input  = $this->normalize($input);
-        $errors = $this->validate($input, null, true);
+        $errors = $this->validate($input, null, $input['google_id'] === null);
 
         if ($errors !== []) {
             throw new ValidationException($errors);
@@ -42,11 +47,13 @@ final class UserService
 
         return $this->atomic(function () use ($input): int {
             $id = (int) $this->users()->insert([
-                'name'          => $input['name'],
-                'email'         => $input['email'],
-                'password_hash' => password_hash($input['password'], PASSWORD_DEFAULT),
-                'role'          => $input['role'],
-                'is_active'     => $input['is_active'],
+                'name'              => $input['name'],
+                'email'             => $input['email'],
+                'email_verified_at' => $input['email_verified'] ? date('Y-m-d H:i:s') : null,
+                'password_hash'     => $input['password'] === '' ? null : password_hash($input['password'], PASSWORD_DEFAULT),
+                'google_id'         => $input['google_id'],
+                'role'              => $input['role'],
+                'is_active'         => $input['is_active'],
             ]);
 
             $this->assignments()->replaceForUser($id, $input['role'] === 'manager' ? $input['branch_ids'] : []);
@@ -80,13 +87,20 @@ final class UserService
             $this->assertNotLastOwner($id);
         }
 
-        $this->atomic(function () use ($id, $input): void {
+        $this->atomic(function () use ($id, $user, $input): void {
             $fields = [
                 'name'      => $input['name'],
                 'email'     => $input['email'],
                 'role'      => $input['role'],
                 'is_active' => $input['is_active'],
             ];
+
+            // Hesap başka bir adrese (ör. yeni çalışana) devredildiyse eski Google bağlantısı düşer;
+            // yeni adres yalnızca admin değiştirdiyse doğrulanmış sayılır.
+            if ($input['email'] !== mb_strtolower((string) $user['email'])) {
+                $fields['google_id']         = null;
+                $fields['email_verified_at'] = $this->scope->isAdmin() ? date('Y-m-d H:i:s') : null;
+            }
 
             if ($input['password'] !== '') {
                 $fields['password_hash']       = password_hash($input['password'], PASSWORD_DEFAULT);
@@ -135,6 +149,7 @@ final class UserService
         $this->atomic(function () use ($id, $user): void {
             $this->users()->update($id, [
                 'email'     => pix_deleted_slug((string) $user['email'], $id, 190),
+                'google_id' => null, // aynı Google hesabı yeniden kayıt olabilsin
                 'is_active' => 0,
             ]);
             $this->assignments()->replaceForUser($id, []);
@@ -157,19 +172,40 @@ final class UserService
             throw new ValidationException($errors);
         }
 
-        $this->users()->update((int) $user['id'], ['name' => $name, 'email' => $email]);
+        $fields = ['name' => $name, 'email' => $email];
+
+        // Yeni adresin sahipliği kanıtlanmadı.
+        if ($email !== mb_strtolower((string) $user['email'])) {
+            $fields['email_verified_at'] = null;
+        }
+
+        $this->users()->update((int) $user['id'], $fields);
+    }
+
+    /**
+     * Hesabın bir şifresi var mı? (Yalnızca Google ile açılan hesaplarda yoktur.)
+     *
+     * @param array<string, mixed> $user
+     */
+    public function hasPassword(array $user): bool
+    {
+        $hash = $this->users()->find((int) $user['id'])['password_hash'] ?? null;
+
+        return is_string($hash) && $hash !== '';
     }
 
     /**
      * Kullanıcının kendi parolası. Diğer oturumlar password_changed_at ile düşer.
+     * Şifresi olmayan (yalnızca Google) hesap mevcut şifre sorulmadan ilk şifresini belirler.
      *
      * @param array<string, mixed> $user
      */
     public function changeOwnPassword(array $user, string $current, string $new, string $confirm): void
     {
-        $row = $this->users()->find((int) $user['id']);
+        $row  = $this->users()->find((int) $user['id']);
+        $hash = $row['password_hash'] ?? null;
 
-        if ($row === null || ! password_verify($current, (string) $row['password_hash'])) {
+        if ($row === null || (is_string($hash) && $hash !== '' && ! password_verify($current, $hash))) {
             throw ValidationException::single('current_password', lang('App.user.passwordCurrent'));
         }
 
@@ -202,7 +238,7 @@ final class UserService
     /**
      * @param array<string, mixed> $input
      *
-     * @return array{name: string, email: string, password: string, role: string, is_active: int, branch_ids: list<int>}
+     * @return array{name: string, email: string, password: string, role: string, is_active: int, branch_ids: list<int>, google_id: string|null, email_verified: bool}
      */
     private function normalize(array $input): array
     {
@@ -228,8 +264,10 @@ final class UserService
             'email'      => mb_strtolower(trim((string) ($input['email'] ?? ''))),
             'password'   => (string) ($input['password'] ?? ''),
             'role'       => $role,
-            'is_active'  => (int) ($input['is_active'] ?? 0) === 1 ? 1 : 0,
-            'branch_ids' => array_values(array_unique($branchIds)),
+            'is_active'      => (int) ($input['is_active'] ?? 0) === 1 ? 1 : 0,
+            'branch_ids'     => array_values(array_unique($branchIds)),
+            'google_id'      => isset($input['google_id']) && $input['google_id'] !== '' ? (string) $input['google_id'] : null,
+            'email_verified' => ($input['email_verified'] ?? false) === true,
         ];
     }
 
@@ -248,6 +286,10 @@ final class UserService
 
         if (($passwordRequired || $input['password'] !== '') && ! PixmenuRules::isStrongPassword($input['password'])) {
             $errors['password'] = lang('App.user.passwordWeak');
+        }
+
+        if (($input['google_id'] ?? null) !== null && $this->users()->googleIdExists((string) $input['google_id'])) {
+            $errors['email'] = lang('App.user.googleTaken');
         }
 
         if ($input['role'] === 'manager') {

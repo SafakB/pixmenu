@@ -3,9 +3,10 @@
     "app/Config/View.php": "969b92b00b9268e71d6a8363f38042ac39d0c24be4f1721d3335991498dc2cd0",
     "app/Helpers/pixmenu_helper.php": "d38e784581a121516df16c8fbc3bbb32259b94a40b1e9aece73e2e39ef48a12d",
     "app/Views/layouts/admin.php": "c055e6f0533f96924939aaca3f6e3cf0faf300621bf21ce9d9f6444433c8c6bf",
-    "app/Views/layouts/auth.php": "0f4e2eee7dd396b03c66f9dfc6cf81cded342253d7e7114105fc10f92ebbe35d",
+    "app/Views/layouts/auth.php": "19f7349f47e59938f2555ccfd26962e646ed30704cd807028063e430b613728e",
+    "app/Views/layouts/landing.php": "bdecf68ff3d3eb2dec747a27934babae74f234b7f8ae246bfe6e420426fc9812",
     "app/Views/layouts/panel.php": "bdea2d922e7cdcc9dc24b787986818a1b5c4f0a54b7d6762b39da0ea405d60ed",
-    "app/Views/partials/flash.php": "76809f6c0bf41e0f3ac6f85ffb975f5cecf25d46cf15913d7936aef425be9252",
+    "app/Views/partials/flash.php": "29f2369bc292df1324b244a192182f2d94dc3c8d3212d7d41f141eae865a3b0b",
     "app/Views/partials/layout/customizer.php": "921666a16a9194d7a2b78d8f6b074f614b53a1e16f9ab8f06326628e99da7dad",
     "app/Views/partials/layout/footer.php": "c39d4a47336b390f7531accfa00d0e05b7d3011f552a35e4d76eafddb101f9d0",
     "app/Views/partials/layout/head.php": "b77d0687019d26aa0c528c2e53ec89dcc7d7502f182824d88309817dcd037b07",
@@ -16,9 +17,9 @@
     "app/Views/partials/layout/sidebar.php": "bcf63d30ca76f6dbc84099c0c22c8c95c209af9beda8908c1802bf1d248b818d",
     "app/Views/partials/layout/topbar.php": "bf4130804331f2049a371efc13e2e774e2214c4c5b23bca68f88984157c726e4",
     "app/Views/partials/layout/user_menu.php": "acb38b5c3171d860df5b90d853ac04b71905e86c808dacc7e648c8f3eca6dd3b",
-    "app/Views/partials/login_form.php": "208934aed4bf9249b3c649d063996e35edc84353153787a28be6f1c1c412e549",
+    "app/Views/partials/login_form.php": "0175311535e3fbd1c54949d416e344cfdff560d5354e80db7eddd1819578ae93",
     "app/Views/partials/translations.php": "404da629cc8cb89d4302e5c81ac0045f765959def56c31469edc86f5e8bebe8c",
-    "docs/VIEW_CONTRACT.md": "5e314ea15781c16b5c55742be106091c5816cfdbce9044e7b3b5bae6000e6596",
+    "docs/VIEW_CONTRACT.md": "e24228df3d58fdccd2a4db1f97322bd1fdb9258c40e3ebc572832693cb9a29c3",
     "public/assets/js/app.js": "47b9e55c55fa6e0dfb414e93cd29c613d7a394e8bc747f807234315a585033ba",
     "public/assets/js/layout.js": "2a183a91dc4ab99e0d94dd387bec4d4fc0b7ce01ba4318d589cb99885931dd39",
     "public/assets/js/pix-confirm.js": "856f249ab134f03b040a26fbd6baa963c0e5b29b83f3094e5c76209efc5a9ab3"
@@ -75,11 +76,15 @@
       "layout.js",
       "pages",
       "pix-confirm.js",
-      "pix-image-preview.js"
+      "pix-image-preview.js",
+      "pix-plan-cycle.js"
     ],
     "public/assets/js/pages": [
+      "checkout.init.js",
+      "landing.init.js",
       "particles.app.js",
-      "password-addon.init.js"
+      "password-addon.init.js",
+      "signup.init.js"
     ],
     "public/assets/css": [
       "app.min.css",

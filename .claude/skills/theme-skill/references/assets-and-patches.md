@@ -9,10 +9,12 @@ Ayrıca bkz. `public/assets/README.md` (proje içindeki kısa not; bu dosyayla t
 | `css/` | tamamı: bootstrap, icons, app, custom (.min.css) |
 | `fonts/` | tamamı (ikon fontları) |
 | `libs/` | tamamı (44 kütüphane: sweetalert2, sortablejs, list.js, gridjs, apexcharts, dropzone, filepond, swiper, particles.js …) |
-| `js/` | `app.js` (**yamalı**), `layout.js`, `pages/password-addon.init.js`, `pages/particles.app.js` · **bizim**: `pix-confirm.js` |
-| `images/` | `favicon.ico`, `auth-one-bg.jpg`, `users/user-dummy-img.jpg`, `sidebar/img-1..4.jpg`, `demos/*.png` (customizer önizlemeleri), `flags/*.svg` (temanın 8 bayrağı + bizim çizdiğimiz `tr.svg`; dil kodu → dosya eşlemesi `admin/languages/index.php`de) |
+| `js/` | `app.js` (**yamalı**), `layout.js`, `pages/password-addon.init.js`, `pages/particles.app.js` · **bizim**: `pix-confirm.js`, `pix-image-preview.js`, `pix-plan-cycle.js`, `pages/landing.init.js` (Velzon landing.init'in sade, Swiper'sız hâli), `pages/signup.init.js`, `pages/checkout.init.js` |
+| `images/` | `landing/` (**bizim**: `hero-phone.svg`, `feature-panel.svg`, `feature-languages.svg` — dummy illüstrasyonlar; `og-image.png` 1200×630), `favicon.ico`, `auth-one-bg.jpg`, `users/user-dummy-img.jpg`, `sidebar/img-1..4.jpg`, `demos/*.png` (customizer önizlemeleri), `flags/*.svg` (temanın 8 bayrağı + bizim çizdiğimiz `tr.svg`; dil kodu → dosya eşlemesi `admin/languages/index.php`de) |
 
-Kopyalanmayanlar: `js/plugins.js` (CDN toastify + göreli choices/flatpickr), `js/pages/plugins/lord-icon-2.1.0.js` (CDN), diğer `js/pages/*.init.js` (demo verisine bağlı; gerekirse kopyalanıp uyarlanır), demo görseller.
+Kopyalanmayanlar: `js/plugins.js` (CDN toastify + göreli choices/flatpickr), `js/pages/plugins/lord-icon-2.1.0.js` (CDN), diğer `js/pages/*.init.js` (demo verisine bağlı; gerekirse kopyalanıp uyarlanır — `landing.init`, `form-wizard.init`, `widgets.init` yerine kendi küçük script'lerimiz var), demo görseller.
+
+Kullanılan lib notu: `libs/card/card.js` (ödeme ekranı) global `Card` sınıfını verir ve kendi CSS'ini enjekte eder; `formSelectors` id ile verilir (`input#card-number` …).
 
 ## `js/app.js` yamaları
 

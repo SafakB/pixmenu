@@ -1,7 +1,9 @@
 <?php
 /**
- * @var string      $action login POST yolu
- * @var string|null $error  429 gibi doğrudan render edilen hata
+ * @var string      $action    login POST yolu
+ * @var string|null $error     429 gibi doğrudan render edilen hata
+ * @var string|null $googleUrl "Google ile giriş yap" düğmesi (yalnızca panel; Google yapılandırılmışsa)
+ * @var string|null $signupUrl "Kayıt olun" linki (yalnızca panel)
  */
 ?>
 <?php if (! empty($error)): ?>
@@ -26,3 +28,16 @@
         <button class="btn btn-success w-100" type="submit">Giriş yap</button>
     </div>
 <?= form_close() ?>
+<?php if (! empty($googleUrl)): ?>
+    <div class="mt-4 text-center">
+        <div class="signin-other-title">
+            <h5 class="fs-13 mb-4 title">veya</h5>
+        </div>
+        <a href="<?= esc($googleUrl, 'attr') ?>" class="btn btn-light w-100 border">
+            <i class="ri-google-fill fs-16 align-middle text-danger me-1"></i> Google ile giriş yap
+        </a>
+    </div>
+<?php endif ?>
+<?php if (! empty($signupUrl)): ?>
+    <p class="mt-4 mb-0 text-center text-muted">Hesabınız yok mu? <a href="<?= esc($signupUrl, 'attr') ?>" class="fw-semibold text-primary text-decoration-underline">Ücretsiz kayıt olun</a></p>
+<?php endif ?>

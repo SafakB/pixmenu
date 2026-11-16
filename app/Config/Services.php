@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Config;
 
 use App\Libraries\Auth\AdminAuth;
+use App\Libraries\Auth\GoogleIdentityProvider;
+use App\Libraries\Auth\GoogleOAuth;
 use App\Libraries\Auth\PanelAuth;
 use App\Libraries\Tenant\TenantContext;
 use App\Services\ActivityLogger;
@@ -15,7 +17,7 @@ use CodeIgniter\Config\BaseService;
 /**
  * Services Configuration file.
  *
- * Proje servisleri: tenant(), adminAuth(), panelAuth(), languageResolver(), activity(), images().
+ * Proje servisleri: tenant(), adminAuth(), panelAuth(), googleOAuth(), languageResolver(), activity(), images().
  */
 class Services extends BaseService
 {
@@ -47,6 +49,18 @@ class Services extends BaseService
         }
 
         return new PanelAuth();
+    }
+
+    /**
+     * Google ile giriş/kayıt istemcisi. Testlerde Services::injectMock('googleOAuth', $sahte).
+     */
+    public static function googleOAuth(bool $getShared = true): GoogleIdentityProvider
+    {
+        if ($getShared) {
+            return static::getSharedInstance('googleOAuth');
+        }
+
+        return new GoogleOAuth(config('Google'));
     }
 
     public static function languageResolver(bool $getShared = true): LanguageResolver

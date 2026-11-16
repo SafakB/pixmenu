@@ -16,17 +16,19 @@ class Honeypot extends BaseConfig
     /**
      * Honeypot Label Content
      */
-    public string $label = 'Fill This Field';
+    public string $label = 'Bu alanı boş bırakın';
 
     /**
      * Honeypot Field Name
+     *
+     * Tarayıcı otomatik doldurmasının tetiklemeyeceği bir ad (kayıt formu: /kayit rota filtresi).
      */
-    public string $name = 'honeypot';
+    public string $name = 'pix_hp';
 
     /**
      * Honeypot HTML Template
      */
-    public string $template = '<label>{label}</label><input type="text" name="{name}" value="">';
+    public string $template = '<label for="{name}">{label}</label><input type="text" id="{name}" name="{name}" value="" autocomplete="off" tabindex="-1">';
 
     /**
      * Honeypot container

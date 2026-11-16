@@ -89,6 +89,34 @@ final class PlanService
     }
 
     /**
+     * Herkese açık sayfalar (landing, kayıt) için aktif paketler: kullanım sayısı gibi iç
+     * bilgiler OLMADAN yalnızca kartta gösterilen alanlar.
+     *
+     * @return list<array{id: int, code: string, name: string, description: string|null, max_branches: int|null, allow_custom_domain: int, allow_custom_design: int, trial_days: int|null, price_monthly: string, price_yearly: string, currency_code: string, is_featured: int, badge_class: string|null}>
+     */
+    public function publicListing(): array
+    {
+        $plans = (new PlanModel())->ordered(true);
+        $texts = $this->texts(array_map('intval', array_column($plans, 'id')));
+
+        return array_map(static fn (array $p): array => [
+            'id'                  => (int) $p['id'],
+            'code'                => (string) $p['code'],
+            'name'                => $texts[(int) $p['id']]['name'] ?? (string) $p['code'],
+            'description'         => $texts[(int) $p['id']]['description'] ?? null,
+            'max_branches'        => $p['max_branches'] === null ? null : (int) $p['max_branches'],
+            'allow_custom_domain' => (int) $p['allow_custom_domain'],
+            'allow_custom_design' => (int) $p['allow_custom_design'],
+            'trial_days'          => $p['trial_days'] === null ? null : (int) $p['trial_days'],
+            'price_monthly'       => (string) $p['price_monthly'],
+            'price_yearly'        => (string) $p['price_yearly'],
+            'currency_code'       => (string) $p['currency_code'],
+            'is_featured'         => (int) $p['is_featured'],
+            'badge_class'         => $p['badge_class'] ?? null,
+        ], $plans);
+    }
+
+    /**
      * @param array<string, mixed>                 $data
      * @param array<string, array<string, string>> $translations
      */

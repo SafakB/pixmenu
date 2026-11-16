@@ -39,6 +39,10 @@ $actions = '<a href="' . site_url('panel/subscription/plans') . '" class="btn bt
                             <td><?= esc(pix_money($i['total'], $i['currency_code'])) ?></td>
                             <td><?= view('partials/billing/badge', ['kind' => 'invoice', 'status' => $i['display_status']]) ?></td>
                             <td class="text-end">
+                                <?php if ($i['status'] === 'pending'): ?>
+                                    <a href="<?= site_url('panel/subscription/invoices/' . $i['id'] . '/pay') ?>" class="btn btn-sm btn-icon btn-soft-success"
+                                       data-bs-toggle="tooltip" title="Öde" aria-label="Öde"><i class="ri-bank-card-line"></i></a>
+                                <?php endif ?>
                                 <a href="<?= site_url('panel/subscription/invoices/' . $i['id']) ?>" class="btn btn-sm btn-icon btn-soft-info"
                                    data-bs-toggle="tooltip" title="Görüntüle" aria-label="Görüntüle"><i class="ri-eye-line"></i></a>
                             </td>

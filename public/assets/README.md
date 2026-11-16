@@ -15,6 +15,10 @@ Tema güncellenirse bu değişiklikler yeniden uygulanmalı:
 ## Bizim dosyalarımız
 
 - `js/pix-confirm.js` — `form[data-confirm]` gönderimini SweetAlert2 onayına bağlar (layout'ta yüklü; öznitelikler dosyanın başında).
+- `js/pix-image-preview.js` — dosya seçiminde görsel önizleme (layout'ta yüklü).
+- `js/pix-plan-cycle.js` — paket kartlarında aylık/yıllık geçişi (panel paketler, landing, kayıt).
+- `js/pages/landing.init.js`, `js/pages/signup.init.js`, `js/pages/checkout.init.js` — tanıtım sitesi, kayıt sihirbazı, kart ödeme ekranı.
+- `images/landing/` — tanıtım sitesi illüstrasyonları (dummy SVG) ve `og-image.png`.
 
 ## Bilinen eksik
 

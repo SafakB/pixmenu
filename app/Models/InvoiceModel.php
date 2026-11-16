@@ -48,6 +48,19 @@ final class InvoiceModel extends TenantModel
     }
 
     /**
+     * Aboneliğin ödenmemiş (en yeni) faturası — self-servis kayıt/geçiş sonrası ödeme ekranı için.
+     *
+     * @return array<string, mixed>|null
+     */
+    public function openForSubscription(int $subscriptionId): ?array
+    {
+        return $this->where('subscription_id', $subscriptionId)
+            ->where('status', 'pending')
+            ->orderBy('id', 'DESC')
+            ->first();
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     public function pending(): array
